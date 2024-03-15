@@ -192,16 +192,6 @@ app.get('/profile', ensureAuthenticated, function(req, res) {
   res.render('pages/profile');
 });
 
-app.get('/page1', ensureAuthenticated, function(req, res) {
-  res.locals.pageTitle ="Page 1";
-  res.render('pages/page1');
-});
-
-app.get('/page2', ensureAuthenticated, function(req, res) {
-  res.locals.pageTitle ="Page 2";
-  res.render('pages/page2');
-});
-
 // Error handling
 app.get('/error', (req, res) => res.send("error logging in"));
 
