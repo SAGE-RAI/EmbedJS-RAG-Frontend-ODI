@@ -9,10 +9,12 @@ const db = mongoose.connection;
 // Database models
 const User = require('./models/user'); // Import the User model
 const Token = require('./models/token'); // Import the Token model
+const Conversation = require('./models/conversation'); // Import the Token model
 
 // Database controllers
 const { retrieveOrCreateUser } = require('./controllers/user');
-const { processToken, verifyToken } = require('./controllers/token');
+const { processToken, verifyToken, getUserIDFromToken } = require('./controllers/token');
+const { createConversation } = require('./controllers/conversation');
 
 
 // Check MongoDB connection
@@ -143,6 +145,108 @@ function ensureAuthenticated(req, res, next) {
   }
 }
 
+// Define the middleware function for token verification
+const verifyTokenMiddleware = async (req, res, next) => {
+  // Check if the authorization header with bearer token exists
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized: Bearer token missing' });
+  }
+
+  // Extract the token from the authorization header
+  const token = authHeader.split(' ')[1];
+  try {
+    // Verify the token's validity
+    const isValidToken = await verifyToken(token);
+    if (!isValidToken) {
+      return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+    }
+    // If token is valid, proceed to the next middleware or route handler
+    next();
+  } catch (error) {
+    console.error("Error in token verification middleware:", error);
+    res.status(error.status || 500).json({ error: error.message });
+  }
+};
+
+const verifyTokenAndConversationMiddleware = async (req, res, next) => {
+  try {
+    // Extract the token from the request header
+    const token = req.headers['authorization'].split(' ')[1];
+
+    // Extract the conversation ID from the request params
+    const conversationId = req.params.conversationId;
+
+    // Get the user ID associated with the token
+    const userId = await getUserIDFromToken(token);
+
+    // Check if the conversation ID belongs to the user
+    const conversation = await Conversation.findOne({ _id: conversationId, userId: userId });
+
+    // If conversation not found or doesn't belong to the user, return 401 Unauthorized
+    if (!conversation) {
+      return res.status(401).json({ error: 'Unauthorized: Conversation not found or does not belong to the user' });
+    }
+
+    // If both token and conversation are verified, proceed to the next middleware or route handler
+    next();
+  } catch (error) {
+    console.error('Error in verifyTokenAndConversationMiddleware:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// Middleware function to process messages and record conversation history
+const processMessagesMiddleware = async (req, res, next) => {
+  try {
+    const conversationId = req.params.conversationId;
+
+    // Retrieve the conversation object from the database
+    let conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    // If history is not defined (new conversation), initialize it as an empty array
+    if (!conversation.history) {
+      conversation.history = [];
+    }
+
+    // Extract messages from request body
+    const messages = req.body.messages;
+    const block = req.body.currentBlock;
+    console.log(req.body);
+    const context = {};
+    context.block = block;
+
+    // Filter out messages that are already present in the conversation history
+    const newMessages = messages.filter(message => {
+      // Check if the message content is already in the conversation history
+      return !conversation.history.some(entry => entry.message.content === message.content);
+    });
+
+    // If there are new messages, add them to the conversation history
+    if (newMessages.length > 0) {
+      // Create new history entries for new messages
+      const newHistoryEntries = newMessages.map(message => ({
+        message: message,
+        context: context
+      }));
+
+      // Update the conversation object with the new history entries
+      conversation.history = conversation.history.concat(newHistoryEntries);
+      await conversation.save();
+    }
+
+    // Continue to the next middleware or route handler
+    next();
+  } catch (error) {
+    console.error('Error processing messages:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 function unauthorised(res) {
   res.locals.pageTitle ="401 Unauthorised";
   return res.status(401).render("errors/401");
@@ -160,22 +264,48 @@ app.get('/', function(req, res) {
   }
 });
 
-app.post("/openai-completion", async (req, res) => {
-  // Check if the authorization header with bearer token exists
-  const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized: Bearer token missing' });
-  }
-
-  // Extract the token from the authorization header
-  const token = authHeader.split(' ')[1];
+// Route handler for /openai-completion/<conversationId>
+app.post("/openai-completion/:conversationId", verifyTokenAndConversationMiddleware, processMessagesMiddleware, async (req, res) => {
   try {
-    // Verify the token's validity
-    const isValidToken = await verifyToken(token);
-    if (!isValidToken) {
-      return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+    const conversationId = req.params.conversationId;
+
+    // Extract block from req.body and remove it
+    const { currentBlock, ...body } = req.body;
+
+    // Proceed to chat with OpenAI
+    const response = await openai.chat.completions.create({
+      ...body,
+    });
+
+    // Update the conversation object with the response in the history
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
     }
 
+    // Add the OpenAI response as a new message in the conversation history
+    const newMessage = { message: response.choices[0].message };
+    conversation.history.push(newMessage);
+    await conversation.save();
+
+    // Update the OpenAI response to include the newly inserted message's _id
+    const insertedMessage = conversation.history[conversation.history.length - 1];
+    response.choices[0].message.id = insertedMessage._id;
+
+    console.log(JSON.stringify(response.choices[0].message));
+
+    res.status(200).send(response.data || response);
+  } catch (error) {
+    console.error("Error in /openai-completion route:", error);
+    res.status(error.status || 500).json({ error: error.message });
+  }
+});
+
+
+
+app.post("/openai-completion", verifyTokenMiddleware, async (req, res) => {
+  try {
     // Proceed to chat with OpenAI
     const response = await openai.chat.completions.create({
       ...req.body,
@@ -186,6 +316,29 @@ app.post("/openai-completion", async (req, res) => {
     res.status(error.status || 500).json({ error: error.message });
   }
 });
+
+app.post("/createConversation", verifyTokenMiddleware, async (req, res) => {
+  try {
+    // Extract the token from the request
+    const token = req.headers['authorization'].split(' ')[1];
+
+    // Call getUserIDFromToken(token) to get userId
+    const userId = await getUserIDFromToken(token);
+
+    // Extract contentObjectId, courseId, and skillsFramework from the request body
+    const { contentObjectId, courseId, _skillsFramework } = req.body;
+
+    // Call createConversation(userId, contentObjectId, courseId, skillsFramework) to create a new conversation
+    const id = await createConversation(userId, contentObjectId, courseId, _skillsFramework);
+
+    // Return the conversationId in the response
+    res.status(200).json({ id });
+  } catch (error) {
+    console.error("Error in /createConversation route:", error);
+    res.status(error.status || 500).json({ error: error.message });
+  }
+});
+
 
 app.get('/profile', ensureAuthenticated, function(req, res) {
   res.locals.pageTitle ="Profile page";

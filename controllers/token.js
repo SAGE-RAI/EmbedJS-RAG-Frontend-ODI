@@ -44,4 +44,22 @@ async function processToken(accessToken,userId) {
   await token.save();
 }
 
-module.exports = { processToken , verifyToken };
+async function getUserIDFromToken(accessToken) {
+  try {
+    // Find the token in the database
+    const tokenDoc = await Token.findOne({ accessToken });
+
+    // If token not found, return null or throw an error
+    if (!tokenDoc) {
+      throw new Error('Token not found');
+    }
+
+    // Return the user ID associated with the token
+    return tokenDoc.userId;
+  } catch (error) {
+    console.error('Error retrieving user ID from token:', error);
+    throw error; // Rethrow the error
+  }
+}
+
+module.exports = { processToken , verifyToken, getUserIDFromToken };
