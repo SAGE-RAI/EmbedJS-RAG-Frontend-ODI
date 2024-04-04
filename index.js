@@ -14,7 +14,7 @@ const Conversation = require('./models/conversation'); // Import the Token model
 // Database controllers
 const { retrieveOrCreateUser } = require('./controllers/user');
 const { processToken, verifyToken, getUserIDFromToken } = require('./controllers/token');
-const { createConversation } = require('./controllers/conversation');
+const { createConversation, getConversations, getConversation } = require('./controllers/conversation');
 
 
 // Check MongoDB connection
@@ -264,6 +264,52 @@ app.get('/', function(req, res) {
   }
 });
 
+
+// Route handler for /conversations
+app.get("/conversations", verifyTokenMiddleware, async (req, res) => {
+  try {
+    const token = req.headers['authorization'].split(' ')[1];
+    // Get the user ID associated with the token
+    const userId = await getUserIDFromToken(token);
+
+    const contentObjectId = req.query.contentObjectId;
+
+    const conversations = await getConversations(contentObjectId,userId);
+    res.json(conversations);
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
+});
+
+// Route handler for /conversation/:conversationId
+app.get("/conversation/:conversationId", verifyTokenAndConversationMiddleware, async (req, res) => {
+  try {
+    const conversationId = req.params.conversationId;
+    const conversation = await getConversation(conversationId);
+    res.json(conversation);
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
+});
+
+// Route handler for /conversation/:conversationId
+app.get("/conversation/:conversationId/messages", verifyTokenAndConversationMiddleware, async (req, res) => {
+  try {
+    const conversationId = req.params.conversationId;
+    const conversation = await getConversation(conversationId);
+    // Extracting messages with role and content
+    const messages = conversation.history.map(entry => {
+      return {
+          role: entry.message.role,
+          content: entry.message.content
+      };
+    });
+    res.json(messages);
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
+});
+
 // Route handler for /openai-completion/<conversationId>
 app.post("/openai-completion/:conversationId", verifyTokenAndConversationMiddleware, processMessagesMiddleware, async (req, res) => {
   try {
@@ -325,11 +371,11 @@ app.post("/createConversation", verifyTokenMiddleware, async (req, res) => {
     // Call getUserIDFromToken(token) to get userId
     const userId = await getUserIDFromToken(token);
 
-    // Extract contentObjectId, courseId, and skillsFramework from the request body
-    const { contentObjectId, courseId, _skillsFramework } = req.body;
+    // Extract contentObject, course, and skillsFramework from the request body
+    const { contentObject, course, _skillsFramework } = req.body;
 
-    // Call createConversation(userId, contentObjectId, courseId, skillsFramework) to create a new conversation
-    const id = await createConversation(userId, contentObjectId, courseId, _skillsFramework);
+    // Call createConversation(userId, contentObject, course, skillsFramework) to create a new conversation
+    const id = await createConversation(userId, contentObject, course, _skillsFramework);
 
     // Return the conversationId in the response
     res.status(200).json({ id });

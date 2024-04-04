@@ -12,11 +12,21 @@ const conversationSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
-  courseId: {
-    type: String
+  course: {
+    id: {
+      type: String
+    },
+    title: {
+      type: String
+    }
   },
-  contentObjectId: {
-    type: String
+  contentObject: {
+    id: {
+      type: String
+    },
+    title: {
+      type: String
+    }
   },
   _skillsFramework: {
     programmeUri: {
