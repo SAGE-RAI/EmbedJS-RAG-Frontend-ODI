@@ -43,4 +43,26 @@ async function getConversation(conversationId) {
     }
 }
 
-module.exports = { createConversation, getConversations, getConversation };
+async function deleteOldConversations() {
+    console.log('finding old conversations');
+    try {
+      // Calculate the cutoff time (24 hours ago)
+      const cutoffTime = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+      // Find conversations that meet the criteria
+      const conversationsToDelete = await Conversation.find({
+        creationDate: { $lt: cutoffTime }, // Conversations created over 24 hours ago
+        'history.0': { $exists: false } // Conversations with an empty history
+      });
+
+      // Delete the found conversations
+      const deletePromises = conversationsToDelete.map(conversation => conversation.remove());
+      await Promise.all(deletePromises);
+
+      console.log(`Deleted ${conversationsToDelete.length} old conversations.`);
+    } catch (error) {
+      console.error('Error deleting old conversations:', error);
+    }
+}
+
+module.exports = { createConversation, getConversations, getConversation, deleteOldConversations };

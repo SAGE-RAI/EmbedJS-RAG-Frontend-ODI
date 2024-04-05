@@ -36,12 +36,25 @@ const conversationSchema = new mongoose.Schema({
       type: String
     }
   },
+  plugin: {
+    type: String
+  },
   history: [{
     message: {
       role: {
         type: String,
       },
       content: {
+        type: String,
+      }
+    },
+    rating: {
+      rating: {
+        type: Number,
+        min: 1,
+        max: 5,
+      },
+      comment: {
         type: String,
       }
     },

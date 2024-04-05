@@ -14,7 +14,7 @@ const Conversation = require('./models/conversation'); // Import the Token model
 // Database controllers
 const { retrieveOrCreateUser } = require('./controllers/user');
 const { processToken, verifyToken, getUserIDFromToken } = require('./controllers/token');
-const { createConversation, getConversations, getConversation } = require('./controllers/conversation');
+const { createConversation, getConversations, getConversation, deleteOldConversations } = require('./controllers/conversation');
 
 
 // Check MongoDB connection
@@ -252,6 +252,10 @@ function unauthorised(res) {
   return res.status(401).render("errors/401");
 }
 
+//Delete old conversations
+deleteOldConversations();
+const interval = setInterval(deleteOldConversations, 3600000);
+
 // Routes
 app.use(express.static(__dirname + '/public')); // Public directory
 
@@ -263,7 +267,6 @@ app.get('/', function(req, res) {
     res.render('pages/auth');
   }
 });
-
 
 // Route handler for /conversations
 app.get("/conversations", verifyTokenMiddleware, async (req, res) => {
@@ -281,7 +284,7 @@ app.get("/conversations", verifyTokenMiddleware, async (req, res) => {
   }
 });
 
-// Route handler for /conversation/:conversationId
+// Route handler for getting a specific conversation
 app.get("/conversation/:conversationId", verifyTokenAndConversationMiddleware, async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
@@ -292,7 +295,7 @@ app.get("/conversation/:conversationId", verifyTokenAndConversationMiddleware, a
   }
 });
 
-// Route handler for /conversation/:conversationId
+// Route handler for getting just the messages related to a conversation
 app.get("/conversation/:conversationId/messages", verifyTokenAndConversationMiddleware, async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
@@ -310,7 +313,81 @@ app.get("/conversation/:conversationId/messages", verifyTokenAndConversationMidd
   }
 });
 
-// Route handler for /openai-completion/<conversationId>
+// Route to handle post of metadata for a conversation
+app.post("/conversation/:conversationId", verifyTokenAndConversationMiddleware, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+
+    // Find the conversation by its ID
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    // Iterate over each key-value pair in req.body and update the conversation
+    for (const key in req.body) {
+      if (Object.hasOwnProperty.call(req.body, key)) {
+        const value = req.body[key];
+        conversation[key] = value;
+      }
+    }
+
+    // Save the updated conversation
+    await conversation.save();
+
+    res.status(200).json({ message: 'Metadata updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Route to handle post of rating data, could be expended to handle other data, but currently has to match schema
+app.post("/conversation/:conversationId/messages/:messageId", verifyTokenAndConversationMiddleware, async (req, res) => {
+  try {
+    const { conversationId, messageId } = req.params;
+    const { rating } = req.body;
+
+    // Find the conversation by its ID
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    // Find the index of the message in the conversation's history array
+    const messageIndex = conversation.history.findIndex(message => message._id.toString() === messageId);
+    if (messageIndex === -1) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    // Update the rating object for the message
+    conversation.history[messageIndex].rating = rating;
+
+    // Save the updated conversation
+    await conversation.save();
+
+    res.status(200).json({ message: 'Rating updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Route handler for generic open AI Completion, no tracking
+app.post("/openai-completion", verifyTokenMiddleware, async (req, res) => {
+  try {
+    // Proceed to chat with OpenAI
+    const response = await openai.chat.completions.create({
+      ...req.body,
+    });
+    res.status(200).send(response.data || response);
+  } catch (error) {
+    console.error("Error in /openai-completion route:", error);
+    res.status(error.status || 500).json({ error: error.message });
+  }
+});
+
+// Route handler for /openai-completion/<conversationId> with tracking
 app.post("/openai-completion/:conversationId", verifyTokenAndConversationMiddleware, processMessagesMiddleware, async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
@@ -339,8 +416,6 @@ app.post("/openai-completion/:conversationId", verifyTokenAndConversationMiddlew
     const insertedMessage = conversation.history[conversation.history.length - 1];
     response.choices[0].message.id = insertedMessage._id;
 
-    console.log(JSON.stringify(response.choices[0].message));
-
     res.status(200).send(response.data || response);
   } catch (error) {
     console.error("Error in /openai-completion route:", error);
@@ -348,21 +423,7 @@ app.post("/openai-completion/:conversationId", verifyTokenAndConversationMiddlew
   }
 });
 
-
-
-app.post("/openai-completion", verifyTokenMiddleware, async (req, res) => {
-  try {
-    // Proceed to chat with OpenAI
-    const response = await openai.chat.completions.create({
-      ...req.body,
-    });
-    res.status(200).send(response.data || response);
-  } catch (error) {
-    console.error("Error in /openai-completion route:", error);
-    res.status(error.status || 500).json({ error: error.message });
-  }
-});
-
+// Create a new conversation and get an ID.
 app.post("/createConversation", verifyTokenMiddleware, async (req, res) => {
   try {
     // Extract the token from the request
@@ -384,7 +445,6 @@ app.post("/createConversation", verifyTokenMiddleware, async (req, res) => {
     res.status(error.status || 500).json({ error: error.message });
   }
 });
-
 
 app.get('/profile', ensureAuthenticated, function(req, res) {
   res.locals.pageTitle ="Profile page";
