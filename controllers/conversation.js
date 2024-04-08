@@ -55,14 +55,20 @@ async function deleteOldConversations() {
         'history.0': { $exists: false } // Conversations with an empty history
       });
 
-      // Delete the found conversations
-      const deletePromises = conversationsToDelete.map(conversation => conversation.remove());
-      await Promise.all(deletePromises);
+      // Iterate over each conversation document and delete it
+      // Iterate over each conversation and delete it
+      for (const conversation of conversationsToDelete) {
+        await Conversation.deleteOne({ _id: conversation._id });
+      }
 
       console.log(`Deleted ${conversationsToDelete.length} old conversations.`);
     } catch (error) {
       console.error('Error deleting old conversations:', error);
     }
 }
+
+//Delete old conversations
+deleteOldConversations();
+const interval = setInterval(deleteOldConversations, 3600000);
 
 module.exports = { createConversation, getConversations, getConversation, deleteOldConversations };

@@ -17,6 +17,11 @@ async function verifyToken(accessToken) {
       return false;
     }
 
+    // Update the expiration date to be 24 hours from now
+    const expirationDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+    tokenDoc.expiry = expirationDate;
+    await tokenDoc.save();
+
     // Token is valid
     return true;
   } catch (error) {
@@ -61,5 +66,32 @@ async function getUserIDFromToken(accessToken) {
     throw error; // Rethrow the error
   }
 }
+
+async function deleteOldTokens() {
+  console.log('finding old tokens');
+  try {
+    // Calculate the cutoff time (24 hours ago)
+    const cutoffTime = new Date(Date.now());
+
+    // Find conversations that meet the criteria
+    const tokensToDelete = await Token.find({
+      expiry: { $lt: cutoffTime } // Expired tokens
+    });
+
+    // Iterate over each conversation document and delete it
+    // Iterate over each conversation and delete it
+    for (const token of tokensToDelete) {
+      await Token.deleteOne({ _id: token._id });
+    }
+
+    console.log(`Deleted ${tokensToDelete.length} old tokens.`);
+  } catch (error) {
+    console.error('Error deleting old tokens:', error);
+  }
+}
+
+//Delete old tokens
+deleteOldTokens();
+const interval = setInterval(deleteOldTokens, 3600000);
 
 module.exports = { processToken , verifyToken, getUserIDFromToken };

@@ -14,7 +14,7 @@ const Conversation = require('./models/conversation'); // Import the Token model
 // Database controllers
 const { retrieveOrCreateUser } = require('./controllers/user');
 const { processToken, verifyToken, getUserIDFromToken } = require('./controllers/token');
-const { createConversation, getConversations, getConversation, deleteOldConversations } = require('./controllers/conversation');
+const { createConversation, getConversations, getConversation } = require('./controllers/conversation');
 
 
 // Check MongoDB connection
@@ -169,7 +169,7 @@ const verifyTokenMiddleware = async (req, res, next) => {
   }
 };
 
-const verifyTokenAndConversationMiddleware = async (req, res, next) => {
+const verifyConversationMiddleware = async (req, res, next) => {
   try {
     // Extract the token from the request header
     const token = req.headers['authorization'].split(' ')[1];
@@ -191,7 +191,7 @@ const verifyTokenAndConversationMiddleware = async (req, res, next) => {
     // If both token and conversation are verified, proceed to the next middleware or route handler
     next();
   } catch (error) {
-    console.error('Error in verifyTokenAndConversationMiddleware:', error);
+    console.error('Error in verifyConversationMiddleware:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -252,10 +252,6 @@ function unauthorised(res) {
   return res.status(401).render("errors/401");
 }
 
-//Delete old conversations
-deleteOldConversations();
-const interval = setInterval(deleteOldConversations, 3600000);
-
 // Routes
 app.use(express.static(__dirname + '/public')); // Public directory
 
@@ -285,7 +281,7 @@ app.get("/conversations", verifyTokenMiddleware, async (req, res) => {
 });
 
 // Route handler for getting a specific conversation
-app.get("/conversation/:conversationId", verifyTokenAndConversationMiddleware, async (req, res) => {
+app.get("/conversation/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
     const conversation = await getConversation(conversationId);
@@ -296,7 +292,7 @@ app.get("/conversation/:conversationId", verifyTokenAndConversationMiddleware, a
 });
 
 // Route handler for getting just the messages related to a conversation
-app.get("/conversation/:conversationId/messages", verifyTokenAndConversationMiddleware, async (req, res) => {
+app.get("/conversation/:conversationId/messages", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
     const conversation = await getConversation(conversationId);
@@ -314,7 +310,7 @@ app.get("/conversation/:conversationId/messages", verifyTokenAndConversationMidd
 });
 
 // Route to handle post of metadata for a conversation
-app.post("/conversation/:conversationId", verifyTokenAndConversationMiddleware, async (req, res) => {
+app.post("/conversation/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
   try {
     const { conversationId } = req.params;
 
@@ -343,7 +339,7 @@ app.post("/conversation/:conversationId", verifyTokenAndConversationMiddleware, 
 });
 
 // Route to handle post of rating data, could be expended to handle other data, but currently has to match schema
-app.post("/conversation/:conversationId/messages/:messageId", verifyTokenAndConversationMiddleware, async (req, res) => {
+app.post("/conversation/:conversationId/messages/:messageId", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
   try {
     const { conversationId, messageId } = req.params;
     const { rating } = req.body;
@@ -388,7 +384,7 @@ app.post("/openai-completion", verifyTokenMiddleware, async (req, res) => {
 });
 
 // Route handler for /openai-completion/<conversationId> with tracking
-app.post("/openai-completion/:conversationId", verifyTokenAndConversationMiddleware, processMessagesMiddleware, async (req, res) => {
+app.post("/openai-completion/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, processMessagesMiddleware, async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
 
