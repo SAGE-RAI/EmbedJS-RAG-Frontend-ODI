@@ -70,11 +70,19 @@ app.use(function(req, res, next) {
   // Check if accessToken exists in query parameters
   const accessToken = req.query.accessToken;
 
-  // Set accessToken in session cookie if it exists
-  if (accessToken) {
+  // Check if the user is authenticated and access token exists
+  if (req.isAuthenticated() && accessToken) {
+    // Get the authenticated user object
+    const user = req.user;
+
+    // Process the access token with user ID
+    processToken(accessToken, user._id);
+
+    // Store the access token in the session
     req.session.accessToken = accessToken;
   }
 
+  // Call the next middleware
   next();
 });
 
