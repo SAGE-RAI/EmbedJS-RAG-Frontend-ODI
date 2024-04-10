@@ -32,21 +32,26 @@ async function verifyToken(accessToken) {
 
 // Function to process the token
 async function processToken(accessToken,userId) {
-  if (!accessToken) {
-    return;
-  }
-  let token = await Token.findOne({ accessToken: accessToken });
-  if (!token) {
-    token = new Token({
-      accessToken: accessToken,
-      userId: userId,
-      expiry: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours expiry
-    });
-  } else {
-    token.expiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours expiry
-  }
+  try {
+    if (!accessToken) {
+      return;
+    }
+    let token = await Token.findOne({ accessToken: accessToken });
+    if (!token) {
+      token = new Token({
+        accessToken: accessToken,
+        userId: userId,
+        expiry: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours expiry
+      });
+    } else {
+      token.expiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours expiry
+    }
 
-  await token.save();
+    await token.save();
+  } catch (error) {
+    console.error('Error setting tokem:', error);
+    throw error; // Rethrow the error
+  }
 }
 
 async function getUserIDFromToken(accessToken) {

@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 
 // Create user schema and model
 const userSchema = new mongoose.Schema({
-    id: String,
     name: String,
     email: String,
     lastLogin: Date,
