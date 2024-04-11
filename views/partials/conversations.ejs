@@ -1,0 +1,61 @@
+<!-- partials/conversations.ejs -->
+
+<script>
+    // Fetch conversations from /conversations endpoint
+    fetch('/conversations', {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(conversations => {
+        try {
+            const conversationList = document.querySelector('#conversationList');
+            conversationList.innerHTML = ''; // Clear existing list
+            conversations.forEach(conversation => {
+                const conversationItem = document.createElement('li');
+                const conversationLink = document.createElement('a');
+                conversationLink.textContent = getTitle(conversation.history[0].message.content);
+                conversationLink.href = `/conversation/${conversation._id}`;
+                conversationLink.classList.add('conversation');
+                conversationItem.appendChild(conversationLink);
+                conversationList.appendChild(conversationItem);
+            });
+        } catch(err) {
+
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching conversations:', error);
+    });
+
+    function getTitle(text) {
+        const words = text.split(' '); // Split the text into words
+        let title = ''; // Initialize the title string
+
+        // Iterate through the words to find the nearest complete set of words that are at least 24 characters long
+        for (let i = 0; i < words.length; i++) {
+            title += words[i] + ' '; // Add the current word to the title
+
+            // Check if the title length is at least 24 characters
+            if (title.length >= 24) {
+                // If the title length is already at least 24 characters, return the title
+                return title.trim(); // Trim any extra whitespace
+            }
+        }
+
+        // If the loop completes without finding a title of at least 24 characters, return the entire text
+        return text;
+    }
+</script>
+
+<div class="conversations">
+    <ul class="new">
+        <li class="conversation" onclick="newConversation()">
+            New conversation
+        </li>
+    </ul>
+    <h2>Conversations</h2>
+    <ul id="conversationList">
+    </ul>
+</div>

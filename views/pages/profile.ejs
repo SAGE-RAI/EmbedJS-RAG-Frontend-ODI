@@ -1,21 +1,24 @@
 <!-- views/profile.ejs -->
 <%- include('../partials/header') %>
-  <div class="container">
-    <div class="jumbotron">
-      <h1 class="text-primary  text-center"><span class="fa fa-user"></span> Profile Information</h1>
-        <div class="row">
-          <div class="col-sm-6">
-            <div class="well">
-              <p>
-                <strong>Id</strong>: <%= user.id %><br>
-                <strong>Email</strong>: <%= user.email %><br>
-                <strong>Name</strong>: <%= user.name %><br>
-                <strong>Is Admin</strong>: <%= user.isAdmin %><br>
-                <strong>Last Login</strong>: <%= user.lastLoginFormatted %>
-              </p>
-              </div>
-          </div>
-      </div>
-     </div>
-  </div>
+<sidebar style="height: calc(100vh - 180px); position: relative;">
+  <nav style="position: absolute; bottom: 0px;">
+    <ul>
+      <li>
+              <form style="display: inline-flex;" id="logout_form" action="/logout" method="post">
+                  <a href="javascript:;" onclick="document.getElementById('logout_form').submit();">Logout</a>
+              </form>
+          </li>
+    </ul>
+  </nav>
+</sidebar>
+<div class="container">
+    <h1>Profile Information</h1>
+      <p>
+        <strong>Id</strong>: <%= user.id %><br>
+        <strong>Email</strong>: <%= user.email %><br>
+        <strong>Name</strong>: <%= user.name %><br>
+        <strong>Is Admin</strong>: <%= user.isAdmin %><br>
+        <strong>Last Login</strong>: <%= user.lastLoginFormatted %>
+      </p>
+</div>
 <%- include('../partials/footer') %>

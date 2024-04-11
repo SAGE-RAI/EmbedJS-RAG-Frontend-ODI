@@ -4,6 +4,9 @@ const Conversation = require('./models/conversation'); // Import the Token model
 
 // Define the middleware function for token verification
 const verifyTokenMiddleware = async (req, res, next) => {
+    if (req.isAuthenticated()) {
+      return next();
+    }
     // Check if the authorization header with bearer token exists
     const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -28,14 +31,17 @@ const verifyTokenMiddleware = async (req, res, next) => {
 
 const verifyConversationMiddleware = async (req, res, next) => {
   try {
-    // Extract the token from the request header
-    const token = req.headers['authorization'].split(' ')[1];
+    let userId = res.locals.user._id || null;
+    console.log(res.locals.user._id);
+    if (!req.isAuthenticated()) {
+      // Extract the token from the request header
+      const token = req.headers['authorization'].split(' ')[1];
+      // Get the user ID associated with the token
+      userId = await getUserIDFromToken(token);
+    }
 
     // Extract the conversation ID from the request params
     const conversationId = req.params.conversationId;
-
-    // Get the user ID associated with the token
-    const userId = await getUserIDFromToken(token);
 
     // Check if the conversation ID belongs to the user
     const conversation = await Conversation.findOne({ _id: conversationId, userId: userId });

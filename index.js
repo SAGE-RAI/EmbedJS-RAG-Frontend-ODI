@@ -12,7 +12,7 @@ const Conversation = require('./models/conversation'); // Import the Token model
 const { retrieveOrCreateUser } = require('./controllers/user');
 const { processToken, getUserIDFromToken } = require('./controllers/token');
 const { getConversations } = require('./controllers/conversation');
-const { verifyTokenMiddleware, verifyConversationMiddleware, processMessagesMiddleware } = require('./middleware'); // Import your middleware functions
+const { verifyTokenMiddleware } = require('./middleware'); // Import your middleware functions
 
 // Check MongoDB connection
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
@@ -37,10 +37,8 @@ const port = process.env.PORT || 3080;
 app.set('view engine', 'ejs');
 app.use(cors());
 
-// Open AI
-const OpenAI = require("openai");
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+// Routes
+app.use(express.static(__dirname + '/public')); // Public directory
 
 // Middleware for logging
 const logger = require('morgan');
@@ -117,21 +115,27 @@ function isAdmin(req) {
   return req.session.authMethod === 'google';
 }
 
-// Routes
-app.use(express.static(__dirname + '/public')); // Public directory
-
 app.get('/', function(req, res) {
   if (req.session.passport) {
     res.redirect("/profile");
   } else {
-    res.locals.pageTitle ="ODI Template (NodeJS + Express + OAuth)";
+    res.locals.pageTitle ="ODI AI Assistant";
     res.render('pages/auth');
   }
 });
 
 app.get('/profile', ensureAuthenticated, function(req, res) {
-  res.locals.pageTitle ="Profile page";
+  res.locals.pageTitle ="Profile";
   res.render('pages/profile');
+});
+
+app.get('/about', function(req, res) {
+  res.locals.pageTitle ="About";
+  res.render('pages/about');
+});
+
+app.get('/admin', function(req, res) {
+  res.redirect('/auth/google');
 });
 
 // Logout route
@@ -154,9 +158,13 @@ app.use('/openai-completion', completionRoutes);
 // Route handler for /conversations
 app.get("/conversations", verifyTokenMiddleware, async (req, res) => {
   try {
-    const token = req.headers['authorization'].split(' ')[1];
-    // Get the user ID associated with the token
-    const userId = await getUserIDFromToken(token);
+    let userId = res.locals.user._id || null;
+    if (!req.isAuthenticated()) {
+      // Extract the token from the request header
+      const token = req.headers['authorization'].split(' ')[1];
+      // Get the user ID associated with the token
+      userId = await getUserIDFromToken(token);
+    }
 
     const contentObjectId = req.query.contentObjectId;
 

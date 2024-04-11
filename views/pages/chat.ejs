@@ -1,0 +1,25 @@
+<%- include('../partials/header') %>
+<script src="/js/chat.js"></script>
+<link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css">
+<sidebar>
+<%- include('../partials/conversations') %>
+<nav>
+	<ul>
+		<li>
+            <form style="display: inline-flex;" id="logout_form" action="/logout" method="post">
+                <a href="javascript:;" onclick="document.getElementById('logout_form').submit();">Logout</a>
+            </form>
+        </li>
+	</ul>
+</nav>
+</sidebar>
+<form class="aichat" onsubmit="handleFormSubmit(event)">
+    <%- include('../partials/conversation', { conversation: conversation, renderMarkdown: renderMarkdown }) %>
+    <div class="bottom">
+        <div id="input">
+            <input ref="inputRef" type="text" id="txt" placeholder="Send a message" name="msg">
+            <button type="submit" class="uil uil-message"></button>
+        </div>
+    </div>
+</form>
+<%- include('../partials/blankFooter') %>

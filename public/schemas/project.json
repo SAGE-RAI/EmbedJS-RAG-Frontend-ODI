@@ -1,0 +1,92 @@
+{
+  "schema": {
+    "_id": {
+      "type": "hidden"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 128,
+      "title": "Name (required)",
+      "required": true
+    },
+    "objectives": {
+      "type": "textarea",
+      "title": "Objectives"
+    },
+    "dataUsed": {
+      "type": "textarea",
+      "title": "Data used"
+    },
+    "stakeholders": {
+        "type": "array",
+        "title": "Stakeholders",
+        "items": {
+          "type": "object",
+          "title": "Stakeholder",
+          "properties": {
+            "stakeholder": {
+                "type": "string",
+                "title": "Stakeholder"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["", "Internal", "External"],
+              "title": "Type",
+              "placeholder": "internal/external"
+            }
+          }
+        }
+    }
+  },
+  "form": [
+    {
+      "key": "title",
+      "prepend": "<h2>Project Title:</h2>",
+      "notitle": true,
+      "htmlClass": "content-block light-blue",
+      "fieldHtmlClass": "inputText",
+      "placeholder": "Project title"
+    },
+    {
+      "key": "objectives",
+      "prepend": "<h2>Project Overview:</h2><br/><div class='infobox' style='background-color: rgba(255,237,213,0.4);'><p>Please provide a detailed description of your data project including its general goals and overall purpose. You may wish to include details on the following:</p><ol><li>Explain how data will be used, processed, stored, and protected throughout the project.</li><li>Provide an estimated project timeline, including key milestones, and important deadlines.</li><li>Mention any relevant data privacy regulations, industry standards, or compliance requirements that the project must adhere to.</li><li>Explain how risks will be monitored throughout the project and the process for reporting and addressing them as they occur.</li></ol><p>Please be as specific as possible. If you choose to use the Assistant AI then the information you provide here will help identify potential risks and generate potential actions for your data project.</p></div><br/>",
+      "notitle": true,
+      "placeholder": "Enter objectives...",
+      "htmlClass": "content-block white",
+      "fieldHtmlClass": "inputText"
+    },
+    {
+      "key": "dataUsed",
+      "prepend": "<h2>What data will you be using?</h2><div class='infobox'><p>Provide details on the data that is being utilised within the project. You may wish to include details on the following:</p><ul><li>What type of data is being used? (e.g., customer info, sales data, etc.)</li><li>Where you get the data from? (sources and providers)</li><li>How the data looks? (format, quality)</li><li>How much data there is? (volume)</li><li>Whether there is any sensitive or private information in the data?</li><li>How you keep the data secure?</li><li>Who has access to the data? (team members, external parties)</li><li>Any legal or compliance rules you follow?</li><li>How long you keep the data and how you get rid of it when done?</li></ul></div><br/>",
+      "notitle": true,
+      "placeholder": "Description of data",
+      "htmlClass": "content-block light-blue",
+      "fieldHtmlClass": "inputText"
+    },
+    {
+      "key": "stakeholders",
+      "prepend": "<h2>Who are the stakeholders?</h2><div class='infobox'><p>Please list the names or titles of individuals, teams, or organisations that are involved in your data project. Include anyone who may be affected by or can affect the project's outcome.</p><p>For each stakeholder, indicate whether they are an \"internal\" stakeholder (part of your organisation or project team) or an \"external\" stakeholder (outside the organisation or project team).</p></div><br/>",
+      "notitle": true,
+      "htmlClass": "content-block yellow stakeholders",
+      "type": "array",
+      "items": {
+        "type": "section",
+        "items": [
+          {
+            "key": "stakeholders[].stakeholder",
+            "fieldHtmlClass": "inputText",
+            "placeholder": "Enter a stakeholder here",
+            "prepend": "<h3>Stakeholder</h3>",
+            "notitle": true
+          },
+          {
+            "key": "stakeholders[].type",
+            "fieldHtmlClass": "inputSelect",
+            "placeholder": "internal/external",
+            "notitle": true
+          }
+        ]
+      }
+    }
+  ]
+}

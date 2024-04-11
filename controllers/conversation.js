@@ -12,18 +12,17 @@ async function createConversation(userId, contentObject, course, skillsFramework
 
     await conversation.save();
 
-    console.log(conversation._id);
-
     return conversation._id;
 }
 
 // Function to fetch conversations by contentObject ID
-async function getConversations(contentObjectId,userId) {
+async function getConversations(contentObjectId, userId) {
     try {
-        const conversations = await Conversation.find({
-            'contentObject.id': contentObjectId,
-            'userId': new mongoose.Types.ObjectId(userId)
-        });
+        let query = { 'userId': new mongoose.Types.ObjectId(userId) };
+        if (contentObjectId) {
+            query['contentObject.id'] = contentObjectId;
+        }
+        const conversations = await Conversation.find(query);
         return conversations;
     } catch (error) {
         throw new Error('Error fetching conversations: ' + error.message);
@@ -32,7 +31,6 @@ async function getConversations(contentObjectId,userId) {
 
 // Function to fetch conversations by contentObject ID
 async function getConversation(conversationId) {
-    console.log(conversationId);
     try {
         const conversation = await Conversation.findOne({
             '_id': new mongoose.Types.ObjectId(conversationId)
