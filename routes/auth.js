@@ -23,10 +23,6 @@ async function processLogin(req,res) {
       // Save the user
       await user.save();
 
-      const id = await createConversation(user._id, {}, {}, {});
-
-      return id;
-
     } catch (error) {
       console.log(error);
     }
@@ -48,8 +44,8 @@ router.get('/google/callback',
   async (req, res) => {
     req.session.authMethod = 'google';
     // Successful authentication, redirect to profile page or wherever needed
-    const id = await processLogin(req);
-    res.redirect('/conversation/' + id);
+    await processLogin(req);
+    res.redirect('/admin/');
   }
 );
 
@@ -59,8 +55,8 @@ router.get('/django/callback',
   async (req, res) => {
     req.session.authMethod = 'django';
     // Successful authentication, redirect to profile page or wherever needed
-    const id = await processLogin(req);
-    res.redirect('/conversation/' + id);
+    await processLogin(req);
+    res.redirect('/conversation/');
   }
 );
 

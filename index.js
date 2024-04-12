@@ -28,6 +28,7 @@ const passport = require('./passport'); // Require the passport module
 
 //Routes import
 const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
 const conversationRoutes = require('./routes/conversation');
 const completionRoutes = require('./routes/completion');
 
@@ -134,10 +135,6 @@ app.get('/about', function(req, res) {
   res.render('pages/about');
 });
 
-app.get('/admin', function(req, res) {
-  res.redirect('/auth/google');
-});
-
 // Logout route
 app.post('/logout', function(req, res, next){
   req.logout(function(err) {
@@ -148,6 +145,9 @@ app.post('/logout', function(req, res, next){
 
 // Use authentication routes
 app.use('/auth', authRoutes);
+
+// Use authentication routes
+app.use('/admin', adminRoutes);
 
 // Use authentication routes
 app.use('/conversation', conversationRoutes);
