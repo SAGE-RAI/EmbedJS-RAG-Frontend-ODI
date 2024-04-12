@@ -1,9 +1,5 @@
 <div class="msgs_cont" id="msgs_cont">
     <ul class="list_cont">
-        <% conversation.history.forEach((message, index) => { %>
-            <li key="<%= index %>" id="<%= message.id %>" class="<%= message.message.role %>">
-            </li>
-            <script>renderMarkdown(`<%- message.message.content %>`, '<%= message.id %>');</script>
-        <% }); %>
     </ul>
 </div>
+<script>loadConversation(`<%- conversation.id %>`);</script>

@@ -1,33 +1,99 @@
 <!-- partials/conversations.ejs -->
 
 <script>
-    // Fetch conversations from /conversations endpoint
-    fetch('/conversations', {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(conversations => {
-        try {
-            const conversationList = document.querySelector('#conversationList');
-            conversationList.innerHTML = ''; // Clear existing list
-            conversations.forEach(conversation => {
-                const conversationItem = document.createElement('li');
-                const conversationLink = document.createElement('a');
-                conversationLink.textContent = getTitle(conversation.history[0].message.content);
-                conversationLink.href = `/conversation/${conversation._id}`;
-                conversationLink.classList.add('conversation');
-                conversationItem.appendChild(conversationLink);
-                conversationList.appendChild(conversationItem);
-            });
-        } catch(err) {
+    function updateConversations() {
+        fetch('/conversations', {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(conversations => {
+            try {
+                const conversationsContainer = document.querySelector('.conversations');
+                conversationsContainer.innerHTML = `<a href="javascript:loadConversation('')">New conversation</a>`;
 
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching conversations:', error);
-    });
+                // Group conversations by date categories
+                const categorizedConversations = categorizeConversations(conversations);
+
+                // Iterate over categorized conversations and render them
+                Object.keys(categorizedConversations).forEach(category => {
+                    // Create a new div for each category
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.classList.add('category');
+
+                    // Add a header for the category
+                    const categoryHeader = document.createElement('h3');
+                    categoryHeader.textContent = category;
+                    categoryDiv.appendChild(categoryHeader);
+
+                    // Create a list for the current category
+                    const categoryList = document.createElement('ul');
+                    categoryList.classList.add('category-list');
+
+                    // Render conversations under each category
+                    categorizedConversations[category].forEach(conversation => {
+                        const conversationItem = document.createElement('li');
+                        const conversationLink = document.createElement('a');
+                        conversationLink.textContent = getTitle(conversation.history[0].message.content);
+                        conversationLink.href = `javascript:loadConversation('${conversation._id}')`; // Call loadConversation with conversationId
+                        conversationLink.classList.add('conversation');
+                        conversationItem.appendChild(conversationLink);
+                        categoryList.appendChild(conversationItem); // Add conversation to the list
+                    });
+
+                    // Append the category list to the category div
+                    categoryDiv.appendChild(categoryList);
+
+                    // Append the category div to the conversations container
+                    conversationsContainer.appendChild(categoryDiv);
+                });
+            } catch(err) {
+                console.error('Error updating conversations:', err);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching conversations:', error);
+        });
+    }
+
+    // Function to categorize conversations based on the date of the last message
+    function categorizeConversations(conversations) {
+        const categorized = {
+            Today: [],
+            Yesterday: [],
+            'Previous 7 days': [],
+            'Previous 30 days': [],
+            Months: {}
+        };
+
+        // Iterate over conversations and categorize them
+        conversations.forEach(conversation => {
+            const lastMessageDate = new Date(conversation.history[conversation.history.length - 1].timestamp);
+            console.log(lastMessageDate);
+            const currentDate = new Date();
+            const timeDiff = currentDate.getTime() - lastMessageDate.getTime();
+            const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+            if (daysDiff === 1) {
+                categorized.Today.push(conversation);
+            } else if (daysDiff === 2) {
+                categorized.Yesterday.push(conversation);
+            } else if (daysDiff <= 8) {
+                categorized['Previous 7 days'].push(conversation);
+            } else if (daysDiff <= 31) {
+                categorized['Previous 30 days'].push(conversation);
+            } else {
+                const monthYear = lastMessageDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+                if (!categorized.Months[monthYear]) {
+                    categorized.Months[monthYear] = [];
+                }
+                categorized.Months[monthYear].push(conversation);
+            }
+        });
+
+        return categorized;
+    }
 
     function getTitle(text) {
         const words = text.split(' '); // Split the text into words
@@ -47,15 +113,20 @@
         // If the loop completes without finding a title of at least 24 characters, return the entire text
         return text;
     }
+
+    // Call the initial updateConversations to populate the conversations
+    updateConversations();
+
+    // Set up polling interval to update conversations every 5 seconds
+    setInterval(updateConversations, 5000);
+
 </script>
 
 <div class="conversations">
     <ul class="new">
-        <li class="conversation" onclick="newConversation()">
-            New conversation
+        <li class="conversation">
+            <a href="javascript:loadConversation('')">New conversation</a>
         </li>
     </ul>
     <h2>Conversations</h2>
-    <ul id="conversationList">
-    </ul>
 </div>

@@ -13,10 +13,11 @@
 	</ul>
 </nav>
 </sidebar>
-<form class="aichat" onsubmit="handleFormSubmit(event)">
-    <%- include('../partials/conversation', { conversation: conversation, renderMarkdown: renderMarkdown }) %>
+<form class="aichat" onsubmit="handleSubmit(event)">
+    <%- include('../partials/conversation', { conversation: conversation }) %>
     <div class="bottom">
         <div id="input">
+            <input type="hidden" id="conversationId" value="<%- conversation.id %>"></input>
             <input ref="inputRef" type="text" id="txt" placeholder="Send a message" name="msg">
             <button type="submit" class="uil uil-message"></button>
         </div>

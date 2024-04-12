@@ -4,7 +4,7 @@ const { verifyTokenMiddleware, verifyConversationMiddleware } = require('../midd
 const Conversation = require('../models/conversation'); // Import the Token model
 
 // Import necessary functions from controllers
-const { getConversation, createConversation } = require('../controllers/conversation');
+const { getConversation, createConversation, getMessages } = require('../controllers/conversation');
 const { getUserIDFromToken } = require('../controllers/token');
 
 // Create a new conversation and get an ID.
@@ -31,7 +31,14 @@ router.post("/create", verifyTokenMiddleware, async (req, res) => {
         console.error("Error in /conversation/create route:", error);
         res.status(error.status || 500).json({ error: error.message });
     }
-    });
+});
+
+// Generic route
+router.get("/", verifyTokenMiddleware, async (req, res) => {
+    const conversation = {};
+    res.locals.pageTitle = "Chat";
+    res.render('pages/chat', { conversation });
+});
 
 // Route handler for getting a specific conversation
 router.get("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
@@ -42,9 +49,8 @@ router.get("/:conversationId", verifyTokenMiddleware, verifyConversationMiddlewa
         // Check if the request accepts JSON
         if (req.accepts('html')) {
             // Serve page with conversation data
-            console.log(JSON.stringify(conversation));
             res.locals.pageTitle = "Chat";
-            res.render('pages/chat', { conversation, renderMarkdown });
+            res.render('pages/chat', { conversation });
         } else {
             // Serve JSON response
             res.json(conversation);
@@ -56,6 +62,7 @@ router.get("/:conversationId", verifyTokenMiddleware, verifyConversationMiddlewa
 
 
 // Route to handle post of metadata for a conversation
+// Need to update this handle message posting, get the conversation, append the message, trim it so we don't send too many tokens and return the response.
 router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
     try {
         const { conversationId } = req.params;
@@ -88,14 +95,7 @@ router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddlew
 router.get("/:conversationId/messages", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
 try {
     const conversationId = req.params.conversationId;
-    const conversation = await getConversation(conversationId);
-    // Extracting messages with role and content
-    const messages = conversation.history.map(entry => {
-    return {
-        role: entry.message.role,
-        content: entry.message.content
-    };
-    });
+    const messages = await getMessages(conversationId);
     res.json(messages);
 } catch (error) {
     res.status(500).json({ error: error.message });
@@ -132,22 +132,5 @@ try {
     res.status(500).json({ error: 'Internal server error' });
 }
 });
-
-async function renderMarkdown(markdown) {
-    try {
-        // Dynamically import the necessary libraries
-        const React = require('react');
-        const ReactDOMServer = require('react-dom/server');
-        const { default: ReactMarkdown } = await import('react-markdown');
-
-        // Render the Markdown content as HTML using ReactMarkdown
-        const html = ReactDOMServer.renderToString(React.createElement(ReactMarkdown, { children: markdown }));
-        console.log(html);
-        return html;
-    } catch (error) {
-        console.error('Error rendering Markdown:', error);
-        throw error;
-    }
-}
 
 module.exports = router;

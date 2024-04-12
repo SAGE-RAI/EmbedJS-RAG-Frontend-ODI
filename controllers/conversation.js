@@ -25,8 +25,6 @@ async function createConversation(userId, contentObject, course, skillsFramework
     return conversation._id;
 }
 
-
-// Function to fetch conversations by contentObject ID
 async function getConversations(contentObjectId, userId) {
     try {
         let query = { 'userId': new mongoose.Types.ObjectId(userId) };
@@ -34,7 +32,13 @@ async function getConversations(contentObjectId, userId) {
             query['contentObject.id'] = contentObjectId;
         }
         const conversations = await Conversation.find(query);
-        return conversations;
+
+        // Filter out conversations with empty or undefined history
+        const filteredConversations = conversations.filter(conversation => {
+            return conversation.history && conversation.history.length > 0;
+        });
+
+        return filteredConversations;
     } catch (error) {
         throw new Error('Error fetching conversations: ' + error.message);
     }
@@ -49,6 +53,21 @@ async function getConversation(conversationId) {
         return conversation;
     } catch (error) {
         throw new Error('Error fetching conversation: ' + error.message);
+    }
+}
+
+// Function to fetch messages from conversation history by conversation ID
+async function getMessages(conversationId) {
+    try {
+        const conversation = await Conversation.findOne({
+            '_id': new mongoose.Types.ObjectId(conversationId)
+        });
+        if (!conversation) {
+            throw new Error('Conversation not found.');
+        }
+        return conversation.history.map(entry => entry.message);
+    } catch (error) {
+        throw new Error('Error fetching messages: ' + error.message);
     }
 }
 
@@ -80,4 +99,4 @@ async function deleteOldConversations() {
 deleteOldConversations();
 const interval = setInterval(deleteOldConversations, 3600000);
 
-module.exports = { createConversation, getConversations, getConversation, deleteOldConversations };
+module.exports = { createConversation, getConversations, getConversation, getMessages, deleteOldConversations };

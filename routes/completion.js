@@ -23,39 +23,63 @@ router.post("/", verifyTokenMiddleware, async (req, res) => {
 });
 
 // Route handler for /openai-completion/<conversationId> with tracking
-router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, processMessagesMiddleware, async (req, res) => {
-    try {
-        const conversationId = req.params.conversationId;
+// Change this to take in a single message, get the history from the locally stored and then chat with OpenAI
+router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
+  try {
+      const conversationId = req.params.conversationId;
+      const { role, content } = req.body;
 
-        // Extract block from req.body and remove it
-        const { currentBlock, ...body } = req.body;
+      // Validate the incoming message from the user
+      if (!role || role !== 'user' || !content) {
+          return res.status(400).json({ error: 'Invalid message format. Must include role "user" and content.' });
+      }
 
-        // Proceed to chat with OpenAI
-        const response = await openai.chat.completions.create({
-        ...body,
-        });
+      // Get the conversation from the database
+      const conversation = await Conversation.findById(conversationId);
 
-        // Update the conversation object with the response in the history
-        const conversation = await Conversation.findById(conversationId);
+      if (!conversation) {
+          return res.status(404).json({ error: 'Conversation not found' });
+      }
 
-        if (!conversation) {
-        return res.status(404).json({ error: 'Conversation not found' });
-        }
+      // Add the user's message to the conversation history
+      const newMessage = {
+          message: {
+              role: role,
+              content: content
+          }
+      };
+      conversation.history.push(newMessage);
 
-        // Add the OpenAI response as a new message in the conversation history
-        const newMessage = { message: response.choices[0].message };
-        conversation.history.push(newMessage);
-        await conversation.save();
+      // Call OpenAI to get the response
+      const response = await openai.chat.completions.create({
+          model: req.body.model || 'gpt-3.5-turbo',
+          messages: conversation.history.map(entry => entry.message),
+          temperature: req.body.temperature || 0.7,
+          max_tokens: req.body.max_tokens || 800,
+          top_p: req.body.top_p || 1,
+          frequency_penalty: req.body.frequency_penalty || 0,
+          presence_penalty: req.body.presence_penalty || 0,
+          stop: req.body.stop_tokens || null
+      });
 
-        // Update the OpenAI response to include the newly inserted message's _id
-        const insertedMessage = conversation.history[conversation.history.length - 1];
-        response.choices[0].message.id = insertedMessage._id;
+      // Add OpenAI response to the conversation history
+      const openaiResponse = response.choices[0].message;
+      conversation.history.push({ message: openaiResponse });
 
-        res.status(200).send(response.data || response);
-    } catch (error) {
-        console.error("Error in /openai-completion route:", error);
-        res.status(error.status || 500).json({ error: error.message });
-    }
+      // Save the updated conversation to the database
+      await conversation.save();
+
+      // Update the OpenAI response to include the newly inserted message's _id
+      const insertedMessage = conversation.history[conversation.history.length - 1];
+      openaiResponse.id = insertedMessage._id;
+
+      // Return the response to the user
+      res.status(200).json(openaiResponse);
+  } catch (error) {
+      console.error("Error in /openai-completion route:", error);
+      res.status(error.status || 500).json({ error: error.message });
+  }
 });
+
 
 module.exports = router;
