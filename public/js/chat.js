@@ -92,3 +92,18 @@ function renderMessage(message) {
     // Make sure renderMarkdownWordByWord is defined in the global scope
     renderMarkdownWordByWord(message.content, messageId);
 }
+
+function newConversation() {
+    // Make a POST request to /conversation/create
+    fetch('/conversation/create', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Redirect the user to /conversation/:id
+        window.location.href = '/conversation/' + data.id;
+    })
+    .catch(error => {
+        console.error('Error creating conversation:', error);
+    });
+}

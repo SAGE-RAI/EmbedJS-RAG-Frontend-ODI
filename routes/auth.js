@@ -5,6 +5,7 @@ const passport = require('../passport'); // Require the passport module
 
 const { retrieveOrCreateUser } = require('../controllers/user'); // Import necessary functions from controllers
 const { processToken } = require('../controllers/token'); // Import necessary functions from controllers
+const { createConversation } = require('../controllers/conversation');
 
 const router = express.Router();
 
@@ -21,6 +22,11 @@ async function processLogin(req,res) {
 
       // Save the user
       await user.save();
+
+      const id = await createConversation(user._id, {}, {}, {});
+
+      return id;
+
     } catch (error) {
       console.log(error);
     }
@@ -42,8 +48,8 @@ router.get('/google/callback',
   async (req, res) => {
     req.session.authMethod = 'google';
     // Successful authentication, redirect to profile page or wherever needed
-    await processLogin(req);
-    res.redirect('/profile');
+    const id = await processLogin(req);
+    res.redirect('/conversation/' + id);
   }
 );
 
@@ -53,8 +59,8 @@ router.get('/django/callback',
   async (req, res) => {
     req.session.authMethod = 'django';
     // Successful authentication, redirect to profile page or wherever needed
-    await processLogin(req);
-    res.redirect('/profile');
+    const id = await processLogin(req);
+    res.redirect('/conversation/' + id);
   }
 );
 

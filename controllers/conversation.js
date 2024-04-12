@@ -2,18 +2,29 @@ const mongoose = require('mongoose');
 const Conversation = require('../models/conversation'); // Import the Conversation model
 
 async function createConversation(userId, contentObject, course, skillsFramework) {
-    const conversation = new Conversation({
-        userId: userId,
-        creationDate: new Date(Date.now()),
-        contentObject: contentObject,
-        course: course,
-        _skillsFramework: skillsFramework
-    });
+    const conversationData = {
+        userId: userId
+    };
+
+    if (contentObject !== undefined && contentObject !== null) {
+        conversationData.contentObject = contentObject;
+    }
+
+    if (course !== undefined && course !== null) {
+        conversationData.course = course;
+    }
+
+    if (skillsFramework !== undefined && skillsFramework !== null) {
+        conversationData._skillsFramework = skillsFramework;
+    }
+
+    const conversation = new Conversation(conversationData);
 
     await conversation.save();
 
     return conversation._id;
 }
+
 
 // Function to fetch conversations by contentObject ID
 async function getConversations(contentObjectId, userId) {

@@ -10,7 +10,7 @@ const conversationSchema = new mongoose.Schema({
   },
   creationDate: {
     type: Date,
-    required: true
+    default: Date.now
   },
   course: {
     id: {

@@ -31,13 +31,14 @@ const verifyTokenMiddleware = async (req, res, next) => {
 
 const verifyConversationMiddleware = async (req, res, next) => {
   try {
-    let userId = res.locals.user._id || null;
-    console.log(res.locals.user._id);
+    let userId = "";
     if (!req.isAuthenticated()) {
       // Extract the token from the request header
       const token = req.headers['authorization'].split(' ')[1];
       // Get the user ID associated with the token
       userId = await getUserIDFromToken(token);
+    } else {
+      userId = res.locals.user._id;
     }
 
     // Extract the conversation ID from the request params

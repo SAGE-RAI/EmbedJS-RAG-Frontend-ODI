@@ -158,12 +158,14 @@ app.use('/openai-completion', completionRoutes);
 // Route handler for /conversations
 app.get("/conversations", verifyTokenMiddleware, async (req, res) => {
   try {
-    let userId = res.locals.user._id || null;
+    let userId = "";
     if (!req.isAuthenticated()) {
       // Extract the token from the request header
       const token = req.headers['authorization'].split(' ')[1];
       // Get the user ID associated with the token
       userId = await getUserIDFromToken(token);
+    } else {
+      userId = res.locals.user._id;
     }
 
     const contentObjectId = req.query.contentObjectId;

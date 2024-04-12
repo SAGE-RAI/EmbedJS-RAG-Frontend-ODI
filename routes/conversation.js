@@ -10,12 +10,15 @@ const { getUserIDFromToken } = require('../controllers/token');
 // Create a new conversation and get an ID.
 router.post("/create", verifyTokenMiddleware, async (req, res) => {
     try {
-        // Extract the token from the request
-        const token = req.headers['authorization'].split(' ')[1];
-
-        // Call getUserIDFromToken(token) to get userId
-        const userId = await getUserIDFromToken(token);
-
+        let userId = "";
+        if (!req.isAuthenticated()) {
+            // Extract the token from the request header
+            const token = req.headers['authorization'].split(' ')[1];
+            // Get the user ID associated with the token
+            userId = await getUserIDFromToken(token);
+        } else {
+            userId = res.locals.user._id;
+        }
         // Extract contentObject, course, and skillsFramework from the request body
         const { contentObject, course, _skillsFramework } = req.body;
 
@@ -25,7 +28,7 @@ router.post("/create", verifyTokenMiddleware, async (req, res) => {
         // Return the conversationId in the response
         res.status(200).json({ id });
     } catch (error) {
-        console.error("Error in /createConversation route:", error);
+        console.error("Error in /conversation/create route:", error);
         res.status(error.status || 500).json({ error: error.message });
     }
     });
