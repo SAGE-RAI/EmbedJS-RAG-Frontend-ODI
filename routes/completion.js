@@ -71,10 +71,9 @@ router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddlew
 
       // Update the OpenAI response to include the newly inserted message's _id
       const insertedMessage = conversation.history[conversation.history.length - 1];
-      openaiResponse.id = insertedMessage._id;
 
       // Return the response to the user
-      res.status(200).json(openaiResponse);
+      res.status(200).json(insertedMessage);
   } catch (error) {
       console.error("Error in /openai-completion route:", error);
       res.status(error.status || 500).json({ error: error.message });

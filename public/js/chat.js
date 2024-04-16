@@ -1,25 +1,40 @@
 // Function to render Markdown content using React
-async function renderMarkdown(markdown, container) {
+// Function to render Markdown content using React
+async function renderMarkdown(markdown, container, callback) {
     const React = window.React;
     const ReactDOM = window.ReactDOM;
     const ReactMarkdown = window.ReactMarkdown;
+    const { useEffect, useState } = React;
 
     if (!window.React || !window.ReactDOM || !ReactMarkdown) {
         console.error('React, ReactDOM, or ReactMarkdown is not loaded.');
         return;
     }
 
+    // Define a functional component for rendering Markdown
+    const MarkdownComponent = ({ markdown }) => {
+        useEffect(() => {
+            // Call the callback function if it's provided
+            if (callback && typeof callback === 'function') {
+                callback();
+            }
+            // Scroll to bottom after rendering
+            setTimeout(() => scrollToBottom('msgs_cont'), 100);
+        }, []); // Empty dependency array to ensure the effect runs only once after initial render
+
+        return React.createElement(ReactMarkdown, null, markdown);
+    };
+
     // Create a root to render the Markdown content
     const root = ReactDOM.createRoot(container);
 
     // Render the Markdown component
     root.render(
-        React.createElement(ReactMarkdown, null, markdown)
+        React.createElement(MarkdownComponent, { markdown })
     );
-    setTimeout(() => scrollToBottom('msgs_cont'), 100);
 }
 
-async function renderMarkdownWordByWord(markdown, container) {
+function renderMarkdownWordByWord(markdown, container, callback) {
     const React = window.React;
     const ReactDOM = window.ReactDOM;
     const ReactMarkdown = window.ReactMarkdown;
@@ -38,7 +53,13 @@ async function renderMarkdownWordByWord(markdown, container) {
 
     // Function to incrementally update the content, preserving Markdown
     const updateContent = () => {
-        if (currentIndex >= tokens.length) return;
+        if (currentIndex >= tokens.length) {
+            // Call the callback function if it's provided
+            if (callback && typeof callback === 'function') {
+                callback();
+            }
+            return;
+        }
 
         // Construct the current content slice with proper Markdown
         const currentContent = tokens.slice(0, currentIndex + 1).join('');
@@ -83,11 +104,16 @@ function renderMessage(message, existingElement = null) {
 
     // Call renderMarkdownWordByWord or renderMarkdown to render the message inside the new element
     // Make sure renderMarkdownWordByWord or renderMarkdown is defined in the global scope
-    if (message.role === "assistant") {
-        renderMarkdownWordByWord(message.message.content, element);
-        renderRating(message.rating, element);
+    if (message.message.role === "assistant") {
+        renderMarkdownWordByWord(message.message.content, element, () => {
+            renderRating(message.rating, element);
+        });
     } else {
-        renderMarkdown(message.message.content, element);
+        renderMarkdown(message.message.content, element, () => {
+            if (message.message.role === "assistant") {
+                renderRating(message.rating, element);
+            }
+        });
     }
 }
 
@@ -116,15 +142,15 @@ async function loadConversation(conversationId) {
             element.id = messageId;
             element.className = message.message.role; // Assuming 'role' is part of the message object for styling purposes
             listCont.appendChild(element);
-            renderMarkdown(message.message.content, element);
-            if (message.message.role === "assistant") {
-                setTimeout(() => {
+            renderMarkdown(message.message.content, element, () => {
+                if (message.message.role === "assistant") {
                     renderRating(message.rating, element);
-                }, 800); // 1000 milliseconds = 1 second
-            }
+                }
+            });
         });
-         // Update the address bar with the conversation ID
-         window.history.pushState({}, '', '/conversation/' + conversationId);
+        document.getElementById('conversationId').value = conversationId;
+        // Update the address bar with the conversation ID
+        window.history.pushState({}, '', '/conversation/' + conversationId);
     } catch (error) {
         console.error('Error loading conversation:', error);
         // Handle error (e.g., show error message)
@@ -168,7 +194,6 @@ function renderRating(rating, element) {
             starsContainer.appendChild(star);
         }
     }
-
     ratingContainer.appendChild(starsContainer);
     element.appendChild(ratingContainer);
     scrollToBottom('msgs_cont');
@@ -281,7 +306,9 @@ async function handleSubmit(event) {
 }
 
 async function sendMessage(conversationId, message) {
-    renderMessage(message);
+    let newMessage = {};
+    newMessage.message = message;
+    renderMessage(newMessage);
     const messageInput = document.getElementById('txt');
     const responseLi = createResponseNode();
     messageInput.value = ''; // Clear the input field

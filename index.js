@@ -111,11 +111,6 @@ function unauthorised(res) {
   return res.status(401).render("errors/401");
 }
 
-function isAdmin(req) {
-  // Check if authMethod session variable is set to 'google'
-  return req.session.authMethod === 'google';
-}
-
 app.get('/', function(req, res) {
   if (req.session.passport) {
     res.redirect("/profile");
