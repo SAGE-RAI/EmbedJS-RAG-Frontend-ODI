@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { verifyTokenMiddleware, verifyConversationMiddleware, processMessagesMiddleware } = require('../middleware'); // Import your middleware functions
-const Conversation = require('../models/conversation'); // Import the Token model
+const Conversation = require('../models/conversation'); // Import the conversation model
 
 // Open AI
 const OpenAI = require("openai");

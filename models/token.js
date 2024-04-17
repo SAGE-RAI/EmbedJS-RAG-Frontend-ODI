@@ -17,6 +17,8 @@ const tokenSchema = new mongoose.Schema({
     type: Date,
     required: true
   }
+}, {
+  collection: 'Tokens' // Specify the collection name
 });
 
 const Token = mongoose.model('Token', tokenSchema);

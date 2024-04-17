@@ -73,6 +73,8 @@ const conversationSchema = new mongoose.Schema({
       }
     }
   }]
+}, {
+  collection: 'Conversations' // Specify the collection name
 });
 
 const Conversation = mongoose.model('Conversation', conversationSchema);

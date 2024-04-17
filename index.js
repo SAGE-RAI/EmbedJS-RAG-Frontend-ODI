@@ -2,8 +2,19 @@
 require("dotenv").config({ path: "./config.env" });
 
 // MongoDB setup
+
+// MongoDB setup
 const mongoose = require('mongoose');
-mongoose.connect(process.env.MONGO_URI);
+
+// Read MongoDB URI and database name from environment variables
+const mongoURI = process.env.MONGO_URI;
+const mongoDB = process.env.MONGO_DB;
+const embeddingsCollection = process.env.EMBEDDINGS_COLLECTION;
+const embeddingsCacheCollection = process.env.EMBEDDINGS_CACHE_COLLECTION;
+
+// Connect to MongoDB
+mongoose.connect(mongoURI, { dbName: mongoDB });
+
 const db = mongoose.connection;
 
 const Conversation = require('./models/conversation'); // Import the Token model
@@ -20,6 +31,8 @@ db.once('open', function() {
   console.log("Connected to MongoDB database");
 });
 
+const { initializeRAGApplication } = require('./ragInitializer.js');
+
 // Express setup
 const express = require('express');
 const session = require('express-session');
@@ -29,6 +42,7 @@ const passport = require('./passport'); // Require the passport module
 //Routes import
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const { router: ragRouter, setRAGApplication } = require('./routes/rag');
 const conversationRoutes = require('./routes/conversation');
 const completionRoutes = require('./routes/completion');
 
@@ -175,10 +189,20 @@ app.get("/conversations", verifyTokenMiddleware, async (req, res) => {
 // Error handling
 app.get('/error', (req, res) => res.send("error logging in"));
 
-app.get('*', function(req, res){
-  res.locals.pageTitle ="404 Not Found";
-  return res.status(404).render("errors/404");
+initializeRAGApplication(mongoURI, mongoDB, embeddingsCollection, embeddingsCacheCollection)
+    .then(ragApplication => {
+      setRAGApplication(ragApplication);
+      // Use rag routes
+      app.use('/rag', ragRouter);
+      // Define wildcard route after other routes
+      app.get('*', function(req, res){
+        res.locals.pageTitle ="404 Not Found";
+        return res.status(404).render("errors/404");
+      });
+      // Start server
+      app.listen(port , () => console.log('App listening on port ' + port));
+    })
+    .catch(error => {
+      console.error('Failed to initialize RAG Application:', error);
+      process.exit(1);
 });
-
-// Start server
-app.listen(port , () => console.log('App listening on port ' + port));
