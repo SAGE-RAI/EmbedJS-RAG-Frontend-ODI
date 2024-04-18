@@ -1,5 +1,3 @@
-// models/embeddingsCache.js
-
 const mongoose = require('mongoose');
 
 const embeddingsCacheSchema = new mongoose.Schema({
@@ -15,9 +13,16 @@ const embeddingsCacheSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  title: {
+    type: String
+  },
   loadedDate: {
     type: Date,
     default: Date.now
+  },
+  type: {
+    type: String,
+    enum: ['internal', 'external']
   }
 }, {
   collection: 'EmbeddingsCache' // Specify the collection name

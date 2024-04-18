@@ -14,7 +14,9 @@ function setRAGApplication(application) {
 }
 
 function isAdmin(req, res, next) {
-    next();
+    if (!req.isAuthenticated()) {
+      return res.redirect('/auth/google'); // Return the redirect response
+    }
     // Check if authMethod session variable is set to 'google'
     if (req.session.authMethod === 'google') {
         next(); // Proceed to the next middleware or route handler
@@ -24,11 +26,35 @@ function isAdmin(req, res, next) {
     }
 }
 
-async function deleteLoader(ragApplication, uniqueLoaderId, areYouSure = false) {
-    if (!areYouSure) {
-      console.warn('Delete loader called without confirmation. No action taken.');
-      return false;
-    }
+async function reload(uniqueLoaderId) {
+  try {
+      // Get source (source), title, and type from the cache
+      const loader = await EmbeddingsCache.findOne({ loaderId: uniqueLoaderId });
+
+      if (!loader) {
+          throw new Error('Loader not found');
+      }
+
+      const { source, title, type } = loader;
+
+      // Call deleteLoader(uniqueLoaderId)
+      const deleteResult = await deleteLoader(uniqueLoaderId);
+
+      if (!deleteResult) {
+          throw new Error('Failed to delete loader');
+      }
+
+      // Call addSource(source, title, type)
+      const addSourceResult = await addSource(source, title, type);
+
+      return addSourceResult;
+  } catch (error) {
+      console.error('Failed to reload loader:', error);
+      throw error;
+  }
+}
+
+async function deleteLoader(uniqueLoaderId) {
     const deleteResult = await ragApplication.deleteEmbeddingsFromLoader(uniqueLoaderId, true);
     if (deleteResult) {
       console.log(`Embeddings associated with loader ${uniqueLoaderId} deleted successfully.`);
@@ -39,47 +65,99 @@ async function deleteLoader(ragApplication, uniqueLoaderId, areYouSure = false) 
     }
 }
 
-// Route to create a new loader
-router.post('/loader', async (req, res) => {
-  const { url, type } = req.body;
-  console.log(url);
+// Function to add a new source
+async function addSource(source, title, type) {
   if (!ragApplication) {
-    return res.status(500).json({ error: 'RAG Application is not initialized' });
+      throw new Error('RAG Application is not initialized');
   }
 
-  const loader = new WebLoader({ url });
+  const loader = new WebLoader({ url: source });
+  await ragApplication.addLoader(loader);
+
+  const uniqueId = loader.getUniqueId();
+  const updateObject = {
+      source: source,
+      loadedDate: new Date()
+  };
+
+  if (title !== null) {
+      updateObject.title = title;
+  }
+
+  if (type !== null) {
+      updateObject.type = type;
+  }
+
+  const updateResult = await EmbeddingsCache.findOneAndUpdate(
+      { loaderId: uniqueId },
+      { $set: updateObject },
+      { upsert: true, new: true }
+  );
+
+  if (!updateResult) {
+      throw new Error('Failed to update cache database with loader information');
+  }
+
+  return { uniqueId };
+}
+
+router.post('/sources', isAdmin, async (req, res) => {
+  const { source, title, type } = req.body;
 
   try {
-    await ragApplication.addLoader(loader);
+      if (!source) {
+          throw new Error('Source is required');
+      }
 
-    // Get the unique ID of the loader
-    const uniqueId = loader.getUniqueId();
-    // Update the existing document in the EmbeddingsCache collection
-    const updateResult = await EmbeddingsCache.findOneAndUpdate(
-        { loaderId: uniqueId },
-        {
-          $set: {
-            source: url,
-            loadedDate: new Date()
-          }
-        },
-        { upsert: true, new: true } // Create a new document if it doesn't exist, return the updated document
+      const result = await addSource(source, title, type);
+      res.json(result);
+  } catch (error) {
+      console.error('Failed to add source:', error);
+      res.status(500).json({ error: error.message });
+  }
+});
+
+
+// Route to update an existing loader's metadata
+router.post('/sources/:loaderId', isAdmin, async (req, res) => {
+  const loaderId = req.params.loaderId;
+  const { title, type } = req.body;
+
+  try {
+      // Create an update object with updated fields
+      const updateObject = {};
+
+      // Set the "title" field if it is not null
+      if (title !== null) {
+          updateObject.title = title;
+      }
+
+      // Set the "type" field if it is not null
+      if (type !== null) {
+          updateObject.type = type;
+      }
+
+      // Update the existing document in the EmbeddingsCache collection
+      const updateResult = await EmbeddingsCache.findOneAndUpdate(
+          { loaderId: loaderId },
+          { $set: updateObject },
+          { new: true } // Return the updated document
       );
 
-    if (!updateResult) {
-      console.error('Failed to update cache database with loader information');
-      return res.status(500).json({ error: 'Failed to update cache database with loader information' });
-    }
+      if (!updateResult) {
+          console.error('Failed to update cache database with loader information');
+          return res.status(500).json({ error: 'Failed to update cache database with loader information' });
+      }
 
-    res.json({ uniqueId });
+      res.json({ uniqueId: loaderId }); // Respond with the updated loaderId
   } catch (error) {
-    console.error('Failed to add loader:', error);
-    res.status(500).json({ error: 'Failed to add loader' });
+      console.error('Failed to update loader:', error);
+      res.status(500).json({ error: 'Failed to update loader' });
   }
 });
 
 // Route to retrieve all loaders
-router.get('/loader', async (req, res) => {
+router.get('/sources', isAdmin, async (req, res) => {
     if (!ragApplication) {
       return res.status(500).json({ error: 'RAG Application is not initialized' });
     }
@@ -95,14 +173,36 @@ router.get('/loader', async (req, res) => {
     }
 });
 
+// Route to retrieve a single loader by its uniqueId
+router.get('/sources/:uniqueId', isAdmin, async (req, res) => {
+  const uniqueId = req.params.uniqueId;
+  if (!ragApplication) {
+      return res.status(500).json({ error: 'RAG Application is not initialized' });
+  }
+
+  try {
+      // Find the document in the EmbeddingsCache collection by uniqueId
+      const loader = await EmbeddingsCache.findOne({ loaderId: uniqueId });
+
+      if (!loader) {
+          return res.status(404).json({ error: 'Loader not found' });
+      }
+
+      res.json({ loader });
+  } catch (error) {
+      console.error('Failed to retrieve loader:', error);
+      res.status(500).json({ error: 'Failed to retrieve loader' });
+  }
+});
+
 // Route to delete a loader
-router.delete('/loader/:uniqueId', async (req, res) => {
+router.delete('/sources/:uniqueId', isAdmin, async (req, res) => {
   const uniqueId = req.params.uniqueId;
   if (!ragApplication) {
     return res.status(500).json({ error: 'RAG Application is not initialized' });
   }
 
-  const result = await deleteLoader(ragApplication, uniqueId, true);
+  const result = await deleteLoader(uniqueId);
   if (result) {
     res.sendStatus(200);
   } else {
@@ -126,7 +226,7 @@ router.get('/', async (req, res) => {
 });
 
 // Route to get embeddings count
-router.get('/embeddings/count', async (req, res) => {
+router.get('/embeddings/count', isAdmin, async (req, res) => {
     if (!ragApplication) {
       return res.status(500).json({ error: 'RAG Application is not initialized' });
     }

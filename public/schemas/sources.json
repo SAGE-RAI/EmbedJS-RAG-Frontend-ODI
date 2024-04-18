@@ -1,0 +1,45 @@
+{
+  "schema": {
+    "loaderId": {
+      "type": "hidden"
+    },
+    "source": {
+      "type": "string",
+      "maxLength": 512,
+      "title": "Source url",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["", "Internal", "External"],
+      "title": "Type",
+      "placeholder": "internal/external"
+    }
+  },
+  "form": [
+    {
+      "key": "loaderId",
+      "fieldHtmlClass": "loaderId"
+    },
+    {
+      "key": "source",
+      "fieldHtmlClass": "longText"
+    },
+    {
+      "key": "title",
+      "fieldHtmlClass": "longText"
+    },
+    {
+      "key": "type"
+    },
+    {
+      "type": "submit",
+      "title": "Submit",
+      "htmlClass": "submit"
+    }
+  ]
+}
