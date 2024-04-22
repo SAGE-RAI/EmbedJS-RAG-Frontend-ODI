@@ -82,16 +82,16 @@ function scrollToBottom(containerId) {
     }
 }
 
-function renderMessage(message, existingElement = null) {
+function renderMessage(entry, existingElement = null) {
     const listCont = document.querySelector('.list_cont');
 
     // Generate a unique ID for the new message, if not provided
-    const messageId = message.id || `msg-${new Date().getTime()}`;
+    const messageId = entry.id || `msg-${new Date().getTime()}`;
 
     // If an existing element is provided, use it; otherwise, create a new <li> element
     const element = existingElement || document.createElement('li');
     element.id = messageId;
-    element.className = message.message.role; // Assuming 'role' is part of the message object for styling purposes
+    element.className = entry.content.sender; // Assuming 'sender' is part of the message object for styling purposes
 
     // If an existing element is provided, clear its content before rendering the new message
     if (!existingElement) {
@@ -104,14 +104,17 @@ function renderMessage(message, existingElement = null) {
 
     // Call renderMarkdownWordByWord or renderMarkdown to render the message inside the new element
     // Make sure renderMarkdownWordByWord or renderMarkdown is defined in the global scope
-    if (message.message.role === "assistant") {
-        renderMarkdownWordByWord(message.message.content, element, () => {
-            renderRating(message.rating, element);
+    console.log(entry);
+    if (entry.content.sender === "AI") {
+        renderMarkdownWordByWord(entry.content.message, element, () => {
+            renderSources(entry.sources, element);
+            renderRating(entry.rating, element);
         });
     } else {
-        renderMarkdown(message.message.content, element, () => {
-            if (message.message.role === "assistant") {
-                renderRating(message.rating, element);
+        renderMarkdown(entry.content.message, element, () => {
+            if (entry.content.sender === "AI") {
+                renderSources(entry.sources, element);
+                renderRating(entry.rating, element);
             }
         });
     }
@@ -133,18 +136,20 @@ async function loadConversation(conversationId) {
         const conversation = await response.json();
         const listCont = document.querySelector('.list_cont');
         listCont.innerHTML = "";
-        // Iterate over the history object
-        conversation.history.forEach(message => {
+        // Iterate over the entries object
+        conversation.entries.forEach(entry => {
             // Generate a unique ID for the new message, if not provided
-            const messageId = message._id || `msg-${new Date().getTime()}`;
+            const messageId = entry._id || `msg-${new Date().getTime()}`;
             // If an existing element is provided, use it; otherwise, create a new <li> element
             const element = document.createElement('li');
             element.id = messageId;
-            element.className = message.message.role; // Assuming 'role' is part of the message object for styling purposes
+            element.className = entry.content.sender; // Assuming 'sender' is part of the message object for styling purposes
             listCont.appendChild(element);
-            renderMarkdown(message.message.content, element, () => {
-                if (message.message.role === "assistant") {
-                    renderRating(message.rating, element);
+            console.log(entry);
+            renderMarkdown(entry.content.message, element, () => {
+                if (entry.content.sender === "AI") {
+                    renderSources(entry.sources, element);
+                    renderRating(entry.rating, element);
                 }
             });
         });
@@ -156,6 +161,49 @@ async function loadConversation(conversationId) {
         // Handle error (e.g., show error message)
     }
 }
+
+async function renderSources(sources, element) {
+    if (sources && sources.length > 0) {
+        const sourcesHeading = document.createElement('h3');
+        sourcesHeading.textContent = 'Sources';
+        element.appendChild(sourcesHeading);
+
+        const sourcesList = document.createElement('ul');
+        sourcesList.classList.add('sources-list');
+
+        for (const sourceObj of sources) {
+            const listItem = document.createElement('li');
+            const link = document.createElement('a');
+
+            // If loaderId is present, fetch title from /rag/sources/:loaderId
+            if (sourceObj.loaderId) {
+                try {
+                    const response = await fetch(`/rag/sources/${sourceObj.loaderId}`);
+                    const data = await response.json();
+                    // Set link text to the title if available, otherwise use source URL
+                    link.textContent = data.loader.title || sourceObj.source;
+                } catch (error) {
+                    console.error('Error fetching source title:', error);
+                    // If there's an error, use source URL as link text
+                    link.textContent = sourceObj.source;
+                }
+            } else {
+                // If loaderId is not present, use source URL as link text
+                link.textContent = sourceObj.source;
+            }
+
+            link.href = sourceObj.source;
+            link.target = '_blank'; // Open link in a new tab
+            listItem.appendChild(link);
+
+            sourcesList.appendChild(listItem);
+        }
+
+        element.appendChild(sourcesList);
+    }
+}
+
+
 
 function renderRating(rating, element) {
     const ratingContainer = document.createElement('div');
@@ -222,7 +270,7 @@ function createResponseNode() {
     const listCont = document.querySelector('.list_cont');
     // Create a new <li> element
     const newLi = document.createElement('li');
-    newLi.className = 'assistant';
+    newLi.className = 'AI';
 
     // Create a <div> element for the typing animation
     const typingAnimationDiv = document.createElement('div');
@@ -282,8 +330,8 @@ async function handleSubmit(event) {
     let conversationId = conversationIdInput.value; // Get the conversation ID value from the input field
 
     const messageData = {
-        content: content,
-        role: 'user'
+        message: content,
+        sender: 'HUMAN'
     };
 
     // If there's no existing conversation ID, call newConversation to get it
@@ -307,7 +355,7 @@ async function handleSubmit(event) {
 
 async function sendMessage(conversationId, message) {
     let newMessage = {};
-    newMessage.message = message;
+    newMessage.content = message;
     renderMessage(newMessage);
     const messageInput = document.getElementById('txt');
     const responseLi = createResponseNode();

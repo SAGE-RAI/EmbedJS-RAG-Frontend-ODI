@@ -309,14 +309,14 @@ sidebar .admin-menu {
   position: relative;
 }
 
-.msgs_cont .user {
+.msgs_cont .HUMAN {
   float: right;
   clear: both;
   margin-bottom: 5px;
   border-bottom-right-radius: 20px;
 }
 
-.msgs_cont .assistant {
+.msgs_cont .AI {
   float: left;
   clear: both;
   margin-bottom: 5px;
@@ -326,19 +326,19 @@ sidebar .admin-menu {
   min-width: 240px;
 }
 
-.msgs_cont .assistant .rating-container {
+.msgs_cont .AI .rating-container {
   margin-top: 10px;
 }
 
-.msgs_cont .assistant .rating-container .stars {
+.msgs_cont .AI .rating-container .stars {
   text-align: right;
 }
 
-.msgs_cont .assistant .rating-container .stars .star {
+.msgs_cont .AI .rating-container .stars .star {
   cursor: pointer;
 }
 
-.msgs_cont .assistant .rating-comment-container {
+.msgs_cont .AI .rating-comment-container {
   border: 1px solid;
   border-radius: 10px;
   padding: 10px;
@@ -346,7 +346,7 @@ sidebar .admin-menu {
   font-size: 0.9em;
 }
 
-.msgs_cont .assistant .rating-comment-container .rating-option {
+.msgs_cont .AI .rating-comment-container .rating-option {
   display: inline-block;
   margin: 5px;
   border: 1px solid gray;
@@ -355,11 +355,11 @@ sidebar .admin-menu {
   cursor: pointer;
 }
 
-.msgs_cont .assistant .rating-comment-container .rating-comment {
+.msgs_cont .AI .rating-comment-container .rating-comment {
   text-align: right;
 }
 
-.msgs_cont .assistant .rating-comment-container textarea {
+.msgs_cont .AI .rating-comment-container textarea {
   width: 100%;
   background: inherit;
   color: inherit;
@@ -372,7 +372,7 @@ sidebar .admin-menu {
   min-height: 120px;
 }
 
-.msgs_cont .assistant .rating-comment-container button {
+.msgs_cont .AI .rating-comment-container button {
   padding: 10px;
 }
 

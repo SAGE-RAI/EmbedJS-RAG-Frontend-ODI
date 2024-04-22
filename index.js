@@ -11,6 +11,7 @@ const mongoURI = process.env.MONGO_URI;
 const mongoDB = process.env.MONGO_DB;
 const embeddingsCollection = process.env.EMBEDDINGS_COLLECTION;
 const embeddingsCacheCollection = process.env.EMBEDDINGS_CACHE_COLLECTION;
+const conversationsCollection = process.env.CONVERSATIONS_COLLECTION;
 
 // Connect to MongoDB
 mongoose.connect(mongoURI, { dbName: mongoDB });
@@ -161,9 +162,6 @@ app.use('/admin', adminRoutes);
 // Use authentication routes
 app.use('/conversation', conversationRoutes);
 
-// Use authentication routes
-app.use('/openai-completion', completionRoutes);
-
 // Route handler for /conversations
 app.get("/conversations", verifyTokenMiddleware, async (req, res) => {
   try {
@@ -189,11 +187,13 @@ app.get("/conversations", verifyTokenMiddleware, async (req, res) => {
 // Error handling
 app.get('/error', (req, res) => res.send("error logging in"));
 
-initializeRAGApplication(mongoURI, mongoDB, embeddingsCollection, embeddingsCacheCollection)
+initializeRAGApplication(mongoURI, mongoDB, embeddingsCollection, embeddingsCacheCollection, conversationsCollection)
     .then(ragApplication => {
       setRAGApplication(ragApplication);
       // Use rag routes
       app.use('/rag', ragRouter);
+      // Use authentication routes
+      app.use('/openai-completion', completionRoutes(ragApplication));
       // Define wildcard route after other routes
       app.get('*', function(req, res){
         res.locals.pageTitle ="404 Not Found";

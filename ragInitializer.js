@@ -3,9 +3,10 @@
 const { RAGApplicationBuilder, SIMPLE_MODELS } = require('@llm-tools/embedjs');
 const { MongoDBAtlas } = require('@llm-tools/embedjs/vectorDb/mongoAtlas');
 const { MongoCache } = require('@llm-tools/embedjs/cache/mongo');
+const { MongoConversations } = require('@llm-tools/embedjs/conversations/mongo');
 
 // Function to initialize the RAG application
-async function initializeRAGApplication(MONGODB_URI, DB_NAME, COLLECTION_NAME, CACHE_COLLECTION_NAME) {
+async function initializeRAGApplication(MONGODB_URI, DB_NAME, COLLECTION_NAME, CACHE_COLLECTION_NAME, CONVERSATIONS_COLLECTION_NAME) {
     const db = new MongoDBAtlas({
         uri: MONGODB_URI,
         dbName: DB_NAME,
@@ -18,11 +19,23 @@ async function initializeRAGApplication(MONGODB_URI, DB_NAME, COLLECTION_NAME, C
         collectionName: CACHE_COLLECTION_NAME
     });
 
+    const conversationsdb = new MongoConversations({
+        uri: MONGODB_URI,
+        dbName: DB_NAME,
+        collectionName: CONVERSATIONS_COLLECTION_NAME
+    });
+
+    // Initialize the connection to MongoDB Atlas
+    await db.init();
+    await cachedb.init();
+    await conversationsdb.init();
+
     try {
         const ragApplication = await new RAGApplicationBuilder()
             .setModel(SIMPLE_MODELS.OPENAI_GPT3_TURBO)
             .setVectorDb(db)
             .setCache(cachedb)
+            .setConversations(conversationsdb)
             .build();
 
         console.log('RAG Application is ready with OpenAI GPT-3.5 Turbo and MongoDB!');

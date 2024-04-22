@@ -174,11 +174,8 @@ router.get('/sources', isAdmin, async (req, res) => {
 });
 
 // Route to retrieve a single loader by its uniqueId
-router.get('/sources/:uniqueId', isAdmin, async (req, res) => {
+router.get('/sources/:uniqueId', async (req, res) => {
   const uniqueId = req.params.uniqueId;
-  if (!ragApplication) {
-      return res.status(500).json({ error: 'RAG Application is not initialized' });
-  }
 
   try {
       // Find the document in the EmbeddingsCache collection by uniqueId

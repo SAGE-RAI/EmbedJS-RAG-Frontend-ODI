@@ -34,7 +34,7 @@
                         categorizedConversations[category].forEach(conversation => {
                             const conversationItem = document.createElement('li');
                             const conversationLink = document.createElement('a');
-                            conversationLink.textContent = getTitle(conversation.history[0].message.content);
+                            conversationLink.textContent = getTitle(conversation.entries[0].content.message);
                             conversationLink.href = `javascript:loadConversation('${conversation._id}')`; // Call loadConversation with conversationId
                             conversationLink.classList.add('conversation');
                             conversationItem.appendChild(conversationLink);
@@ -69,7 +69,7 @@
 
         // Iterate over conversations and categorize them
         conversations.forEach(conversation => {
-            const lastMessageDate = new Date(conversation.history[conversation.history.length - 1].timestamp);3
+            const lastMessageDate = new Date(conversation.entries[conversation.entries.length - 1].timestamp);3
             const currentDate = new Date();
             const timeDiff = currentDate.getTime() - lastMessageDate.getTime();
             const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
