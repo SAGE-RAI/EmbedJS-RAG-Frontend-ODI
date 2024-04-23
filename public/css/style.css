@@ -167,26 +167,6 @@ sidebar .admin-menu {
   text-decoration: underline;
   cursor: pointer;
 }
-.closeButton {
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  width: 35px;
-  height: 35px;
-  background-color: transparent;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  font-size: 1.5em;
-  z-index: 9999; /* Ensure it's above other content */
-}
-
-.rating-comment-container .closeButton {
-  position: relative;
-  float: right;
-}
 
 .topper {
   width: auto;
@@ -343,28 +323,35 @@ sidebar .admin-menu {
   cursor: pointer;
 }
 
-.msgs_cont .AI .rating-comment-container {
-  border: 1px solid;
-  border-radius: 10px;
-  padding: 10px;
-  margin-top: 10px;
-  font-size: 0.9em;
-}
-
-.msgs_cont .AI .rating-comment-container .rating-option {
-  display: inline-block;
-  margin: 5px;
-  border: 1px solid gray;
-  padding: 5px;
-  border-radius: 5px;
+.closeButton {
+  top: -5px;
+  right: 0px;
   cursor: pointer;
+  font-size: 1em;
+  z-index: 9999;
+  position: relative;
+  float: right;
+  color: white;
 }
-
-.msgs_cont .AI .rating-comment-container .rating-comment {
-  text-align: right;
+.msgs_cont .AI .response-choices {
+  border: 1px solid #eee;
+  padding: 10px;
+  margin: 10px;
 }
-
-.msgs_cont .AI .rating-comment-container textarea {
+.msgs_cont .AI .other-input-container {
+  padding: 10px;
+  border: 1px solid #eee;
+  margin: 10px;
+}
+.msgs_cont .AI .response-choices h3 {
+  margin-top: 12px;
+  padding: 6px;
+}
+.msgs_cont .AI .other-input-container h3 {
+  margin-top: 12px;
+  padding: 6px;
+}
+.msgs_cont .AI .other-input-container textarea {
   width: 100%;
   background: inherit;
   color: inherit;
@@ -375,10 +362,6 @@ sidebar .admin-menu {
   margin-bottom: 10px;
   min-width: 320px;
   min-height: 120px;
-}
-
-.msgs_cont .AI .rating-comment-container button {
-  padding: 10px;
 }
 
 /* Style for the tooltip icon */

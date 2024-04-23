@@ -86,7 +86,7 @@ function renderMessage(entry, existingElement = null, newMessage = false) {
     const listCont = document.querySelector('.list_cont');
 
     // Generate a unique ID for the new message, if not provided
-    const messageId = entry.id || `msg-${new Date().getTime()}`;
+    const messageId = entry._id || `msg-${new Date().getTime()}`;
 
     // If an existing element is provided, use it; otherwise, create a new <li> element
     const element = existingElement || document.createElement('li');
@@ -100,6 +100,7 @@ function renderMessage(entry, existingElement = null, newMessage = false) {
     const sourcesDiv = document.createElement('div');
     sourcesDiv.classList.add('sources');
     const ratingDiv = document.createElement('div');
+    ratingDiv.id = messageId;
     ratingDiv.classList.add('rating');
 
     // Append the three divs to the list item
@@ -232,7 +233,51 @@ async function renderSources(sources, element) {
     }
 }
 
+ // Need to move this somewhere.
+const defaultRatingResponses = {
+    1: [
+        "Don't like the style",
+        "Not factually correct",
+        "Didn't fully follow instructions",
+        "Refused when it shouldn't have",
+        "Wrong or no sources"
+    ],
+    2: [
+        "Not helpful",
+        "Confusing response",
+        "Didn't provide enough detail",
+        "Incomplete information",
+        "Wrong or no sources",
+    ],
+    3: [
+        "Somewhat helpful",
+        "Partially correct",
+        "Room for improvement",
+        "Average response",
+        "Needs more detail"
+    ],
+    4: [
+        "Quite helpful",
+        "Mostly correct",
+        "Good response",
+        "Well-written",
+        "Informative"
+    ],
+    5: [
+        "Very helpful",
+        "Completely correct",
+        "Excellent response",
+        "Clear and concise",
+        "Highly informative"
+    ]
+};
+
 function renderRating(rating, element) {
+    console.log(rating);
+    element.innerHTML = '';
+    const ratingContainer = document.createElement('div');
+    ratingContainer.classList.add('rating-container');
+
     const starsContainer = document.createElement('div');
     starsContainer.classList.add('stars');
 
@@ -260,15 +305,133 @@ function renderRating(rating, element) {
             const star = document.createElement('span');
             star.classList.add('star');
             star.innerHTML = '☆ '; // Unicode for empty star symbol
-            star.onmouseenter = () => handleRatingHover(messageId, i + 1);
-            star.onmouseleave = () => handleRatingHover(messageId, 0);
-            star.onclick = () => handleRating(messageId, i + 1);
+            star.onclick = () => {
+                const rating = i + 1;
+                handleRating(element, messageId, rating, "");
+            };
             starsContainer.appendChild(star);
         }
     }
-    element.appendChild(starsContainer);
+    ratingContainer.appendChild(starsContainer);
+    element.appendChild(ratingContainer);
+}
 
-    scrollToBottom('msgs_cont');
+function displayResponseChoices(element, messageId, rating) {
+    const responses = defaultRatingResponses[rating.rating];
+    const choicesContainer = document.createElement('div');
+    choicesContainer.classList.add('response-choices');
+
+    const closeButton = document.createElement('span');
+    closeButton.classList.add('closeButton');
+    closeButton.innerHTML = 'X';
+    closeButton.onclick = () => {
+        renderRating(rating, element);
+    };
+    choicesContainer.appendChild(closeButton);
+
+    const heading = document.createElement('h3');
+    heading.innerHTML = 'Tell us more?';
+    choicesContainer.appendChild(heading);
+
+    // Create buttons for each response choice
+    responses.forEach(response => {
+        const choiceButton = document.createElement('button');
+        choiceButton.type = 'button';
+        choiceButton.textContent = response;
+        choiceButton.onclick = () => {
+            handleRating(element, messageId, rating.rating, response);
+        };
+
+        choicesContainer.appendChild(choiceButton);
+    });
+
+    // Create "Other" button
+    const otherButton = document.createElement('button');
+    otherButton.type = 'button';
+    otherButton.textContent = 'Other';
+    otherButton.onclick = () => {
+        clearChoicesAndDisplayInput(element, messageId, rating);
+    };
+    choicesContainer.appendChild(otherButton);
+
+    element.appendChild(choicesContainer);
+}
+
+function clearChoicesAndDisplayInput(element, messageId, rating) {
+    // Remove all buttons
+    element.innerHTML = '';
+
+    // Create a text input field
+    const inputContainer = document.createElement('div');
+    inputContainer.classList.add('other-input-container');
+
+    const heading = document.createElement('h3');
+    heading.innerHTML = 'Tell us more?';
+
+    const inputField = document.createElement('textarea');
+    inputField.placeholder = 'Enter your own comment...';
+
+    const submitButton = document.createElement('button');
+    submitButton.type = 'button';
+    submitButton.textContent = 'Submit';
+    submitButton.onclick = () => {
+        const customComment = inputField.value.trim();
+        if (customComment) {
+            handleRating(element, messageId, rating.rating, customComment);
+        }
+    };
+
+    // Create close button (X)
+    const closeButton = document.createElement('span');
+    closeButton.classList.add('closeButton');
+    closeButton.innerHTML = 'X';
+    closeButton.onclick = () => {
+        renderRating(rating, element);
+    };
+
+    inputContainer.appendChild(closeButton);
+    inputContainer.appendChild(heading);
+    inputContainer.appendChild(inputField);
+    inputContainer.appendChild(submitButton);
+    element.appendChild(inputContainer);
+}
+
+async function handleRating(element, entryId, starRating, message) {
+    try {
+        // Get the conversation ID from the hidden input field
+        const conversationId = document.getElementById('conversationId').value;
+
+        // Construct the rating object
+        const ratingData = {
+            rating: starRating,
+            comment: message
+        };
+
+        // Perform a POST request to update the rating
+        const response = await fetch(`/conversation/${conversationId}/messages/${entryId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rating: ratingData })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update rating');
+        }
+
+        const responseData = await response.json();
+        renderRating(ratingData,element);
+        if (message === "") {
+            displayResponseChoices(element, entryId, ratingData);
+        }
+
+        // Optionally, handle success response
+
+    } catch (error) {
+        console.error('Error handling rating:', error);
+        // Optionally, handle error
+    }
 }
 
 function handleRatingHover(messageId, rating) {

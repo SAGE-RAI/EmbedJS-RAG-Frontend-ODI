@@ -103,8 +103,37 @@ async function deleteOldConversations() {
     }
 }
 
+async function setRating(conversationId, entryId, rating, message) {
+    try {
+        // Find the conversation by conversationId
+        const conversation = await Conversation.findOne({ _id: conversationId });
+
+        if (!conversation) {
+            throw new Error('Conversation not found');
+        }
+
+        // Find the entry with the given entryId in the conversation
+        const entry = conversation.entries.find(e => e._id === entryId);
+
+        if (!entry) {
+            throw new Error('Entry not found');
+        }
+
+        // Update the rating and message of the entry
+        entry.rating = { rating, comment: message };
+
+        // Save the updated conversation
+        await conversation.save();
+
+        return { success: true, message: 'Rating updated successfully' };
+    } catch (error) {
+        console.error('Error setting rating:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 //Delete old conversations
 deleteOldConversations();
 const interval = setInterval(deleteOldConversations, 3600000);
 
-module.exports = { createConversation, getConversations, getConversation, getMessages, deleteOldConversations };
+module.exports = { createConversation, getConversations, getConversation, getMessages, setRating, deleteOldConversations };
