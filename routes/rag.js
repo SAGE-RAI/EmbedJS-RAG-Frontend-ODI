@@ -3,7 +3,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { WebLoader } = require('@llm-tools/embedjs');
+const { WebLoader, TextLoader } = require('@llm-tools/embedjs');
 const EmbeddingsCache = require('../models/embeddingsCache'); // Import the embeddingsCache model
 
 let ragApplication;
@@ -66,12 +66,14 @@ async function deleteLoader(uniqueLoaderId) {
 }
 
 // Function to add a new source
-async function addSource(source, title, type, overrideUrl) {
+async function addSource(source, title, type, overrideUrl, sourceText) {
   if (!ragApplication) {
       throw new Error('RAG Application is not initialized');
   }
-
-  const loader = new WebLoader({ url: source });
+  let loader = new WebLoader({ url: source });
+  if (sourceText) {
+    loader = new TextLoader({ text: sourceText });
+  }
   await ragApplication.addLoader(loader);
 
   const uniqueId = loader.getUniqueId();
@@ -106,14 +108,14 @@ async function addSource(source, title, type, overrideUrl) {
 }
 
 router.post('/sources', isAdmin, async (req, res) => {
-  const { source, title, type, overrideUrl } = req.body;
+  const { source, title, type, overrideUrl, sourceText } = req.body;
 
   try {
       if (!source) {
           throw new Error('Source is required');
       }
 
-      const result = await addSource(source, title, type, overrideUrl);
+      const result = await addSource(source, title, type, overrideUrl, sourceText);
       res.json(result);
   } catch (error) {
       console.error('Failed to add source:', error);

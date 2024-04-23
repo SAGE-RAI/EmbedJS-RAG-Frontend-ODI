@@ -121,6 +121,25 @@ router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddlew
     }
 });
 
+// Route to delete a conversation by its ID
+router.delete("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+
+        // Find the conversation by its ID and delete it
+        const deletedConversation = await Conversation.findByIdAndDelete(conversationId);
+
+        if (!deletedConversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        res.status(200).json({ message: 'Conversation deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Route handler for getting just the messages related to a conversation
 router.get("/:conversationId/messages", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
 try {

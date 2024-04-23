@@ -16,6 +16,11 @@ main {
   overflow-y: scroll;
   overflow-x: hidden;
 }
+.delete-icon {
+  float: right;
+  top: 10px;
+  position: relative;
+}
 
 /* LOGIN PAGE */
 .login-block {
@@ -161,7 +166,7 @@ sidebar .admin-menu {
 }
 .conversations ul {
   margin: 0;
-  padding-left: 10px;
+  padding-left: 2px;
   font-size: 0.8em;
 }
 .conversations li {
