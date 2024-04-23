@@ -66,7 +66,7 @@ async function deleteLoader(uniqueLoaderId) {
 }
 
 // Function to add a new source
-async function addSource(source, title, type) {
+async function addSource(source, title, type, overrideUrl) {
   if (!ragApplication) {
       throw new Error('RAG Application is not initialized');
   }
@@ -88,6 +88,10 @@ async function addSource(source, title, type) {
       updateObject.type = type;
   }
 
+  if (overrideUrl !== null) {
+    updateObject.overrideUrl = overrideUrl;
+  }
+
   const updateResult = await EmbeddingsCache.findOneAndUpdate(
       { loaderId: uniqueId },
       { $set: updateObject },
@@ -102,14 +106,14 @@ async function addSource(source, title, type) {
 }
 
 router.post('/sources', isAdmin, async (req, res) => {
-  const { source, title, type } = req.body;
+  const { source, title, type, overrideUrl } = req.body;
 
   try {
       if (!source) {
           throw new Error('Source is required');
       }
 
-      const result = await addSource(source, title, type);
+      const result = await addSource(source, title, type, overrideUrl);
       res.json(result);
   } catch (error) {
       console.error('Failed to add source:', error);
@@ -121,7 +125,7 @@ router.post('/sources', isAdmin, async (req, res) => {
 // Route to update an existing loader's metadata
 router.post('/sources/:loaderId', isAdmin, async (req, res) => {
   const loaderId = req.params.loaderId;
-  const { title, type } = req.body;
+  const { title, type, overrideUrl } = req.body;
 
   try {
       // Create an update object with updated fields
@@ -135,6 +139,11 @@ router.post('/sources/:loaderId', isAdmin, async (req, res) => {
       // Set the "type" field if it is not null
       if (type !== null) {
           updateObject.type = type;
+      }
+
+      // Set the "overrideUrl" field if it is not null
+      if (overrideUrl !== null) {
+        updateObject.overrideUrl = overrideUrl;
       }
 
       // Update the existing document in the EmbeddingsCache collection

@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { verifyTokenMiddleware, verifyConversationMiddleware, processMessagesMiddleware } = require('../middleware'); // Import your middleware functions
 const Conversation = require('../models/conversation'); // Import the conversation model
+// Import necessary functions from controllers
+const { getMessages } = require('../controllers/conversation');
 
 // Open AI
 const OpenAI = require("openai");
@@ -23,8 +25,6 @@ router.post("/", verifyTokenMiddleware, async (req, res) => {
     }
 });
 
-// Route handler for /openai-completion/<conversationId> with tracking
-// Change this to take in a single message, get the history from the locally stored and then chat with OpenAI
 router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
   try {
       const conversationId = req.params.conversationId;
@@ -35,23 +35,43 @@ router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddlew
           return res.status(400).json({ error: 'Invalid message format. Must include sender "HUMAN" and message.' });
       }
 
-      // Get the conversation from the database
-      const conversation = await Conversation.findById(conversationId);
+      let contextQuery = message; // Default contextQuery is just the new query
 
-      if (!conversation) {
-          return res.status(404).json({ error: 'Conversation not found' });
+      // Fetch the last two messages from the conversation with sender "HUMAN"
+
+      const messages = await getMessages(conversationId);
+
+      // Check if there are no messages in the conversation
+      if (messages.length === 0) {
+          console.log('No messages found in the conversation. Using default contextQuery.');
+      } else {
+          // Filter out messages sent by "HUMAN"
+          const humanMessages = messages.filter(msg => msg.sender === 'HUMAN');
+
+          // Get the last two messages or fewer if there are not enough
+          const contextMessages = humanMessages.slice(-2);
+
+          // Construct contextQuery based on existing messages
+          if (contextMessages.length === 1) {
+              contextQuery = `${contextMessages[0].message} ${message}`;
+          } else if (contextMessages.length === 2) {
+              contextQuery = `${contextMessages[0].message} ${contextMessages[1].message} ${message}`;
+          }
       }
 
-      const response = await rag.query(message,conversationId);
+      // Get context embeddings for the contextQuery
+      const chunks = await rag.getContext(contextQuery);
+
+      // Use context embeddings along with the new message to query the RAG model
+      const ragResponse = await rag.query(message, conversationId, chunks);
 
       // Return the response to the user
-      res.status(200).json(response);
+      res.status(200).json(ragResponse);
   } catch (error) {
       console.error("Error in /openai-completion route:", error);
       res.status(error.status || 500).json({ error: error.message });
   }
 });
-
 
 module.exports = function(ragApplication) {
   rag = ragApplication;

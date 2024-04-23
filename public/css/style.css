@@ -326,15 +326,20 @@ sidebar .admin-menu {
   min-width: 240px;
 }
 
-.msgs_cont .AI .rating-container {
+.msgs_cont .AI .sources-list a {
+  color: white;
+  text-decoration: underline;
+}
+
+.msgs_cont .AI .rating {
   margin-top: 10px;
 }
 
-.msgs_cont .AI .rating-container .stars {
+.msgs_cont .AI .rating .stars {
   text-align: right;
 }
 
-.msgs_cont .AI .rating-container .stars .star {
+.msgs_cont .AI .rating .stars .star {
   cursor: pointer;
 }
 
@@ -374,6 +379,28 @@ sidebar .admin-menu {
 
 .msgs_cont .AI .rating-comment-container button {
   padding: 10px;
+}
+
+/* Style for the tooltip icon */
+.tooltip-icon {
+  position: relative;
+  vertical-align: super; /* Make the icon superscript */
+  cursor: help; /* Change cursor to indicate it's clickable */
+}
+
+/* Style for the tooltip */
+.tooltip {
+  position: absolute;
+  top: -25px; /* Adjust the tooltip position */
+  left: 20px; /* Adjust the tooltip position */
+  width: 300px;
+  font-size: 0.8em;
+  background-color: var(--background-body);
+  border: 1px solid #ccc; /* Border style */
+  padding: 5px; /* Add padding for better appearance */
+  border-radius: 5px; /* Add border radius for rounded corners */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add shadow for depth */
+  z-index: 999; /* Ensure tooltip appears above other content */
 }
 
 button.uil {

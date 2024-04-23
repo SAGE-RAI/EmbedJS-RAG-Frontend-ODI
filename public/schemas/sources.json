@@ -13,6 +13,10 @@
       "type": "string",
       "title": "Title"
     },
+    "overrideUrl": {
+      "type": "string",
+      "title": "Display URL"
+    },
     "type": {
       "type": "string",
       "enum": ["", "Internal", "External"],
@@ -31,6 +35,10 @@
     },
     {
       "key": "title",
+      "fieldHtmlClass": "longText"
+    },
+    {
+      "key": "overrideUrl",
       "fieldHtmlClass": "longText"
     },
     {

@@ -77,8 +77,8 @@ function updateSource(errors, values) {
         var inputObject = values;
         var postUrl = '/rag/sources';
 
-        if (inputObject.loadedId) {
-            postUrl += '/' + inputObject.loadedId;
+        if (inputObject.loaderId) {
+            postUrl += '/' + inputObject.loaderId;
         }
 
         // Post the input object to the appropriate URL

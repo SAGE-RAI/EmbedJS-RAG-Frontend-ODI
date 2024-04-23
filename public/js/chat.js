@@ -82,7 +82,7 @@ function scrollToBottom(containerId) {
     }
 }
 
-function renderMessage(entry, existingElement = null) {
+function renderMessage(entry, existingElement = null, newMessage = false) {
     const listCont = document.querySelector('.list_cont');
 
     // Generate a unique ID for the new message, if not provided
@@ -90,31 +90,46 @@ function renderMessage(entry, existingElement = null) {
 
     // If an existing element is provided, use it; otherwise, create a new <li> element
     const element = existingElement || document.createElement('li');
+    element.innerHTML = '';
     element.id = messageId;
     element.className = entry.content.sender; // Assuming 'sender' is part of the message object for styling purposes
+
+    // Create three divs inside the list item for message, sources, and rating with respective classes
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message');
+    const sourcesDiv = document.createElement('div');
+    sourcesDiv.classList.add('sources');
+    const ratingDiv = document.createElement('div');
+    ratingDiv.classList.add('rating');
+
+    // Append the three divs to the list item
+    element.appendChild(messageDiv);
+    element.appendChild(sourcesDiv);
+    element.appendChild(ratingDiv);
 
     // If an existing element is provided, clear its content before rendering the new message
     if (!existingElement) {
         // Append the new <li> to the list container
         listCont.appendChild(element);
     } else {
-        // Clear existing content
-        element.innerHTML = '';
+        // Clear existing content of message, sources, and rating divs
+        messageDiv.innerHTML = '';
+        sourcesDiv.innerHTML = '';
+        ratingDiv.innerHTML = '';
     }
 
-    // Call renderMarkdownWordByWord or renderMarkdown to render the message inside the new element
+    // Call renderMarkdownWordByWord or renderMarkdown to render the message inside the message div
     // Make sure renderMarkdownWordByWord or renderMarkdown is defined in the global scope
-    console.log(entry);
-    if (entry.content.sender === "AI") {
-        renderMarkdownWordByWord(entry.content.message, element, () => {
-            renderSources(entry.sources, element);
-            renderRating(entry.rating, element);
+    if (entry.content.sender === "AI" && newMessage) {
+        renderMarkdownWordByWord(entry.content.message, messageDiv, () => {
+            renderSources(entry.sources, sourcesDiv);
+            renderRating(entry.rating, ratingDiv);
         });
     } else {
-        renderMarkdown(entry.content.message, element, () => {
+        renderMarkdown(entry.content.message, messageDiv, () => {
             if (entry.content.sender === "AI") {
-                renderSources(entry.sources, element);
-                renderRating(entry.rating, element);
+                renderSources(entry.sources, sourcesDiv);
+                renderRating(entry.rating, ratingDiv);
             }
         });
     }
@@ -138,20 +153,7 @@ async function loadConversation(conversationId) {
         listCont.innerHTML = "";
         // Iterate over the entries object
         conversation.entries.forEach(entry => {
-            // Generate a unique ID for the new message, if not provided
-            const messageId = entry._id || `msg-${new Date().getTime()}`;
-            // If an existing element is provided, use it; otherwise, create a new <li> element
-            const element = document.createElement('li');
-            element.id = messageId;
-            element.className = entry.content.sender; // Assuming 'sender' is part of the message object for styling purposes
-            listCont.appendChild(element);
-            console.log(entry);
-            renderMarkdown(entry.content.message, element, () => {
-                if (entry.content.sender === "AI") {
-                    renderSources(entry.sources, element);
-                    renderRating(entry.rating, element);
-                }
-            });
+            renderMessage(entry,null,false)
         });
         document.getElementById('conversationId').value = conversationId;
         // Update the address bar with the conversation ID
@@ -166,6 +168,13 @@ async function renderSources(sources, element) {
     if (sources && sources.length > 0) {
         const sourcesHeading = document.createElement('h3');
         sourcesHeading.textContent = 'Sources';
+
+        const tooltipIcon = document.createElement('span');
+        tooltipIcon.textContent = '?';
+        tooltipIcon.classList.add('tooltip-icon');
+        tooltipIcon.setAttribute('data-tooltip', 'Sources are shown for the last three queries you have made. You might need to refine your query if the sources are missing or innacurate.');
+
+        sourcesHeading.appendChild(tooltipIcon);
         element.appendChild(sourcesHeading);
 
         const sourcesList = document.createElement('ul');
@@ -182,17 +191,21 @@ async function renderSources(sources, element) {
                     const data = await response.json();
                     // Set link text to the title if available, otherwise use source URL
                     link.textContent = data.loader.title || sourceObj.source;
+
+                    // Set href to overrideUrl if available, otherwise use source URL
+                    link.href = data.loader.overrideUrl || sourceObj.source;
                 } catch (error) {
                     console.error('Error fetching source title:', error);
-                    // If there's an error, use source URL as link text
+                    // If there's an error, use source URL for both link text and href
                     link.textContent = sourceObj.source;
+                    link.href = sourceObj.source;
                 }
             } else {
-                // If loaderId is not present, use source URL as link text
+                // If loaderId is not present, use source URL for both link text and href
                 link.textContent = sourceObj.source;
+                link.href = sourceObj.source;
             }
 
-            link.href = sourceObj.source;
             link.target = '_blank'; // Open link in a new tab
             listItem.appendChild(link);
 
@@ -200,15 +213,26 @@ async function renderSources(sources, element) {
         }
 
         element.appendChild(sourcesList);
+
+        // Initialize tooltips using plain JavaScript for simplicity
+        tooltipIcon.addEventListener('mouseover', function() {
+            const tooltipText = this.getAttribute('data-tooltip');
+            const tooltip = document.createElement('div');
+            tooltip.classList.add('tooltip');
+            tooltip.textContent = tooltipText;
+            this.appendChild(tooltip);
+        });
+
+        tooltipIcon.addEventListener('mouseout', function() {
+            const tooltip = this.querySelector('.tooltip');
+            if (tooltip) {
+                tooltip.remove();
+            }
+        });
     }
 }
 
-
-
 function renderRating(rating, element) {
-    const ratingContainer = document.createElement('div');
-    ratingContainer.classList.add('rating-container');
-
     const starsContainer = document.createElement('div');
     starsContainer.classList.add('stars');
 
@@ -242,13 +266,12 @@ function renderRating(rating, element) {
             starsContainer.appendChild(star);
         }
     }
-    ratingContainer.appendChild(starsContainer);
-    element.appendChild(ratingContainer);
+    element.appendChild(starsContainer);
+
     scrollToBottom('msgs_cont');
 }
 
 function handleRatingHover(messageId, rating) {
-    console.log('in here');
     console.log(messageId);
     console.log(rating);
     // Get the message container element by its ID
@@ -356,7 +379,7 @@ async function handleSubmit(event) {
 async function sendMessage(conversationId, message) {
     let newMessage = {};
     newMessage.content = message;
-    renderMessage(newMessage);
+    renderMessage(newMessage,null,true);
     const messageInput = document.getElementById('txt');
     const responseLi = createResponseNode();
     messageInput.value = ''; // Clear the input field
@@ -375,7 +398,7 @@ async function sendMessage(conversationId, message) {
         }
 
         const responseMessage = await response.json();
-        renderMessage(responseMessage, responseLi); // Render the message
+        renderMessage(responseMessage, responseLi,true); // Render the message
     } catch (error) {
         console.error('Error sending message:', error);
         alert('Failed to send message. Please try again.');

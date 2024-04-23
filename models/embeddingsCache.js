@@ -16,6 +16,9 @@ const embeddingsCacheSchema = new mongoose.Schema({
   title: {
     type: String
   },
+  overrideUrl: {
+    type: String
+  },
   loadedDate: {
     type: Date,
     default: Date.now

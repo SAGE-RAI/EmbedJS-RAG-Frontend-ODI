@@ -3,11 +3,17 @@
 <sidebar style="height: calc(100vh - 180px); position: relative;">
   <nav style="position: absolute; bottom: 0px;">
     <ul>
-      <li>
-              <form style="display: inline-flex;" id="logout_form" action="/logout" method="post">
-                  <a href="javascript:;" onclick="document.getElementById('logout_form').submit();">Logout</a>
-              </form>
-          </li>
+      <li style="display: inline-block;"">
+        <form style="display: inline-flex;" id="logout_form" action="/logout" method="post">
+            <a href="javascript:;" onclick="document.getElementById('logout_form').submit();">Logout</a>
+        </form>
+    </li>
+    <li style="display: inline-block;
+    padding-left: 1em;
+    border-left: 1px solid white;
+    margin-left: 1em;">
+        <a href="/admin">Admin</a></li>
+    </li>
     </ul>
   </nav>
 </sidebar>

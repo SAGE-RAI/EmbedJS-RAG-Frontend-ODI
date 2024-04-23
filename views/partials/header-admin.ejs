@@ -31,6 +31,10 @@
 		<sidebar style="height: calc(100vh - 180px); position: relative;">
 			<nav>
 			  <h2 style="margin-top: 0;">Admin menu</h2>
+			  <h3 style="">Conversations</h3>
+			  <ul class="admin-menu">
+				  <li><a href="/conversation">My conversations</a></li>
+			  </ul>
 			  <h3 style="">Sources</h3>
 			  <ul class="admin-menu">
 				  <li><a href="/admin/sources">Manage sources</a></li>
@@ -44,11 +48,17 @@
 			</nav>
 			<nav style="position: absolute; bottom: 0px;">
 			  <ul>
-				<li>
-						<form style="display: inline-flex;" id="logout_form" action="/logout" method="post">
-							<a href="javascript:;" onclick="document.getElementById('logout_form').submit();">Logout</a>
-						</form>
-					</li>
+				<li style="display: inline-block;"">
+					<form style="display: inline-flex;" id="logout_form" action="/logout" method="post">
+						<a href="javascript:;" onclick="document.getElementById('logout_form').submit();">Logout</a>
+					</form>
+				</li>
+				<li style="display: inline-block;
+				padding-left: 1em;
+				border-left: 1px solid white;
+				margin-left: 1em;">
+					<a href="/admin">Admin</a></li>
+				</li>
 			  </ul>
 			</nav>
 		  </sidebar>

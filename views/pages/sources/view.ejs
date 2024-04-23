@@ -28,11 +28,13 @@
             columns: [
                 { data: 'title', title: 'Title', defaultContent: '' },
                 {
-                    data: 'source',
+                    data: null,
                     title: 'URL',
                     render: function(data, type, row) {
+                        // Check if overrideUrl exists, if so, use it as the URL
+                        const url = row.overrideUrl ? row.overrideUrl : row.source;
                         // Render the URL as a clickable link
-                        return '<a href="' + data + '">' + data + '</a>';
+                        return '<a href="' + url + '">' + url + '</a>';
                     }
                 },
                 { data: 'type', title: 'Type', defaultContent: '', width: '5%'},
