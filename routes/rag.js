@@ -108,7 +108,7 @@ async function addSource(source, title, type, overrideUrl, sourceText) {
 }
 
 router.post('/sources', isAdmin, async (req, res) => {
-  const { source, title, type, overrideUrl, sourceText } = req.body;
+  let { source, title, type, overrideUrl, sourceText } = req.body;
 
   try {
       if (!source) {

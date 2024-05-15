@@ -31,6 +31,11 @@ router.get('/sources/add', isAdmin, function(req, res) {
     res.render('pages/sources/add');
 });
 
+router.get('/sources/import', isAdmin, function(req, res) {
+    res.locals.pageTitle = "Bulk import";
+    res.render('pages/sources/import');
+});
+
 // Admin route to render the add source page with loaderId
 router.get('/sources/:loaderId', isAdmin, function(req, res) {
     const loaderId = req.params.loaderId;
