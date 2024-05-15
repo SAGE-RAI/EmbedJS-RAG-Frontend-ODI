@@ -107,7 +107,7 @@ function addSelectedSources() {
             })
             .then(response => response.json())
             .then(data => {
-                let status = data.uniqueId ? `Error: ${data.uniqueId}` : `Error: ${data.error}`;
+                let status = data.uniqueId ? `Success: ${data.uniqueId}` : `Error: ${data.error}`;
                 statusCell.textContent = status;
             })
             .catch(error => {
