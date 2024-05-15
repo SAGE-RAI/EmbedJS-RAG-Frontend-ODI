@@ -1,6 +1,6 @@
 // ragInitializer.js
 
-const { RAGApplicationBuilder, SIMPLE_MODELS } = require('@llm-tools/embedjs');
+const { RAGApplicationBuilder, OpenAi } = require('@llm-tools/embedjs');
 const { MongoDBAtlas } = require('@llm-tools/embedjs/vectorDb/mongoAtlas');
 const { MongoCache } = require('@llm-tools/embedjs/cache/mongo');
 const { MongoConversations } = require('@llm-tools/embedjs/conversations/mongo');
@@ -32,13 +32,13 @@ async function initializeRAGApplication(MONGODB_URI, DB_NAME, COLLECTION_NAME, C
 
     try {
         const ragApplication = await new RAGApplicationBuilder()
-            .setModel(SIMPLE_MODELS.OPENAI_GPT3_TURBO)
+            .setModel(new OpenAi({ modelName: 'gpt-4o' }))
             .setVectorDb(db)
             .setCache(cachedb)
             .setConversations(conversationsdb)
             .build();
 
-        console.log('RAG Application is ready with OpenAI GPT-3.5 Turbo and MongoDB!');
+        console.log('RAG Application is ready with OpenAI GPT-4o Turbo and MongoDB!');
         return ragApplication;
     } catch (error) {
         console.error('Failed to setup RAG Application:', error);
