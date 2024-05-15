@@ -137,6 +137,9 @@ function renderMessage(entry, existingElement = null, newMessage = false) {
 }
 
 async function loadConversation(conversationId) {
+    const listCont = document.querySelector('.list_cont');
+    listCont.innerHTML = "";
+    document.getElementById('conversationId').value = null;
     try {
         // Fetch conversation data from the server
         const response = await fetch(`/conversation/${conversationId}`, {
@@ -150,8 +153,6 @@ async function loadConversation(conversationId) {
         }
 
         const conversation = await response.json();
-        const listCont = document.querySelector('.list_cont');
-        listCont.innerHTML = "";
         // Iterate over the entries object
         conversation.entries.forEach(entry => {
             renderMessage(entry,null,false)

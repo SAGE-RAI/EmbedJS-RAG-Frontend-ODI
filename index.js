@@ -128,7 +128,7 @@ function unauthorised(res) {
 
 app.get('/', function(req, res) {
   if (req.session.passport) {
-    res.redirect("/profile");
+    res.redirect("/conversation");
   } else {
     res.locals.pageTitle ="ODI AI Assistant";
     res.render('pages/auth');
