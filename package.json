@@ -1,7 +1,7 @@
 {
-  "name": "odi-nodejs-template",
+  "name": "embedjs-rag-frontend-odi",
   "version": "2.0.0",
-  "description": "The ODI NodeJS Template (Express + PassportJS + Google Oauth)",
+  "description": "A frontend for EmbedJS and proxy API for other chat interfaces using tokens.",
   "type": "module",
   "exports": "./index.js",
   "scripts": {
