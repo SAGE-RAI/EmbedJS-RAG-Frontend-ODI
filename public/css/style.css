@@ -330,6 +330,11 @@ sidebar .admin-menu {
 .msgs_cont .AI .rating .stars .star {
   cursor: pointer;
 }
+.copy-button {
+  padding: 5px 10px;
+  background: none;
+  float: right;
+}
 
 .closeButton {
   top: -5px;

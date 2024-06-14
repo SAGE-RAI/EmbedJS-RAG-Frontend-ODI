@@ -105,6 +105,26 @@ function renderMessage(entry, existingElement = null, newMessage = false) {
 
     // Append the three divs to the list item
     element.appendChild(messageDiv);
+
+    // Create the copy button and append only if sender is "AI"
+    if (entry.content.sender === "AI") {
+        const copyButton = document.createElement('button');
+        copyButton.classList.add('copy-button');
+        copyButton.innerHTML = '<i class="fa fa-copy"></i>'; // Add your desired icon here
+
+        // Add event listener to copy the message to the clipboard
+        copyButton.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent form submission
+            navigator.clipboard.writeText(entry.content.message).then(() => {
+                console.log('Message copied to clipboard');
+            }).catch(err => {
+                console.error('Failed to copy message: ', err);
+            });
+        });
+
+        element.appendChild(copyButton); // Insert copy button before sourcesDiv
+    }
+
     element.appendChild(sourcesDiv);
     element.appendChild(ratingDiv);
 
@@ -135,6 +155,7 @@ function renderMessage(entry, existingElement = null, newMessage = false) {
         });
     }
 }
+
 
 async function loadConversation(conversationId) {
     const listCont = document.querySelector('.list_cont');
