@@ -1,12 +1,12 @@
-const express = require('express');
+import express from 'express';
+import { verifyTokenMiddleware, verifyConversationMiddleware, processMessagesMiddleware } from '../middleware.js'; // Import your middleware functions
+import Conversation from '../models/conversation.js'; // Import the conversation model
+import { getMessages } from '../controllers/conversation.js'; // Import necessary functions from controllers
+import OpenAI from 'openai';
+
 const router = express.Router();
-const { verifyTokenMiddleware, verifyConversationMiddleware, processMessagesMiddleware } = require('../middleware'); // Import your middleware functions
-const Conversation = require('../models/conversation'); // Import the conversation model
-// Import necessary functions from controllers
-const { getMessages } = require('../controllers/conversation');
 
 // Open AI
-const OpenAI = require("openai");
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 var rag;
@@ -73,7 +73,7 @@ router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddlew
   }
 });
 
-module.exports = function(ragApplication) {
+export default function(ragApplication) {
   rag = ragApplication;
   return router;
 };

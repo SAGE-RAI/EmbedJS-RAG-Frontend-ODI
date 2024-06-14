@@ -1,4 +1,4 @@
-const Token = require('../models/token'); // Import the Token model
+import Token from '../models/token.js'; // Import the Token model
 
 async function verifyToken(accessToken) {
   try {
@@ -99,4 +99,4 @@ async function deleteOldTokens() {
 deleteOldTokens();
 const interval = setInterval(deleteOldTokens, 3600000);
 
-module.exports = { processToken , verifyToken, getUserIDFromToken };
+export { processToken , verifyToken, getUserIDFromToken };

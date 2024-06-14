@@ -1,11 +1,11 @@
-const express = require('express');
-const router = express.Router();
-const { verifyTokenMiddleware, verifyConversationMiddleware } = require('../middleware'); // Import your middleware functions
-const Conversation = require('../models/conversation'); // Import the Token model
+// Import necessary modules
+import express from 'express';
+import { verifyTokenMiddleware, verifyConversationMiddleware } from '../middleware.js'; // Import your middleware functions
+import Conversation from '../models/conversation.js'; // Import the Token model
+import { getConversation, createConversation, getMessages } from '../controllers/conversation.js'; // Import necessary functions from controllers
+import { getUserIDFromToken } from '../controllers/token.js';
 
-// Import necessary functions from controllers
-const { getConversation, createConversation, getMessages } = require('../controllers/conversation');
-const { getUserIDFromToken } = require('../controllers/token');
+const router = express.Router();
 
 // Create a new conversation and get an ID.
 router.post("/create", verifyTokenMiddleware, async (req, res) => {
@@ -151,4 +151,4 @@ try {
 }
 });
 
-module.exports = router;
+export default router;

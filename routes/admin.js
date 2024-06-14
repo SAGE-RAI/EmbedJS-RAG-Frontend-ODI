@@ -1,7 +1,7 @@
 // admin.js
 // admin routes
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
 function isAdmin(req, res, next) {
@@ -48,4 +48,4 @@ router.get('/sources', isAdmin, function(req, res) {
     res.render('pages/sources/view');
 });
 
-module.exports = router;
+export default router;

@@ -1,14 +1,14 @@
 // ragInitializer.js
 
-const { RAGApplicationBuilder, OpenAi } = require('@llm-tools/embedjs');
-const { MongoDBAtlas } = require('@llm-tools/embedjs/vectorDb/mongoAtlas');
-const { MongoCache } = require('@llm-tools/embedjs/cache/mongo');
-const { MongoConversations } = require('@llm-tools/embedjs/conversations/mongo');
+import { RAGApplicationBuilder, OpenAi } from '@llm-tools/embedjs';
+import { MongoDb } from '@llm-tools/embedjs/vectorDb/mongo';
+import { MongoCache } from '@llm-tools/embedjs/cache/mongo';
+import { MongoConversations } from '@llm-tools/embedjs/conversations/mongo';
 
 // Function to initialize the RAG application
 async function initializeRAGApplication(MONGODB_URI, DB_NAME, COLLECTION_NAME, CACHE_COLLECTION_NAME, CONVERSATIONS_COLLECTION_NAME) {
-    const db = new MongoDBAtlas({
-        uri: MONGODB_URI,
+    const db = new MongoDb({
+        connectionString: MONGODB_URI,
         dbName: DB_NAME,
         collectionName: COLLECTION_NAME
     });
@@ -26,7 +26,7 @@ async function initializeRAGApplication(MONGODB_URI, DB_NAME, COLLECTION_NAME, C
     });
 
     // Initialize the connection to MongoDB Atlas
-    await db.init();
+    //await db.init();
     await cachedb.init();
     await conversationsdb.init();
 
@@ -46,4 +46,4 @@ async function initializeRAGApplication(MONGODB_URI, DB_NAME, COLLECTION_NAME, C
     }
 }
 
-module.exports = { initializeRAGApplication };
+export { initializeRAGApplication };

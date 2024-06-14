@@ -1,6 +1,6 @@
 // models/token.js
 
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const tokenSchema = new mongoose.Schema({
   accessToken: {
@@ -23,4 +23,4 @@ const tokenSchema = new mongoose.Schema({
 
 const Token = mongoose.model('Token', tokenSchema);
 
-module.exports = Token;
+export default Token;

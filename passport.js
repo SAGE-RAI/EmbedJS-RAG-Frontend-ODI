@@ -1,9 +1,12 @@
-// auth.js
+// passport.js
 
-const passport = require('passport');
-const OAuth2Strategy = require('passport-oauth2').Strategy;
-const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
+import passport from 'passport';
+import { Strategy as OAuth2Strategy } from 'passport-oauth2';
+import { OAuth2Strategy as GoogleStrategy } from 'passport-google-oauth';
+import fetch from 'node-fetch';
 
+console.log("Hello");
+console.log(process.env.GOOGLE_CLIENT_ID);
 // Passport setup for Google authentication
 passport.use('google', new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
@@ -25,7 +28,7 @@ passport.use('django', new OAuth2Strategy({
   clientSecret: process.env.DJANGO_CLIENT_SECRET,
   callbackURL: process.env.DJANGO_CALLBACK_URL,
   grant_type: 'authorization_code', // Specify grant type
-  pkce: true, // Enable PKCE,
+  pkce: true, // Enable PKCE
   state: true,
   passReqToCallback: true
 }, (req, accessToken, refreshToken, profile, done) => {
@@ -64,4 +67,4 @@ passport.deserializeUser(function(obj, cb) {
   cb(null, obj);
 });
 
-module.exports = passport;
+export default passport;

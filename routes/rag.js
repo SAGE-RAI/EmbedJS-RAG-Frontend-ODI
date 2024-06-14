@@ -1,12 +1,10 @@
-// admin.js
-// rag routes
-
-const express = require('express');
-const router = express.Router();
-const { WebLoader, TextLoader } = require('@llm-tools/embedjs');
-const EmbeddingsCache = require('../models/embeddingsCache'); // Import the embeddingsCache model
+import express from 'express';
+import { WebLoader, TextLoader, PdfLoader } from '@llm-tools/embedjs';
+import EmbeddingsCache from '../models/embeddingsCache.js'; // Import the embeddingsCache model
 
 let ragApplication;
+
+const router = express.Router();
 
 // Function to set the RAG application instance
 function setRAGApplication(application) {
@@ -70,12 +68,16 @@ async function addSource(source, title, type, overrideUrl, sourceText) {
   if (!ragApplication) {
       throw new Error('RAG Application is not initialized');
   }
-  let loader = new WebLoader({ url: source });
+  let loader;
   if (sourceText) {
     loader = new TextLoader({ text: sourceText });
+  } else if (source.endsWith('.pdf')) {
+    loader = new PdfLoader({ filePathOrUrl: source });
+  } else {
+    loader = new WebLoader({ urlOrContent: source });
+
   }
   await ragApplication.addLoader(loader);
-
   const uniqueId = loader.getUniqueId();
   const updateObject = {
       source: source,
@@ -175,7 +177,7 @@ router.get('/sources', isAdmin, async (req, res) => {
 
     try {
       // Find all documents in the EmbeddingsCache collection
-      const loaders = await EmbeddingsCache.find({});
+      const loaders = await EmbeddingsCache.find({ loaderId: { $ne: "LOADERS_LIST_CACHE_KEY" } });
 
       res.json({ loaders });
     } catch (error) {
@@ -262,4 +264,4 @@ router.get('/context', async (req, res) => {
     }
 });
 
-module.exports = { router, setRAGApplication };
+export { router, setRAGApplication };

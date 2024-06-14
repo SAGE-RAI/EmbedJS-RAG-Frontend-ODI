@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const Conversation = require('../models/conversation'); // Import the Conversation model
+import mongoose from 'mongoose';
+import Conversation from '../models/conversation.js'; // Import the Conversation model
 
 async function createConversation(userId, contentObject, course, skillsFramework) {
     const conversationData = {
@@ -136,4 +136,4 @@ async function setRating(conversationId, entryId, rating, message) {
 deleteOldConversations();
 const interval = setInterval(deleteOldConversations, 3600000);
 
-module.exports = { createConversation, getConversations, getConversation, getMessages, setRating, deleteOldConversations };
+export { createConversation, getConversations, getConversation, getMessages, setRating, deleteOldConversations };

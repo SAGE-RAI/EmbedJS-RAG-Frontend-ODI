@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const embeddingsCacheSchema = new mongoose.Schema({
   loaderId: {
@@ -33,4 +33,4 @@ const embeddingsCacheSchema = new mongoose.Schema({
 
 const EmbeddingsCache = mongoose.model('EmbeddingsCache', embeddingsCacheSchema);
 
-module.exports = EmbeddingsCache;
+export default EmbeddingsCache;

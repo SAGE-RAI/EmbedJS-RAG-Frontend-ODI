@@ -1,10 +1,8 @@
 // Load environment variables securely
-require("dotenv").config({ path: "./config.env" });
-
+import './loadEnv.js';
 // MongoDB setup
-
-// MongoDB setup
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+import { __dirname } from './utils.js'; // Import the helper
 
 // Read MongoDB URI and database name from environment variables
 const mongoURI = process.env.MONGO_URI;
@@ -18,13 +16,11 @@ mongoose.connect(mongoURI, { dbName: mongoDB });
 
 const db = mongoose.connection;
 
-const Conversation = require('./models/conversation'); // Import the Token model
-
 // Database controllers
-const { retrieveOrCreateUser } = require('./controllers/user');
-const { processToken, getUserIDFromToken } = require('./controllers/token');
-const { getConversations } = require('./controllers/conversation');
-const { verifyTokenMiddleware } = require('./middleware'); // Import your middleware functions
+import { retrieveOrCreateUser } from './controllers/user.js';
+import { processToken, getUserIDFromToken } from './controllers/token.js';
+import { getConversations } from './controllers/conversation.js';
+import { verifyTokenMiddleware } from './middleware.js'; // Import your middleware functions
 
 // Check MongoDB connection
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
@@ -32,20 +28,20 @@ db.once('open', function() {
   console.log("Connected to MongoDB database");
 });
 
-const { initializeRAGApplication } = require('./ragInitializer.js');
+import { initializeRAGApplication } from './ragInitializer.js';
 
 // Express setup
-const express = require('express');
-const session = require('express-session');
-const cors = require("cors");
-const passport = require('./passport'); // Require the passport module
+import express from 'express';
+import session from 'express-session';
+import cors from 'cors';
+import passport from './passport.js'; // Require the passport module
 
 //Routes import
-const authRoutes = require('./routes/auth');
-const adminRoutes = require('./routes/admin');
-const { router: ragRouter, setRAGApplication } = require('./routes/rag');
-const conversationRoutes = require('./routes/conversation');
-const completionRoutes = require('./routes/completion');
+import authRoutes from './routes/auth.js';
+import adminRoutes from './routes/admin.js';
+import { router as ragRouter, setRAGApplication } from './routes/rag.js';
+import conversationRoutes from './routes/conversation.js';
+import completionRoutes from './routes/completion.js';
 
 const app = express();
 const port = process.env.PORT || 3080;
@@ -57,7 +53,7 @@ app.use(cors());
 app.use(express.static(__dirname + '/public')); // Public directory
 
 // Middleware for logging
-const logger = require('morgan');
+import logger from 'morgan';
 app.use(logger('dev'));
 
 // Middleware for parsing incoming requests
@@ -90,7 +86,7 @@ app.use(async function(req, res, next) {
   next();
 });
 
-// This function checks for a new token after a successful login, it doens't handle the token during login!!!
+// This function checks for a new token after a successful login, it doesn't handle the token during login!!!
 app.use(function(req, res, next) {
   // Check if accessToken exists in query parameters
   const accessToken = req.query.accessToken;

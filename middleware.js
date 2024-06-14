@@ -1,6 +1,6 @@
 // Import necessary functions from controllers
-const { verifyToken, getUserIDFromToken } = require('./controllers/token');
-const Conversation = require('./models/conversation'); // Import the Token model
+import { verifyToken, getUserIDFromToken } from './controllers/token.js';
+import Conversation from './models/conversation.js'; // Import the Token model
 
 // Define the middleware function for token verification
 const verifyTokenMiddleware = async (req, res, next) => {
@@ -110,4 +110,4 @@ const processMessagesMiddleware = async (req, res, next) => {
   }
 };
 
-module.exports = { verifyTokenMiddleware, verifyConversationMiddleware, processMessagesMiddleware };
+export { verifyTokenMiddleware, verifyConversationMiddleware, processMessagesMiddleware };

@@ -1,6 +1,6 @@
-// models/token.js
+// models/user.js
 
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 // Create user schema and model
 const userSchema = new mongoose.Schema({
@@ -14,4 +14,4 @@ const userSchema = new mongoose.Schema({
 
   const User = mongoose.model('User', userSchema);
 
-  module.exports = User;
+  export default  User;
