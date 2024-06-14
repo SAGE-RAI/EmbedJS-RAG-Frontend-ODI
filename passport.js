@@ -5,8 +5,6 @@ import { Strategy as OAuth2Strategy } from 'passport-oauth2';
 import { OAuth2Strategy as GoogleStrategy } from 'passport-google-oauth';
 import fetch from 'node-fetch';
 
-console.log("Hello");
-console.log(process.env.GOOGLE_CLIENT_ID);
 // Passport setup for Google authentication
 passport.use('google', new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
