@@ -1,11 +1,11 @@
 // authRoutes.js
 
-const express = require('express');
-const passport = require('../passport'); // Require the passport module
+import express from 'express';
+import passport from '../passport.js'; // Require the passport module
 
-const { retrieveOrCreateUser } = require('../controllers/user'); // Import necessary functions from controllers
-const { processToken } = require('../controllers/token'); // Import necessary functions from controllers
-const { createConversation } = require('../controllers/conversation');
+import { retrieveOrCreateUser } from '../controllers/user.js'; // Import necessary functions from controllers
+import { processToken } from '../controllers/token.js'; // Import necessary functions from controllers
+import { createConversation } from '../controllers/conversation.js';
 
 const router = express.Router();
 
@@ -60,4 +60,4 @@ router.get('/django/callback',
   }
 );
 
-module.exports = router;
+export default router;

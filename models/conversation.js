@@ -1,6 +1,6 @@
 // models/conversation.js
 
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const conversationSchema = new mongoose.Schema({
   userId: {
@@ -12,39 +12,47 @@ const conversationSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  course: {
-    id: {
-      type: String
-    },
-    title: {
-      type: String
-    }
-  },
-  contentObject: {
-    id: {
-      type: String
-    },
-    title: {
-      type: String
-    }
-  },
-  _skillsFramework: {
-    programmeUri: {
-      type: String
-    },
-    programmeTitle: {
-      type: String
-    }
-  },
-  plugin: {
+  conversationId: {
     type: String
   },
-  history: [{
-    message: {
-      role: {
+  construnctor: {
+    course: {
+      id: {
+        type: String
+      },
+      title: {
+        type: String
+      }
+    },
+    contentObject: {
+      id: {
+        type: String
+      },
+      title: {
+        type: String
+      }
+    },
+    _skillsFramework: {
+      programmeUri: {
+        type: String
+      },
+      programmeTitle: {
+        type: String
+      }
+    },
+    plugin: {
+      type: String
+    }
+  },
+  entries: [{
+    _id: {
+      type: String,
+    },
+    content: {
+      sender: {
         type: String,
       },
-      content: {
+      message: {
         type: String,
       }
     },
@@ -62,7 +70,8 @@ const conversationSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     },
-    context: {
+    sources: [],
+    constructor: {
       block: {
         id: {
           type: String
@@ -73,8 +82,10 @@ const conversationSchema = new mongoose.Schema({
       }
     }
   }]
+}, {
+  collection: 'Conversations' // Specify the collection name
 });
 
 const Conversation = mongoose.model('Conversation', conversationSchema);
 
-module.exports = Conversation;
+export default Conversation;

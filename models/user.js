@@ -1,6 +1,6 @@
-// models/token.js
+// models/user.js
 
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 // Create user schema and model
 const userSchema = new mongoose.Schema({
@@ -8,8 +8,10 @@ const userSchema = new mongoose.Schema({
     email: String,
     lastLogin: Date,
     lastLoginFormatted: String,
+  }, {
+    collection: 'Users' // Specify the collection name
   });
 
   const User = mongoose.model('User', userSchema);
 
-  module.exports = User;
+  export default  User;

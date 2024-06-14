@@ -1,4 +1,4 @@
-const User = require('../models/user'); // Import the Token model
+import User from '../models/user.js'; // Import the User model
 
 // Function to retrieve or create a user based on the profile data
 async function retrieveOrCreateUser(profile) {
@@ -16,4 +16,4 @@ async function retrieveOrCreateUser(profile) {
     return user;
 }
 
-module.exports = { retrieveOrCreateUser };
+export { retrieveOrCreateUser };

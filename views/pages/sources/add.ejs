@@ -1,0 +1,149 @@
+<%- include('../../partials/header-admin') %>
+<style>
+    .longText {
+        min-width: 80%;
+    }
+    .submit {
+        margin-top: 2em;
+    }
+</style>
+<h1><%= pageTitle %></h1>
+<div id="res" class="alert"></div>
+<form id="dataForm">
+
+</form>
+<script>
+const data = {};
+data.stakeholders = [];
+let stakeholder = {};
+stakeholder.stakeholder = "";
+stakeholder.type = "";
+data.stakeholders.push(stakeholder);
+$('#dataForm').html("");
+$('#result').html("");
+$('form').show();
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Fetch the schema from "schemas/panels.json"
+    fetch('/schemas/sources.json')
+        .then(response => response.json())
+        .then(schema => {
+            // Check if loaderId is present in the URL
+            const loaderId = '<%= typeof loaderId !== "undefined" ? loaderId : "" %>';
+
+            // Fetch existing data if loaderId is present
+            if (loaderId) {
+                fetch(`/rag/sources/${loaderId}`)
+                    .then(response => response.json())
+                    .then(existingData => {
+                        // Populate the form with existing data
+                        $('#dataForm').jsonForm({
+                            schema: schema.schema,
+                            form: schema.form,
+                            value: existingData.loader, // Assuming loader is the key containing the existing data
+                            onSubmit: function (errors, values) {
+                                updateSource(errors, values);
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error("Error fetching existing data:", error);
+                    });
+            } else {
+                // Render the form with empty data if loaderId is not present
+                $('#dataForm').jsonForm({
+                    schema: schema.schema,
+                    form: schema.form,
+                    value: data,
+                    onSubmit: function (errors, values) {
+                        addSource(errors, values);
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching schema:", error);
+        });
+});
+
+function updateSource(errors, values) {
+    if (errors) {
+        $('#res').html('<p>Please correct the errors in your form</p>');
+    } else {
+        // Disable the submit button
+        $('.submit').prop('disabled', true);
+        // Display a message while submitting
+        $('#res').html('<p>Updating, please wait...</p>');
+        var inputObject = values;
+        var postUrl = '/rag/sources';
+
+        if (inputObject.loaderId) {
+            postUrl += '/' + inputObject.loaderId;
+        }
+
+        // Post the input object to the appropriate URL
+        fetch(postUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(inputObject)
+        })
+        .then(response => response.json())
+        .then(data => {
+            $('#res').html(`<p>Successfully updated source</p>`);
+            $('.submit').prop('disabled', false);
+            setTimeout(function () {
+                $('#res').html('');
+            }, 5000);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            $('#res').html('<p>An error occurred while processing your request</p>');
+        });
+    }
+}
+
+function addSource(errors, values) {
+    if (errors) {
+        $('#res').html('<p>Please correct the errors in your form</p>');
+    } else {
+        // Disable the submit button
+        $('.submit').prop('disabled', true);
+        // Display a message while submitting
+        $('#res').html('<p>Submitting, please wait while vector embeddings are calculated</p>');
+        var inputObject = values;
+        var postUrl = '/rag/sources';
+
+        // Post the input object to the appropriate URL
+        fetch(postUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(inputObject)
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Handle response
+            if (data.uniqueId) {
+                // Update the input field with html class loaderId with the loaderId
+                $('.loaderId').val(data.uniqueId);
+                // Re-enable the submit button
+                $('.submit').prop('disabled', false);
+                $('#res').html(`<p>Successfully created with Unique ID: ${data.uniqueId}</p>`);
+            } else if (data.error) {
+                $('#res').html(`<p>Error: ${data.error}</p>`);
+            } else {
+                $('#res').html('<p>Unknown error occurred</p>');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            $('#res').html('<p>An error occurred while processing your request</p>');
+        });
+    }
+}
+</script>
+
+<%- include('../../partials/footer-admin') %>

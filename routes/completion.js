@@ -1,12 +1,15 @@
-const express = require('express');
+import express from 'express';
+import { verifyTokenMiddleware, verifyConversationMiddleware, processMessagesMiddleware } from '../middleware.js'; // Import your middleware functions
+import Conversation from '../models/conversation.js'; // Import the conversation model
+import { getMessages } from '../controllers/conversation.js'; // Import necessary functions from controllers
+import OpenAI from 'openai';
+
 const router = express.Router();
-const { verifyTokenMiddleware, verifyConversationMiddleware, processMessagesMiddleware } = require('../middleware'); // Import your middleware functions
-const Conversation = require('../models/conversation'); // Import the Token model
 
 // Open AI
-const OpenAI = require("openai");
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+var rag;
 
 // Route handler for generic open AI Completion, no tracking
 router.post("/", verifyTokenMiddleware, async (req, res) => {
@@ -22,63 +25,55 @@ router.post("/", verifyTokenMiddleware, async (req, res) => {
     }
 });
 
-// Route handler for /openai-completion/<conversationId> with tracking
-// Change this to take in a single message, get the history from the locally stored and then chat with OpenAI
 router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
   try {
       const conversationId = req.params.conversationId;
-      const { role, content } = req.body;
+      const { message, sender } = req.body;
 
       // Validate the incoming message from the user
-      if (!role || role !== 'user' || !content) {
-          return res.status(400).json({ error: 'Invalid message format. Must include role "user" and content.' });
+      if (!sender || sender !== 'HUMAN' || !message) {
+          return res.status(400).json({ error: 'Invalid message format. Must include sender "HUMAN" and message.' });
       }
 
-      // Get the conversation from the database
-      const conversation = await Conversation.findById(conversationId);
+      let contextQuery = message; // Default contextQuery is just the new query
 
-      if (!conversation) {
-          return res.status(404).json({ error: 'Conversation not found' });
-      }
+      // Fetch the last two messages from the conversation with sender "HUMAN"
 
-      // Add the user's message to the conversation history
-      const newMessage = {
-          message: {
-              role: role,
-              content: content
+      const messages = await getMessages(conversationId);
+
+      // Check if there are no messages in the conversation
+      if (messages.length === 0) {
+          console.log('No messages found in the conversation. Using default contextQuery.');
+      } else {
+          // Filter out messages sent by "HUMAN"
+          const humanMessages = messages.filter(msg => msg.sender === 'HUMAN');
+
+          // Get the last two messages or fewer if there are not enough
+          const contextMessages = humanMessages.slice(-2);
+
+          // Construct contextQuery based on existing messages
+          if (contextMessages.length === 1) {
+              contextQuery = `${contextMessages[0].message} ${message}`;
+          } else if (contextMessages.length === 2) {
+              contextQuery = `${contextMessages[0].message} ${contextMessages[1].message} ${message}`;
           }
-      };
-      conversation.history.push(newMessage);
+      }
 
-      // Call OpenAI to get the response
-      const response = await openai.chat.completions.create({
-          model: req.body.model || 'gpt-3.5-turbo',
-          messages: conversation.history.map(entry => entry.message),
-          temperature: req.body.temperature || 0.7,
-          max_tokens: req.body.max_tokens || 800,
-          top_p: req.body.top_p || 1,
-          frequency_penalty: req.body.frequency_penalty || 0,
-          presence_penalty: req.body.presence_penalty || 0,
-          stop: req.body.stop_tokens || null
-      });
+      // Get context embeddings for the contextQuery
+      const chunks = await rag.getContext(contextQuery);
 
-      // Add OpenAI response to the conversation history
-      const openaiResponse = response.choices[0].message;
-      conversation.history.push({ message: openaiResponse });
-
-      // Save the updated conversation to the database
-      await conversation.save();
-
-      // Update the OpenAI response to include the newly inserted message's _id
-      const insertedMessage = conversation.history[conversation.history.length - 1];
+      // Use context embeddings along with the new message to query the RAG model
+      const ragResponse = await rag.query(message, conversationId, chunks);
 
       // Return the response to the user
-      res.status(200).json(insertedMessage);
+      res.status(200).json(ragResponse);
   } catch (error) {
       console.error("Error in /openai-completion route:", error);
       res.status(error.status || 500).json({ error: error.message });
   }
 });
 
-
-module.exports = router;
+export default function(ragApplication) {
+  rag = ragApplication;
+  return router;
+};

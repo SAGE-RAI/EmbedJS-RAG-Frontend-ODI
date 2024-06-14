@@ -82,42 +82,85 @@ function scrollToBottom(containerId) {
     }
 }
 
-function renderMessage(message, existingElement = null) {
+function renderMessage(entry, existingElement = null, newMessage = false) {
     const listCont = document.querySelector('.list_cont');
 
     // Generate a unique ID for the new message, if not provided
-    const messageId = message.id || `msg-${new Date().getTime()}`;
+    const messageId = entry._id || `msg-${new Date().getTime()}`;
 
     // If an existing element is provided, use it; otherwise, create a new <li> element
     const element = existingElement || document.createElement('li');
+    element.innerHTML = '';
     element.id = messageId;
-    element.className = message.message.role; // Assuming 'role' is part of the message object for styling purposes
+    element.className = entry.content.sender; // Assuming 'sender' is part of the message object for styling purposes
+
+    // Create three divs inside the list item for message, sources, and rating with respective classes
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message');
+    const sourcesDiv = document.createElement('div');
+    sourcesDiv.classList.add('sources');
+    const ratingDiv = document.createElement('div');
+    ratingDiv.id = messageId;
+    ratingDiv.classList.add('rating');
+
+    // Append the three divs to the list item
+    element.appendChild(messageDiv);
+
+    // Create the copy button and append only if sender is "AI"
+    if (entry.content.sender === "AI") {
+        const copyButton = document.createElement('button');
+        copyButton.classList.add('copy-button');
+        copyButton.innerHTML = '<i class="fa fa-copy"></i>'; // Add your desired icon here
+
+        // Add event listener to copy the message to the clipboard
+        copyButton.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent form submission
+            navigator.clipboard.writeText(entry.content.message).then(() => {
+                console.log('Message copied to clipboard');
+            }).catch(err => {
+                console.error('Failed to copy message: ', err);
+            });
+        });
+
+        element.appendChild(copyButton); // Insert copy button before sourcesDiv
+    }
+
+    element.appendChild(sourcesDiv);
+    element.appendChild(ratingDiv);
 
     // If an existing element is provided, clear its content before rendering the new message
     if (!existingElement) {
         // Append the new <li> to the list container
         listCont.appendChild(element);
     } else {
-        // Clear existing content
-        element.innerHTML = '';
+        // Clear existing content of message, sources, and rating divs
+        messageDiv.innerHTML = '';
+        sourcesDiv.innerHTML = '';
+        ratingDiv.innerHTML = '';
     }
 
-    // Call renderMarkdownWordByWord or renderMarkdown to render the message inside the new element
+    // Call renderMarkdownWordByWord or renderMarkdown to render the message inside the message div
     // Make sure renderMarkdownWordByWord or renderMarkdown is defined in the global scope
-    if (message.message.role === "assistant") {
-        renderMarkdownWordByWord(message.message.content, element, () => {
-            renderRating(message.rating, element);
+    if (entry.content.sender === "AI" && newMessage) {
+        renderMarkdownWordByWord(entry.content.message, messageDiv, () => {
+            renderSources(entry.sources, sourcesDiv);
+            renderRating(entry.rating, ratingDiv);
         });
     } else {
-        renderMarkdown(message.message.content, element, () => {
-            if (message.message.role === "assistant") {
-                renderRating(message.rating, element);
+        renderMarkdown(entry.content.message, messageDiv, () => {
+            if (entry.content.sender === "AI") {
+                renderSources(entry.sources, sourcesDiv);
+                renderRating(entry.rating, ratingDiv);
             }
         });
     }
 }
 
+
 async function loadConversation(conversationId) {
+    const listCont = document.querySelector('.list_cont');
+    listCont.innerHTML = "";
+    document.getElementById('conversationId').value = null;
     try {
         // Fetch conversation data from the server
         const response = await fetch(`/conversation/${conversationId}`, {
@@ -131,22 +174,9 @@ async function loadConversation(conversationId) {
         }
 
         const conversation = await response.json();
-        const listCont = document.querySelector('.list_cont');
-        listCont.innerHTML = "";
-        // Iterate over the history object
-        conversation.history.forEach(message => {
-            // Generate a unique ID for the new message, if not provided
-            const messageId = message._id || `msg-${new Date().getTime()}`;
-            // If an existing element is provided, use it; otherwise, create a new <li> element
-            const element = document.createElement('li');
-            element.id = messageId;
-            element.className = message.message.role; // Assuming 'role' is part of the message object for styling purposes
-            listCont.appendChild(element);
-            renderMarkdown(message.message.content, element, () => {
-                if (message.message.role === "assistant") {
-                    renderRating(message.rating, element);
-                }
-            });
+        // Iterate over the entries object
+        conversation.entries.forEach(entry => {
+            renderMessage(entry,null,false)
         });
         document.getElementById('conversationId').value = conversationId;
         // Update the address bar with the conversation ID
@@ -157,7 +187,116 @@ async function loadConversation(conversationId) {
     }
 }
 
+async function renderSources(sources, element) {
+    if (sources && sources.length > 0) {
+        const sourcesHeading = document.createElement('h3');
+        sourcesHeading.textContent = 'Sources';
+
+        const tooltipIcon = document.createElement('span');
+        tooltipIcon.textContent = '?';
+        tooltipIcon.classList.add('tooltip-icon');
+        tooltipIcon.setAttribute('data-tooltip', 'Sources are shown for the last three queries you have made. You might need to refine your query if the sources are missing or innacurate.');
+
+        sourcesHeading.appendChild(tooltipIcon);
+        element.appendChild(sourcesHeading);
+
+        const sourcesList = document.createElement('ul');
+        sourcesList.classList.add('sources-list');
+
+        for (const sourceObj of sources) {
+            const listItem = document.createElement('li');
+            const link = document.createElement('a');
+
+            // If loaderId is present, fetch title from /rag/sources/:loaderId
+            if (sourceObj.loaderId) {
+                try {
+                    const response = await fetch(`/rag/sources/${sourceObj.loaderId}`);
+                    const data = await response.json();
+                    // Set link text to the title if available, otherwise use source URL
+                    link.textContent = data.loader.title || sourceObj.source;
+
+                    // Set href to overrideUrl if available, otherwise use source URL
+                    link.href = data.loader.overrideUrl || sourceObj.source;
+                } catch (error) {
+                    console.error('Error fetching source title:', error);
+                    // If there's an error, use source URL for both link text and href
+                    link.textContent = sourceObj.source;
+                    link.href = sourceObj.source;
+                }
+            } else {
+                // If loaderId is not present, use source URL for both link text and href
+                link.textContent = sourceObj.source;
+                link.href = sourceObj.source;
+            }
+
+            link.target = '_blank'; // Open link in a new tab
+            listItem.appendChild(link);
+
+            sourcesList.appendChild(listItem);
+        }
+
+        element.appendChild(sourcesList);
+
+        // Initialize tooltips using plain JavaScript for simplicity
+        tooltipIcon.addEventListener('mouseover', function() {
+            const tooltipText = this.getAttribute('data-tooltip');
+            const tooltip = document.createElement('div');
+            tooltip.classList.add('tooltip');
+            tooltip.textContent = tooltipText;
+            this.appendChild(tooltip);
+        });
+
+        tooltipIcon.addEventListener('mouseout', function() {
+            const tooltip = this.querySelector('.tooltip');
+            if (tooltip) {
+                tooltip.remove();
+            }
+        });
+    }
+}
+
+ // Need to move this somewhere.
+const defaultRatingResponses = {
+    1: [
+        "Don't like the style",
+        "Not factually correct",
+        "Didn't fully follow instructions",
+        "Refused when it shouldn't have",
+        "Wrong or no sources"
+    ],
+    2: [
+        "Not helpful",
+        "Confusing response",
+        "Didn't provide enough detail",
+        "Incomplete information",
+        "Wrong or no sources",
+    ],
+    3: [
+        "Somewhat helpful",
+        "Partially correct",
+        "Room for improvement",
+        "Average response",
+        "Needs more detail"
+    ],
+    4: [
+        "Quite helpful",
+        "Mostly correct",
+        "Good response",
+        "Well-written",
+        "Informative"
+    ],
+    5: [
+        "Very helpful",
+        "Completely correct",
+        "Excellent response",
+        "Clear and concise",
+        "Highly informative"
+    ]
+};
+
 function renderRating(rating, element) {
+    console.log(rating);
+    element.innerHTML = '';
     const ratingContainer = document.createElement('div');
     ratingContainer.classList.add('rating-container');
 
@@ -188,19 +327,136 @@ function renderRating(rating, element) {
             const star = document.createElement('span');
             star.classList.add('star');
             star.innerHTML = '☆ '; // Unicode for empty star symbol
-            star.onmouseenter = () => handleRatingHover(messageId, i + 1);
-            star.onmouseleave = () => handleRatingHover(messageId, 0);
-            star.onclick = () => handleRating(messageId, i + 1);
+            star.onclick = () => {
+                const rating = i + 1;
+                handleRating(element, messageId, rating, "");
+            };
             starsContainer.appendChild(star);
         }
     }
     ratingContainer.appendChild(starsContainer);
     element.appendChild(ratingContainer);
-    scrollToBottom('msgs_cont');
+}
+
+function displayResponseChoices(element, messageId, rating) {
+    const responses = defaultRatingResponses[rating.rating];
+    const choicesContainer = document.createElement('div');
+    choicesContainer.classList.add('response-choices');
+
+    const closeButton = document.createElement('span');
+    closeButton.classList.add('closeButton');
+    closeButton.innerHTML = 'X';
+    closeButton.onclick = () => {
+        renderRating(rating, element);
+    };
+    choicesContainer.appendChild(closeButton);
+
+    const heading = document.createElement('h3');
+    heading.innerHTML = 'Tell us more?';
+    choicesContainer.appendChild(heading);
+
+    // Create buttons for each response choice
+    responses.forEach(response => {
+        const choiceButton = document.createElement('button');
+        choiceButton.type = 'button';
+        choiceButton.textContent = response;
+        choiceButton.onclick = () => {
+            handleRating(element, messageId, rating.rating, response);
+        };
+
+        choicesContainer.appendChild(choiceButton);
+    });
+
+    // Create "Other" button
+    const otherButton = document.createElement('button');
+    otherButton.type = 'button';
+    otherButton.textContent = 'Other';
+    otherButton.onclick = () => {
+        clearChoicesAndDisplayInput(element, messageId, rating);
+    };
+    choicesContainer.appendChild(otherButton);
+
+    element.appendChild(choicesContainer);
+}
+
+function clearChoicesAndDisplayInput(element, messageId, rating) {
+    // Remove all buttons
+    element.innerHTML = '';
+
+    // Create a text input field
+    const inputContainer = document.createElement('div');
+    inputContainer.classList.add('other-input-container');
+
+    const heading = document.createElement('h3');
+    heading.innerHTML = 'Tell us more?';
+
+    const inputField = document.createElement('textarea');
+    inputField.placeholder = 'Enter your own comment...';
+
+    const submitButton = document.createElement('button');
+    submitButton.type = 'button';
+    submitButton.textContent = 'Submit';
+    submitButton.onclick = () => {
+        const customComment = inputField.value.trim();
+        if (customComment) {
+            handleRating(element, messageId, rating.rating, customComment);
+        }
+    };
+
+    // Create close button (X)
+    const closeButton = document.createElement('span');
+    closeButton.classList.add('closeButton');
+    closeButton.innerHTML = 'X';
+    closeButton.onclick = () => {
+        renderRating(rating, element);
+    };
+
+    inputContainer.appendChild(closeButton);
+    inputContainer.appendChild(heading);
+    inputContainer.appendChild(inputField);
+    inputContainer.appendChild(submitButton);
+    element.appendChild(inputContainer);
+}
+
+async function handleRating(element, entryId, starRating, message) {
+    try {
+        // Get the conversation ID from the hidden input field
+        const conversationId = document.getElementById('conversationId').value;
+
+        // Construct the rating object
+        const ratingData = {
+            rating: starRating,
+            comment: message
+        };
+
+        // Perform a POST request to update the rating
+        const response = await fetch(`/conversation/${conversationId}/messages/${entryId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rating: ratingData })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update rating');
+        }
+
+        const responseData = await response.json();
+        renderRating(ratingData,element);
+        if (message === "") {
+            displayResponseChoices(element, entryId, ratingData);
+        }
+
+        // Optionally, handle success response
+
+    } catch (error) {
+        console.error('Error handling rating:', error);
+        // Optionally, handle error
+    }
 }
 
 function handleRatingHover(messageId, rating) {
-    console.log('in here');
     console.log(messageId);
     console.log(rating);
     // Get the message container element by its ID
@@ -222,7 +478,7 @@ function createResponseNode() {
     const listCont = document.querySelector('.list_cont');
     // Create a new <li> element
     const newLi = document.createElement('li');
-    newLi.className = 'assistant';
+    newLi.className = 'AI';
 
     // Create a <div> element for the typing animation
     const typingAnimationDiv = document.createElement('div');
@@ -282,8 +538,8 @@ async function handleSubmit(event) {
     let conversationId = conversationIdInput.value; // Get the conversation ID value from the input field
 
     const messageData = {
-        content: content,
-        role: 'user'
+        message: content,
+        sender: 'HUMAN'
     };
 
     // If there's no existing conversation ID, call newConversation to get it
@@ -307,8 +563,8 @@ async function handleSubmit(event) {
 
 async function sendMessage(conversationId, message) {
     let newMessage = {};
-    newMessage.message = message;
-    renderMessage(newMessage);
+    newMessage.content = message;
+    renderMessage(newMessage,null,true);
     const messageInput = document.getElementById('txt');
     const responseLi = createResponseNode();
     messageInput.value = ''; // Clear the input field
@@ -327,7 +583,7 @@ async function sendMessage(conversationId, message) {
         }
 
         const responseMessage = await response.json();
-        renderMessage(responseMessage, responseLi); // Render the message
+        renderMessage(responseMessage, responseLi,true); // Render the message
     } catch (error) {
         console.error('Error sending message:', error);
         alert('Failed to send message. Please try again.');

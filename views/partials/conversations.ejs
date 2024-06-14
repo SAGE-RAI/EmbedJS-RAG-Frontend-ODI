@@ -34,10 +34,17 @@
                         categorizedConversations[category].forEach(conversation => {
                             const conversationItem = document.createElement('li');
                             const conversationLink = document.createElement('a');
-                            conversationLink.textContent = getTitle(conversation.history[0].message.content);
+                            conversationLink.textContent = getTitle(conversation.entries[0].content.message);
                             conversationLink.href = `javascript:loadConversation('${conversation._id}')`; // Call loadConversation with conversationId
                             conversationLink.classList.add('conversation');
                             conversationItem.appendChild(conversationLink);
+
+                            // Add delete button for each conversation
+                            const deleteIcon = document.createElement('i');
+                            deleteIcon.classList.add('fa', 'fa-trash', 'delete-icon');
+                            deleteIcon.onclick = () => deleteConversation(conversation._id);
+                            conversationItem.appendChild(deleteIcon);
+
                             categoryList.appendChild(conversationItem); // Add conversation to the list
                         });
                     };
@@ -57,6 +64,29 @@
         });
     }
 
+    // Function to delete a conversation by its ID
+    function deleteConversation(conversationId) {
+        if (confirm("Are you sure you want to delete this conversation?")) {
+            fetch(`/conversation/${conversationId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Reload conversations after deletion
+                    updateConversations();
+                } else {
+                    throw new Error('Failed to delete conversation');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting conversation:', error);
+            });
+        }
+    }
+
     // Function to categorize conversations based on the date of the last message
     function categorizeConversations(conversations) {
         const categorized = {
@@ -69,7 +99,7 @@
 
         // Iterate over conversations and categorize them
         conversations.forEach(conversation => {
-            const lastMessageDate = new Date(conversation.history[conversation.history.length - 1].timestamp);3
+            const lastMessageDate = new Date(conversation.entries[conversation.entries.length - 1].timestamp);3
             const currentDate = new Date();
             const timeDiff = currentDate.getTime() - lastMessageDate.getTime();
             const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));

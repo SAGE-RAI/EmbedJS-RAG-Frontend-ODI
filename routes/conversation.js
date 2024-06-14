@@ -1,11 +1,11 @@
-const express = require('express');
-const router = express.Router();
-const { verifyTokenMiddleware, verifyConversationMiddleware } = require('../middleware'); // Import your middleware functions
-const Conversation = require('../models/conversation'); // Import the Token model
+// Import necessary modules
+import express from 'express';
+import { verifyTokenMiddleware, verifyConversationMiddleware } from '../middleware.js'; // Import your middleware functions
+import Conversation from '../models/conversation.js'; // Import the Token model
+import { getConversation, createConversation, getMessages } from '../controllers/conversation.js'; // Import necessary functions from controllers
+import { getUserIDFromToken } from '../controllers/token.js';
 
-// Import necessary functions from controllers
-const { getConversation, createConversation, getMessages } = require('../controllers/conversation');
-const { getUserIDFromToken } = require('../controllers/token');
+const router = express.Router();
 
 // Create a new conversation and get an ID.
 router.post("/create", verifyTokenMiddleware, async (req, res) => {
@@ -60,6 +60,36 @@ router.get("/:conversationId", verifyTokenMiddleware, verifyConversationMiddlewa
     }
 });
 
+// Route to handle post of rating data, could be expended to handle other data, but currently has to match schema
+router.post("/:conversationId/messages/:messageId", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
+    try {
+        const { conversationId, messageId } = req.params;
+        const { rating } = req.body;
+
+        // Find the conversation by its ID
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+        return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        // Find the index of the message in the conversation's entries array
+        const entryIndex = conversation.entries.findIndex(entry => entry._id === messageId);
+        if (entryIndex === -1) {
+        return res.status(404).json({ error: 'Message not found' });
+        }
+
+        // Update the rating object for the message
+        conversation.entries[entryIndex].rating = rating;
+
+        // Save the updated conversation
+        await conversation.save();
+
+        res.status(200).json({ message: 'Rating updated successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 // Route to handle post of metadata for a conversation
 // Need to update this handle message posting, get the conversation, append the message, trim it so we don't send too many tokens and return the response.
@@ -91,6 +121,25 @@ router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddlew
     }
 });
 
+// Route to delete a conversation by its ID
+router.delete("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+
+        // Find the conversation by its ID and delete it
+        const deletedConversation = await Conversation.findByIdAndDelete(conversationId);
+
+        if (!deletedConversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        res.status(200).json({ message: 'Conversation deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Route handler for getting just the messages related to a conversation
 router.get("/:conversationId/messages", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
 try {
@@ -102,35 +151,4 @@ try {
 }
 });
 
-// Route to handle post of rating data, could be expended to handle other data, but currently has to match schema
-router.post("/:conversationId/messages/:messageId", verifyTokenMiddleware, verifyConversationMiddleware, async (req, res) => {
-try {
-    const { conversationId, messageId } = req.params;
-    const { rating } = req.body;
-
-    // Find the conversation by its ID
-    const conversation = await Conversation.findById(conversationId);
-    if (!conversation) {
-    return res.status(404).json({ error: 'Conversation not found' });
-    }
-
-    // Find the index of the message in the conversation's history array
-    const messageIndex = conversation.history.findIndex(message => message._id.toString() === messageId);
-    if (messageIndex === -1) {
-    return res.status(404).json({ error: 'Message not found' });
-    }
-
-    // Update the rating object for the message
-    conversation.history[messageIndex].rating = rating;
-
-    // Save the updated conversation
-    await conversation.save();
-
-    res.status(200).json({ message: 'Rating updated successfully' });
-} catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
-}
-});
-
-module.exports = router;
+export default router;

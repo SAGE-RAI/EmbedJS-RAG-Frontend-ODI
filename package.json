@@ -1,11 +1,13 @@
 {
   "name": "odi-nodejs-template",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "The ODI NodeJS Template (Express + PassportJS + Google Oauth)",
-  "main": "index.js",
+  "type": "module",
+  "exports": "./index.js",
   "scripts": {
     "start": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "DEBUG=embedjs:* node index.js"
   },
   "repository": {
     "type": "git",
@@ -18,6 +20,7 @@
   },
   "homepage": "https://github.com/theodi/nodejs-oauth-template/#readme",
   "dependencies": {
+    "@llm-tools/embedjs": "github:theodi/embedJs#main",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.8",
@@ -26,6 +29,7 @@
     "mongoose": "^8.2.1",
     "morgan": "^1.10.0",
     "nodemon": "^3.1.0",
+    "office-text-extractor": "^3.0.3",
     "openai": "^4.29.0",
     "passport": "^0.6.0",
     "passport-google-oauth": "^2.0.0",

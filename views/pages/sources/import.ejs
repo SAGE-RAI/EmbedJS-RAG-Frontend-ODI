@@ -1,0 +1,120 @@
+<%- include('../../partials/header-admin') %>
+<style>
+    .longText {
+        min-width: 80%;
+    }
+    .submit {
+        margin-top: 2em;
+    }
+</style>
+<h1><%= pageTitle %></h1>
+<div id="res" class="alert"></div>
+<form id="csvUploadForm" enctype="multipart/form-data">
+    <input type="file" id="csvFile" name="csvFile" accept=".csv" required />
+    <button type="button" onclick="uploadCSV()">Upload CSV</button>
+</form>
+<div id="csvTable" style="display:none;">
+    <h2>CSV Content</h2>
+    <table id="sourceTable" border="1">
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="selectAll" /></th>
+                <th>Title</th>
+                <th>Source</th>
+                <th>Import Status</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <button type="button" class="submit" onclick="addSelectedSources()">Add Selected Sources</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+<script>
+document.getElementById("selectAll").addEventListener("click", function() {
+    let checkboxes = document.querySelectorAll("#sourceTable tbody input[type='checkbox']");
+    checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+});
+
+let existingSources = {};
+
+// Fetch existing sources
+fetch('/rag/sources')
+    .then(response => response.json())
+    .then(data => {
+        data.loaders.forEach(source => {
+            const url = source.overrideUrl ? source.overrideUrl : source.source;
+            existingSources[url] = source.loadedDate;
+        });
+    })
+    .catch(error => {
+        console.error('Error fetching existing sources:', error);
+    });
+
+function uploadCSV() {
+    let fileInput = document.getElementById('csvFile');
+    let file = fileInput.files[0];
+    if (file) {
+        Papa.parse(file, {
+            header: true,
+            complete: function(results) {
+                parseCSV(results.data);
+            },
+            error: function(error) {
+                alert('Error parsing CSV file: ' + error.message);
+            }
+        });
+    } else {
+        alert('Please select a CSV file to upload.');
+    }
+}
+
+function parseCSV(data) {
+    let table = document.getElementById('sourceTable').getElementsByTagName('tbody')[0];
+    table.innerHTML = '';
+    data.forEach(row => {
+        if (row.title && row.source) {
+            let newRow = table.insertRow();
+            let importedStatus = existingSources[row.source] ? `Imported ${new Date(existingSources[row.source]).toLocaleString()}` : '';
+            newRow.innerHTML = `
+                <td>${existingSources[row.source] ? '' : '<input type="checkbox" />'}</td>
+                <td>${row.title}</td>
+                <td>${row.source}</td>
+                <td class="import-status">${importedStatus}</td>
+            `;
+        }
+    });
+    document.getElementById('csvTable').style.display = 'block';
+}
+
+function addSelectedSources() {
+    let rows = document.querySelectorAll("#sourceTable tbody tr");
+    rows.forEach(row => {
+        let checkbox = row.querySelector('input[type="checkbox"]');
+        if (checkbox && checkbox.checked) {
+            let title = row.cells[1].textContent;
+            let source = row.cells[2].textContent;
+            let statusCell = row.cells[3];
+            let postUrl = '/rag/sources';
+            let inputObject = { title, source };
+
+            fetch(postUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(inputObject)
+            })
+            .then(response => response.json())
+            .then(data => {
+                let status = data.uniqueId ? `Success: ${data.uniqueId}` : `Error: ${data.error}`;
+                statusCell.textContent = status;
+            })
+            .catch(error => {
+                statusCell.textContent = `Error: ${error.message}`;
+            });
+        }
+    });
+}
+</script>
+<%- include('../../partials/footer-admin') %>

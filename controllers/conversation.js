@@ -1,41 +1,49 @@
-const mongoose = require('mongoose');
-const Conversation = require('../models/conversation'); // Import the Conversation model
+import mongoose from 'mongoose';
+import Conversation from '../models/conversation.js'; // Import the Conversation model
 
 async function createConversation(userId, contentObject, course, skillsFramework) {
     const conversationData = {
         userId: userId
     };
 
+    const constructor = {};
     if (contentObject !== undefined && contentObject !== null) {
-        conversationData.contentObject = contentObject;
+        constructor.contentObject = contentObject;
     }
 
     if (course !== undefined && course !== null) {
-        conversationData.course = course;
+        constructor.course = course;
     }
 
     if (skillsFramework !== undefined && skillsFramework !== null) {
-        conversationData._skillsFramework = skillsFramework;
+        constructor._skillsFramework = skillsFramework;
     }
+    conversationData.constructor = constructor; // Correct the typo: `construnctor` to `constructor`
 
     const conversation = new Conversation(conversationData);
 
     await conversation.save();
 
-    return conversation._id;
+    // Convert ObjectId to string and set it as conversationId
+    const conversationId = conversation._id.toString();
+
+    // Update the conversation with the string version of ObjectId
+    await Conversation.findByIdAndUpdate(conversation._id, { $set: { conversationId: conversationId } });
+
+    return conversationId;
 }
 
 async function getConversations(contentObjectId, userId) {
     try {
         let query = { 'userId': new mongoose.Types.ObjectId(userId) };
         if (contentObjectId) {
-            query['contentObject.id'] = contentObjectId;
+            query['constructor.contentObject.id'] = contentObjectId;
         }
         const conversations = await Conversation.find(query);
 
         // Filter out conversations with empty or undefined history
         const filteredConversations = conversations.filter(conversation => {
-            return conversation.history && conversation.history.length > 0;
+            return conversation.entries && conversation.entries.length > 0;
         });
 
         return filteredConversations;
@@ -65,7 +73,7 @@ async function getMessages(conversationId) {
         if (!conversation) {
             throw new Error('Conversation not found.');
         }
-        return conversation.history.map(entry => entry.message);
+        return conversation.entries.map(entry => entry.content);
     } catch (error) {
         throw new Error('Error fetching messages: ' + error.message);
     }
@@ -80,7 +88,7 @@ async function deleteOldConversations() {
       // Find conversations that meet the criteria
       const conversationsToDelete = await Conversation.find({
         creationDate: { $lt: cutoffTime }, // Conversations created over 24 hours ago
-        'history.0': { $exists: false } // Conversations with an empty history
+        'entries.0': { $exists: false } // Conversations with an empty history
       });
 
       // Iterate over each conversation document and delete it
@@ -95,8 +103,37 @@ async function deleteOldConversations() {
     }
 }
 
+async function setRating(conversationId, entryId, rating, message) {
+    try {
+        // Find the conversation by conversationId
+        const conversation = await Conversation.findOne({ _id: conversationId });
+
+        if (!conversation) {
+            throw new Error('Conversation not found');
+        }
+
+        // Find the entry with the given entryId in the conversation
+        const entry = conversation.entries.find(e => e._id === entryId);
+
+        if (!entry) {
+            throw new Error('Entry not found');
+        }
+
+        // Update the rating and message of the entry
+        entry.rating = { rating, comment: message };
+
+        // Save the updated conversation
+        await conversation.save();
+
+        return { success: true, message: 'Rating updated successfully' };
+    } catch (error) {
+        console.error('Error setting rating:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 //Delete old conversations
 deleteOldConversations();
 const interval = setInterval(deleteOldConversations, 3600000);
 
-module.exports = { createConversation, getConversations, getConversation, getMessages, deleteOldConversations };
+export { createConversation, getConversations, getConversation, getMessages, setRating, deleteOldConversations };
