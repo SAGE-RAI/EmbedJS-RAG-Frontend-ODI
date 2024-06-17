@@ -11,16 +11,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/theodi/nodejs-oauth-template.git"
+    "url": "git+ssh://git@github.com:SAGE-RAI/EmbedJS-RAG-Frontend-ODI.git"
   },
   "author": "David Tarrant",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/theodi/nodejs-oauth-template/issues"
+    "url": "https://github.com:SAGE-RAI/EmbedJS-RAG-Frontend-ODI/issues"
   },
-  "homepage": "https://github.com/theodi/nodejs-oauth-template/#readme",
+  "homepage": "https://github.com:SAGE-RAI/EmbedJS-RAG-Frontend-ODI/#readme",
   "dependencies": {
-    "@llm-tools/embedjs": "github:theodi/embedJs#main",
+    "@llm-tools/embedjs": "github:SAGE-RAI/embedJs#main",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.8",

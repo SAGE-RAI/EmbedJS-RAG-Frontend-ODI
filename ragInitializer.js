@@ -1,7 +1,7 @@
 // ragInitializer.js
 
 import { RAGApplicationBuilder, OpenAi } from '@llm-tools/embedjs';
-import { MongoDb } from '@llm-tools/embedjs/vectorDb/mongo';
+import { MongoDb } from '@llm-tools/embedjs/vectorDb/mongodb';
 import { MongoCache } from '@llm-tools/embedjs/cache/mongo';
 import { MongoConversations } from '@llm-tools/embedjs/conversations/mongo';
 
