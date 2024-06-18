@@ -175,6 +175,47 @@ sidebar .admin-menu {
   text-decoration: underline;
   cursor: pointer;
 }
+.menu-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 10px 6px;
+}
+
+.menu {
+  display: none;
+  position: absolute;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+  color: black;
+  left: 210px;
+}
+
+.menu.show {
+  display: block;
+}
+
+.menu-option {
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.menu-option:hover {
+  background-color: #f0f0f0;
+}
+
+.conversation-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.conversation {
+  flex-grow: 1;
+  margin-right: 10px;
+}
 
 .topper {
   width: auto;
@@ -376,6 +417,8 @@ sidebar .admin-menu {
   min-width: 320px;
   min-height: 120px;
 }
+
+
 
 /* Style for the tooltip icon */
 .tooltip-icon {

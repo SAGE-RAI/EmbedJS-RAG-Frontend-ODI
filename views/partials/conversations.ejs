@@ -15,6 +15,7 @@
 
                 // Group conversations by date categories
                 const categorizedConversations = categorizeConversations(conversations);
+
                 // Iterate over categorized conversations and render them
                 Object.keys(categorizedConversations).forEach(category => {
                     // Create a new div for each category
@@ -33,21 +34,63 @@
                     if (categorizedConversations[category].length > 0) {
                         categorizedConversations[category].forEach(conversation => {
                             const conversationItem = document.createElement('li');
+
+                            // Create conversation link
                             const conversationLink = document.createElement('a');
-                            conversationLink.textContent = getTitle(conversation.entries[0].content.message);
-                            conversationLink.href = `javascript:loadConversation('${conversation._id}')`; // Call loadConversation with conversationId
+                            conversationLink.textContent = conversation.title ? conversation.title : getTitle(conversation.entries[0].content.message);
+                            conversationLink.href = `javascript:loadConversation('${conversation._id}')`;
                             conversationLink.classList.add('conversation');
-                            conversationItem.appendChild(conversationLink);
 
-                            // Add delete button for each conversation
-                            const deleteIcon = document.createElement('i');
-                            deleteIcon.classList.add('fa', 'fa-trash', 'delete-icon');
-                            deleteIcon.onclick = () => deleteConversation(conversation._id);
-                            conversationItem.appendChild(deleteIcon);
+                            // Create a container for the link and menu
+                            const conversationContainer = document.createElement('div');
+                            conversationContainer.classList.add('conversation-container');
+                            conversationContainer.appendChild(conversationLink);
 
-                            categoryList.appendChild(conversationItem); // Add conversation to the list
+                            // Create menu button (three dots)
+                            const menuButton = document.createElement('button');
+                            menuButton.classList.add('menu-button');
+                            menuButton.innerHTML = '&#x22EE;'; // Vertical ellipsis (three dots)
+                            menuButton.onclick = (event) => {
+                                event.stopPropagation();
+                                closeAllMenus();
+                                toggleMenu(menuButton);
+                            };
+
+                            // Create the menu
+                            const menu = document.createElement('div');
+                            menu.classList.add('menu');
+
+                            // Rename option
+                            const renameOption = document.createElement('div');
+                            renameOption.classList.add('menu-option');
+                            renameOption.textContent = 'Rename';
+                            renameOption.onclick = () => {
+                                closeAllMenus();
+                                renameConversation(conversationItem, conversation._id);
+                            };
+                            menu.appendChild(renameOption);
+
+                            // Delete option
+                            const deleteOption = document.createElement('div');
+                            deleteOption.classList.add('menu-option');
+                            deleteOption.textContent = 'Delete';
+                            deleteOption.onclick = () => {
+                                closeAllMenus();
+                                deleteConversation(conversation._id);
+                            };
+                            menu.appendChild(deleteOption);
+
+                            // Append menu to button and button to container
+                            conversationContainer.appendChild(menuButton);
+                            conversationContainer.appendChild(menu);
+
+                            // Append the container to the list item
+                            conversationItem.appendChild(conversationContainer);
+
+                            // Append conversation item to the list
+                            categoryList.appendChild(conversationItem);
                         });
-                    };
+                    }
 
                     // Append the category list to the category div
                     categoryDiv.appendChild(categoryList);
@@ -55,12 +98,65 @@
                     // Append the category div to the conversations container
                     conversationsContainer.appendChild(categoryDiv);
                 });
-            } catch(err) {
+            } catch (err) {
                 console.error('Error updating conversations:', err);
             }
         })
         .catch(error => {
             console.error('Error fetching conversations:', error);
+        });
+    }
+
+    document.addEventListener('click', (event) => {
+        const menus = document.querySelectorAll('.menu');
+        menus.forEach(menu => {
+            if (!menu.contains(event.target) && !menu.previousElementSibling.contains(event.target)) {
+                menu.classList.remove('show');
+            }
+        });
+    });
+
+    function toggleMenu(button) {
+        const menu = button.nextElementSibling;
+        menu.classList.toggle('show');
+    }
+
+    function closeAllMenus() {
+        const menus = document.querySelectorAll('.menu');
+        menus.forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+
+    function renameConversation(conversationItem, conversationId) {
+        const conversationLink = conversationItem.querySelector('.conversation');
+        conversationLink.contentEditable = true;
+        conversationLink.focus();
+        const range = document.createRange();
+        range.selectNodeContents(conversationLink);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        conversationLink.onblur = () => {
+            conversationLink.contentEditable = false;
+            saveConversationTitle(conversationId, conversationLink.textContent);
+        };
+    }
+
+    function saveConversationTitle(conversationId, newTitle) {
+        fetch(`/conversation/${conversationId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ title: newTitle })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Title updated successfully:', data);
+        })
+        .catch(error => {
+            console.error('Error updating title:', error);
         });
     }
 
@@ -147,7 +243,7 @@
     updateConversations();
 
     // Set up polling interval to update conversations every 5 seconds
-    setInterval(updateConversations, 5000);
+    //setInterval(updateConversations, 5000);
 
 </script>
 

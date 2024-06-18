@@ -15,6 +15,9 @@ const conversationSchema = new mongoose.Schema({
   conversationId: {
     type: String
   },
+  title: {
+    type: String
+  },
   construnctor: {
     course: {
       id: {
