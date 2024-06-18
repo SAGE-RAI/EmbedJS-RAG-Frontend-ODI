@@ -71,7 +71,7 @@ or in dev mode:
 npm run dev
 ```
 
-The application will be accessible at `http://localhost:3080`.
+The application will be accessible at `http://localhost:3080` or `http://localhost:3080/admin` for the admin interface.
 
 ## Usage
 
