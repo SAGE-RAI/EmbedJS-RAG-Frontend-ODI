@@ -48,14 +48,14 @@ EmbedJS-RAG-Frontend-ODI is a frontend and API interface for EmbedJS, designed t
    ```
 
 3. Manual install SAGE-RAI embedJS
-  ```bash
-  cd ..
-  git clone [git@github.com:SAGE-RAI/embedJs.git](https://github.com/SAGE-RAI/embedJs.git)
-  cd embedJs
-  npm i
-  npm run build
-  cp -r dist ../EmbedJS-RAG-Frontend-ODI/node_modules/@llm-tools/embedjs/
-  ```
+    ```bash
+    cd ..
+    git clone [git@github.com:SAGE-RAI/embedJs.git](https://github.com/SAGE-RAI/embedJs.git)
+    cd embedJs
+    npm i
+    npm run build
+    cp -r dist ../EmbedJS-RAG-Frontend-ODI/node_modules/@llm-tools/embedjs/
+    ```
 
 4. Copy `config.env.example` to `config.env` file in the root directory and add your configuration.
 
