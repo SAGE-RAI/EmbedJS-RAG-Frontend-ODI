@@ -1,5 +1,5 @@
 import express from 'express';
-import { WebLoader, TextLoader, PdfLoader } from '@llm-tools/embedjs';
+import { WebLoader, TextLoader, PdfLoader } from 'embedjs';//from '@llm-tools/embedjs';
 import EmbeddingsCache from '../models/embeddingsCache.js'; // Import the embeddingsCache model
 
 let ragApplication;

@@ -1,9 +1,9 @@
 // ragInitializer.js
 
-import { RAGApplicationBuilder, OpenAi } from '@llm-tools/embedjs';
-import { MongoDb } from '@llm-tools/embedjs/vectorDb/mongodb';
-import { MongoCache } from '@llm-tools/embedjs/cache/mongo';
-import { MongoConversations } from '@llm-tools/embedjs/conversations/mongo';
+import { RAGApplicationBuilder, OpenAi } from 'embedjs' // from '@llm-tools/embedjs';
+import { MongoDb } from 'embedjs' // from '@llm-tools/embedjs/vectorDb/mongodb';
+import { MongoCache } from 'embedjs' // from '@llm-tools/embedjs/cache/mongo';
+import { MongoConversations } from 'embedjs' // from '@llm-tools/embedjs/conversations/mongo';
 
 // Function to initialize the RAG application
 async function initializeRAGApplication(MONGODB_URI, DB_NAME, COLLECTION_NAME, CACHE_COLLECTION_NAME, CONVERSATIONS_COLLECTION_NAME) {
