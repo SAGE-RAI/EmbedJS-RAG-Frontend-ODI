@@ -1,7 +1,7 @@
 <!-- views/partials/header-admin.ejs -->
 <!DOCTYPE html>
 <html class="dark" data-bs-theme="dark"
-		prefix="dct: http://purl.org/dc/terms/
+      prefix="dct: http://purl.org/dc/terms/
               rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
               dcat: http://www.w3.org/ns/dcat#
               odrs: http://schema.theodi.org/odrs#">
@@ -21,46 +21,92 @@
 <link href="/css/style.css" rel="stylesheet">
 <link rel="shortcut icon" href="/images/odifavicon32.ico">
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ragInstanceSelect = document.getElementById('ragInstanceSelect');
+        const currentPath = window.location.pathname;
+        const activeRagId = '<%= typeof activeRagInstance !== 'undefined' && activeRagInstance ? activeRagInstance._id : "" %>';
+
+        // Add default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = "";
+        defaultOption.text = "Select instance";
+        ragInstanceSelect.appendChild(defaultOption);
+
+        // Fetch the user's RAG instances and populate the select dropdown
+        fetch('/instances', {
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(instance => {
+                const option = document.createElement('option');
+                option.value = instance._id;
+                option.text = instance.name;
+                if (instance._id === activeRagId) {
+                    option.selected = true;
+                }
+                ragInstanceSelect.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error fetching RAG instances:', error));
+    });
+
+    function switchRagInstance() {
+        const ragInstanceSelect = document.getElementById('ragInstanceSelect');
+        const selectedRagId = ragInstanceSelect.value;
+        if (selectedRagId) {
+            const currentPath = window.location.pathname.split('/').slice(3).join('/'); // Get the current path without the ragId
+            window.location.href = `/instances/${selectedRagId}/${currentPath}`;
+        }
+    }
+</script>
+
 </head>
 <body>
-	<div class="topper">
-		<div class="icon"></div>
-		<div class="name"><%= pageTitle %></div>
-	</div>
-	<main>
-		<sidebar style="height: calc(100vh - 180px); position: relative;">
-			<nav>
-			  <h2 style="margin-top: 0;">Admin menu</h2>
-			  <h3 style="">Conversations</h3>
-			  <ul class="admin-menu">
-				  <li><a href="/conversation">My conversations</a></li>
-			  </ul>
-			  <h3 style="">Sources</h3>
-			  <ul class="admin-menu">
-				  <li><a href="/admin/sources">Manage sources</a></li>
-				  <li><a href="/admin/sources/add">Add new source</a></li>
-				  <li><a href="/admin/sources/import">Bulk import</a></li>
-			  </ul>
-			  <h3 style="">Ratings</h3>
-			  <ul class="admin-menu">
-				  <li><a href="/admin/ratings">View ratings</a></li>
-				  <li><a href="/admin/ratings/choices">Rating choices</a></li>
-			  </ul>
-			</nav>
-			<nav style="position: absolute; bottom: 0px;">
-			  <ul>
-				<li style="display: inline-block;"">
-					<form style="display: inline-flex;" id="logout_form" action="/logout" method="post">
-						<a href="javascript:;" onclick="document.getElementById('logout_form').submit();">Logout</a>
-					</form>
-				</li>
-				<li style="display: inline-block;
-				padding-left: 1em;
-				border-left: 1px solid white;
-				margin-left: 1em;">
-					<a href="/admin">Admin</a></li>
-				</li>
-			  </ul>
-			</nav>
-		  </sidebar>
-		  <div class="container">
+    <div class="topper">
+        <div class="icon"></div>
+        <div class="name"><%= pageTitle %></div>
+    </div>
+    <main>
+        <sidebar style="height: calc(100vh - 180px); position: relative;">
+            <nav>
+              <h2 style="margin-top: 0;">Admin menu</h2>
+              <h3>RAG Instances</h3>
+              <select id="ragInstanceSelect" onchange="switchRagInstance()">
+                  <!-- Populate this select with the user's RAG instances -->
+              </select>
+              <% if (typeof activeRagInstance !== 'undefined' && activeRagInstance) { %>
+                <h3>Conversations</h3>
+                <ul class="admin-menu">
+                    <li><a href="/instances/<%= activeRagInstance._id %>/conversations">My conversations</a></li>
+                </ul>
+                <h3>Sources</h3>
+                <ul class="admin-menu">
+                    <li><a href="/instances/<%= activeRagInstance._id %>/sources">Manage sources</a></li>
+                    <li><a href="/instances/<%= activeRagInstance._id %>/sources/add">Add new source</a></li>
+                    <li><a href="/instances/<%= activeRagInstance._id %>/sources/import">Bulk import</a></li>
+                </ul>
+                <h3>Ratings</h3>
+                <ul class="admin-menu">
+                    <li><a href="/instances/<%= activeRagInstance._id %>/ratings">View ratings</a></li>
+                    <li><a href="/instances/<%= activeRagInstance._id %>/ratings/choices">Rating choices</a></li>
+                </ul>
+              <% } %>
+            </nav>
+            <nav style="position: absolute; bottom: 0px;">
+              <ul>
+                <li style="display: inline-block;">
+                    <form style="display: inline-flex;" id="logout_form" action="/logout" method="post">
+                        <a href="javascript:;" onclick="document.getElementById('logout_form').submit();">Logout</a>
+                    </form>
+                </li>
+                <li style="display: inline-block; padding-left: 1em; border-left: 1px solid white; margin-left: 1em;">
+                    <a href="/instances">Admin</a>
+                </li>
+              </ul>
+            </nav>
+          </sidebar>
+          <div class="container">

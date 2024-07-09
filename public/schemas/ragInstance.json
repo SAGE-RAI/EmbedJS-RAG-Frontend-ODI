@@ -1,0 +1,31 @@
+{
+    "schema": {
+        "name": {
+            "type": "string",
+            "title": "Name",
+            "required": true
+        },
+        "description": {
+            "type": "string",
+            "title": "Description"
+        },
+        "public": {
+            "type": "boolean",
+            "title": "Public"
+        }
+    },
+    "form": [
+        "name",
+        "description",
+        {
+            "key": "public",
+            "type": "checkbox",
+            "title": "Public"
+        },
+        {
+            "type": "submit",
+            "title": "Submit",
+            "htmlClass": "submit"
+        }
+    ]
+}

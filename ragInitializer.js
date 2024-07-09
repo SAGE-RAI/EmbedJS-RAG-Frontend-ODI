@@ -1,32 +1,38 @@
-// ragInitializer.js
-
 import { RAGApplicationBuilder, OpenAi } from '@llm-tools/embedjs';
 import { MongoDb } from '@llm-tools/embedjs/vectorDb/mongodb';
 import { MongoCache } from '@llm-tools/embedjs/cache/mongo';
 import { MongoConversations } from '@llm-tools/embedjs/conversations/mongo';
+import mongoose from 'mongoose';
+
+// Central configuration for Mongo URI and collection names
+const MONGODB_URI = process.env.MONGO_URI;
+const COLLECTION_NAME = process.env.EMBEDDINGS_COLLECTION;
+const CACHE_COLLECTION_NAME = process.env.EMBEDDINGS_CACHE_COLLECTION;
+const CONVERSATIONS_COLLECTION_NAME = process.env.CONVERSATIONS_COLLECTION;
 
 // Function to initialize the RAG application
-async function initializeRAGApplication(MONGODB_URI, DB_NAME, COLLECTION_NAME, CACHE_COLLECTION_NAME, CONVERSATIONS_COLLECTION_NAME) {
+async function initializeRAGApplication(ragInstance) {
+    const { dbName } = ragInstance;
+
     const db = new MongoDb({
         connectionString: MONGODB_URI,
-        dbName: DB_NAME,
+        dbName: dbName,
         collectionName: COLLECTION_NAME
     });
 
     const cachedb = new MongoCache({
         uri: MONGODB_URI,
-        dbName: DB_NAME,
+        dbName: dbName,
         collectionName: CACHE_COLLECTION_NAME
     });
 
     const conversationsdb = new MongoConversations({
         uri: MONGODB_URI,
-        dbName: DB_NAME,
+        dbName: dbName,
         collectionName: CONVERSATIONS_COLLECTION_NAME
     });
 
     // Initialize the connection to MongoDB Atlas
-    //await db.init();
     await cachedb.init();
     await conversationsdb.init();
 
@@ -46,4 +52,14 @@ async function initializeRAGApplication(MONGODB_URI, DB_NAME, COLLECTION_NAME, C
     }
 }
 
-export { initializeRAGApplication };
+function connectToRagDatabase(dbName) {
+    const connection = mongoose.createConnection(MONGODB_URI, {
+        dbName: dbName,
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    });
+
+    return connection;
+}
+
+export { initializeRAGApplication, connectToRagDatabase };

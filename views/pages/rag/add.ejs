@@ -1,0 +1,80 @@
+<%- include('../../partials/header-admin') %>
+<style>
+    .longText {
+        min-width: 80%;
+    }
+    .submit {
+        margin-top: 2em;
+    }
+</style>
+<h1><%= pageTitle %></h1>
+<div id="res" class="alert"></div>
+<form id="dataForm"></form>
+
+<script>
+const data = {};
+$('#dataForm').html("");
+$('#result').html("");
+$('form').show();
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Fetch the schema
+    fetch('/schemas/ragInstance.json')
+        .then(response => response.json())
+        .then(schema => {
+            // Render the form with empty data
+            $('#dataForm').jsonForm({
+                schema: schema.schema,
+                form: schema.form,
+                value: data,
+                onSubmit: function (errors, values) {
+                    addRagInstance(errors, values);
+                }
+            });
+        })
+        .catch(error => {
+            console.error("Error fetching schema:", error);
+        });
+});
+
+function addRagInstance(errors, values) {
+    if (errors) {
+        $('#res').html('<p>Please correct the errors in your form</p>');
+    } else {
+        // Disable the submit button
+        $('.submit').prop('disabled', true);
+        // Display a message while submitting
+        $('#res').html('<p>Submitting, please wait...</p>');
+        var inputObject = values;
+        var postUrl = '/instances/';
+
+        // Post the input object to the appropriate URL
+        fetch(postUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(inputObject)
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Handle response
+            if (data._id) {
+                // Re-enable the submit button
+                $('.submit').prop('disabled', false);
+                $('#res').html(`<p>Successfully created with ID: ${data._id}</p>`);
+            } else if (data.error) {
+                $('#res').html(`<p>Error: ${data.error}</p>`);
+            } else {
+                $('#res').html('<p>Unknown error occurred</p>');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            $('#res').html('<p>An error occurred while processing your request</p>');
+        });
+    }
+}
+</script>
+
+<%- include('../../partials/footer-admin') %>

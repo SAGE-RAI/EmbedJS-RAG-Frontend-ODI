@@ -1,5 +1,3 @@
-// models/conversation.js
-
 import mongoose from 'mongoose';
 
 const conversationSchema = new mongoose.Schema({
@@ -18,7 +16,7 @@ const conversationSchema = new mongoose.Schema({
   title: {
     type: String
   },
-  construnctor: {
+  constructor: {
     course: {
       id: {
         type: String
@@ -89,6 +87,14 @@ const conversationSchema = new mongoose.Schema({
   collection: 'Conversations' // Specify the collection name
 });
 
-const Conversation = mongoose.model('Conversation', conversationSchema);
+function getConversationModel(dbName) {
+  const connection = mongoose.connection.useDb(dbName, { useCache: true });
 
-export default Conversation;
+  if (connection.models.Conversations) {
+    return connection.models.Conversations;
+  } else {
+    return connection.model('Conversations', conversationSchema);
+  }
+}
+
+export { getConversationModel };

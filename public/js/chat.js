@@ -1,5 +1,4 @@
 // Function to render Markdown content using React
-// Function to render Markdown content using React
 async function renderMarkdown(markdown, container, callback) {
     const React = window.React;
     const ReactDOM = window.ReactDOM;
@@ -161,9 +160,10 @@ async function loadConversation(conversationId) {
     const listCont = document.querySelector('.list_cont');
     listCont.innerHTML = "";
     document.getElementById('conversationId').value = null;
+    const ragId = getRagIdFromPath();
     try {
         // Fetch conversation data from the server
-        const response = await fetch(`/conversation/${conversationId}`, {
+        const response = await fetch(`/instances/${ragId}/conversations/${conversationId}`, {
             headers: {
                 'Accept': 'application/json'
             }
@@ -176,11 +176,11 @@ async function loadConversation(conversationId) {
         const conversation = await response.json();
         // Iterate over the entries object
         conversation.entries.forEach(entry => {
-            renderMessage(entry,null,false)
+            renderMessage(entry, null, false);
         });
         document.getElementById('conversationId').value = conversationId;
         // Update the address bar with the conversation ID
-        window.history.pushState({}, '', '/conversation/' + conversationId);
+        window.history.pushState({}, '', `/instances/${ragId}/conversations/${conversationId}`);
     } catch (error) {
         console.error('Error loading conversation:', error);
         // Handle error (e.g., show error message)
@@ -188,6 +188,7 @@ async function loadConversation(conversationId) {
 }
 
 async function renderSources(sources, element) {
+    const ragId = getRagIdFromPath();
     if (sources && sources.length > 0) {
         const sourcesHeading = document.createElement('h3');
         sourcesHeading.textContent = 'Sources';
@@ -210,7 +211,7 @@ async function renderSources(sources, element) {
             // If loaderId is present, fetch title from /rag/sources/:loaderId
             if (sourceObj.loaderId) {
                 try {
-                    const response = await fetch(`/rag/sources/${sourceObj.loaderId}`);
+                    const response = await fetch(`/instances/${ragId}/sources/${sourceObj.loaderId}`);
                     const data = await response.json();
                     // Set link text to the title if available, otherwise use source URL
                     link.textContent = data.loader.title || sourceObj.source;
@@ -316,7 +317,6 @@ function renderRating(rating, element) {
         // Render empty stars for the remaining
         for (let i = rating.rating; i < 5; i++) {
             const star = document.createElement('span');
-            star.classList.add('star');
             star.innerHTML = '&#9734; '; // Unicode for empty star symbol
             starsContainer.appendChild(star);
         }
@@ -422,6 +422,7 @@ async function handleRating(element, entryId, starRating, message) {
     try {
         // Get the conversation ID from the hidden input field
         const conversationId = document.getElementById('conversationId').value;
+        const ragId = getRagIdFromPath();
 
         // Construct the rating object
         const ratingData = {
@@ -430,7 +431,7 @@ async function handleRating(element, entryId, starRating, message) {
         };
 
         // Perform a POST request to update the rating
-        const response = await fetch(`/conversation/${conversationId}/messages/${entryId}`, {
+        const response = await fetch(`/instances/${ragId}/conversations/${conversationId}/messages/${entryId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -443,7 +444,7 @@ async function handleRating(element, entryId, starRating, message) {
         }
 
         const responseData = await response.json();
-        renderRating(ratingData,element);
+        renderRating(ratingData, element);
         if (message === "") {
             displayResponseChoices(element, entryId, ratingData);
         }
@@ -500,8 +501,9 @@ function createResponseNode() {
 
 async function newConversation() {
     try {
-        // Make a POST request to /conversation/create
-        const response = await fetch('/conversation/create', {
+        const ragId = getRagIdFromPath();
+        // Make a POST request to /conversations/create
+        const response = await fetch(`/instances/${ragId}/conversations/create`, {
             method: 'POST'
         });
 
@@ -512,7 +514,7 @@ async function newConversation() {
         const data = await response.json();
 
         // Update the address bar with the conversation ID
-        window.history.pushState({}, '', '/conversation/' + data.id);
+        window.history.pushState({}, '', `/instances/${ragId}/conversations/${data.id}`);
 
         // Return the conversation ID
         return data.id;
@@ -564,13 +566,15 @@ async function handleSubmit(event) {
 async function sendMessage(conversationId, message) {
     let newMessage = {};
     newMessage.content = message;
-    renderMessage(newMessage,null,true);
+    renderMessage(newMessage, null, true);
     const messageInput = document.getElementById('txt');
     const responseLi = createResponseNode();
     messageInput.value = ''; // Clear the input field
 
+    const ragId = getRagIdFromPath();
+
     try {
-        const response = await fetch(`/openai-completion/${conversationId}`, {
+        const response = await fetch(`/instances/${ragId}/conversations/${conversationId}/messages`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -583,10 +587,15 @@ async function sendMessage(conversationId, message) {
         }
 
         const responseMessage = await response.json();
-        renderMessage(responseMessage, responseLi,true); // Render the message
+        renderMessage(responseMessage, responseLi, true); // Render the message
     } catch (error) {
         console.error('Error sending message:', error);
         alert('Failed to send message. Please try again.');
         responseLi.remove();
     }
+}
+
+function getRagIdFromPath() {
+    const pathSegments = window.location.pathname.split('/');
+    return pathSegments[2]; // Assumes /instances/:ragId/... structure
 }

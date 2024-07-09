@@ -1,9 +1,8 @@
-// passport.js
-
 import passport from 'passport';
 import { Strategy as OAuth2Strategy } from 'passport-oauth2';
 import { OAuth2Strategy as GoogleStrategy } from 'passport-google-oauth';
 import fetch from 'node-fetch';
+import { retrieveOrCreateUser } from './controllers/user.js'; // Ensure this path is correct
 
 // Passport setup for Google authentication
 passport.use('google', new GoogleStrategy({
@@ -46,7 +45,7 @@ passport.use('django', new OAuth2Strategy({
     Object.keys(userProfile).forEach(key => {
       profile[key] = userProfile[key];
     });
-    profile.name = userProfile.first_name + ' ' + userProfile.last_name;
+    profile.name = `${userProfile.first_name} ${userProfile.last_name}`;
     profile.currentToken = req.session.accessToken;
     return done(null, profile);
   })
@@ -57,12 +56,17 @@ passport.use('django', new OAuth2Strategy({
 }));
 
 // Serialize and deserialize user
-passport.serializeUser(function(user, cb) {
+passport.serializeUser((user, cb) => {
   cb(null, user);
 });
 
-passport.deserializeUser(function(obj, cb) {
-  cb(null, obj);
+passport.deserializeUser(async (obj, cb) => {
+  try {
+    const user = await retrieveOrCreateUser(obj);
+    cb(null, user);
+  } catch (error) {
+    cb(error);
+  }
 });
 
 export default passport;

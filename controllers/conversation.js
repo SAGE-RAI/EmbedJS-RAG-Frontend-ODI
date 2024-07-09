@@ -1,139 +1,164 @@
-import mongoose from 'mongoose';
-import Conversation from '../models/conversation.js'; // Import the Conversation model
+import { getConversationModel } from '../models/conversation.js';
+import { getUserIDFromToken } from '../controllers/token.js';
 
-async function createConversation(userId, contentObject, course, skillsFramework) {
-    const conversationData = {
-        userId: userId
-    };
+async function createConversation(req, res) {
+  try {
+      const userId = req.user._id;
+      const { contentObject, course, _skillsFramework } = req.body;
 
-    const constructor = {};
-    if (contentObject !== undefined && contentObject !== null) {
-        constructor.contentObject = contentObject;
-    }
-
-    if (course !== undefined && course !== null) {
-        constructor.course = course;
-    }
-
-    if (skillsFramework !== undefined && skillsFramework !== null) {
-        constructor._skillsFramework = skillsFramework;
-    }
-    conversationData.constructor = constructor; // Correct the typo: `construnctor` to `constructor`
-
-    const conversation = new Conversation(conversationData);
-
-    await conversation.save();
-
-    // Convert ObjectId to string and set it as conversationId
-    const conversationId = conversation._id.toString();
-
-    // Update the conversation with the string version of ObjectId
-    await Conversation.findByIdAndUpdate(conversation._id, { $set: { conversationId: conversationId } });
-
-    return conversationId;
-}
-
-async function getConversations(contentObjectId, userId) {
-    try {
-        let query = { 'userId': new mongoose.Types.ObjectId(userId) };
-        if (contentObjectId) {
-            query['constructor.contentObject.id'] = contentObjectId;
-        }
-        const conversations = await Conversation.find(query);
-
-        // Filter out conversations with empty or undefined history
-        const filteredConversations = conversations.filter(conversation => {
-            return conversation.entries && conversation.entries.length > 0;
-        });
-
-        return filteredConversations;
-    } catch (error) {
-        throw new Error('Error fetching conversations: ' + error.message);
-    }
-}
-
-// Function to fetch conversations by contentObject ID
-async function getConversation(conversationId) {
-    try {
-        const conversation = await Conversation.findOne({
-            '_id': new mongoose.Types.ObjectId(conversationId)
-        });
-        return conversation;
-    } catch (error) {
-        throw new Error('Error fetching conversation: ' + error.message);
-    }
-}
-
-// Function to fetch messages from conversation history by conversation ID
-async function getMessages(conversationId) {
-    try {
-        const conversation = await Conversation.findOne({
-            '_id': new mongoose.Types.ObjectId(conversationId)
-        });
-        if (!conversation) {
-            throw new Error('Conversation not found.');
-        }
-        return conversation.entries.map(entry => entry.content);
-    } catch (error) {
-        throw new Error('Error fetching messages: ' + error.message);
-    }
-}
-
-async function deleteOldConversations() {
-    console.log('finding old conversations');
-    try {
-      // Calculate the cutoff time (24 hours ago)
-      const cutoffTime = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-      // Find conversations that meet the criteria
-      const conversationsToDelete = await Conversation.find({
-        creationDate: { $lt: cutoffTime }, // Conversations created over 24 hours ago
-        'entries.0': { $exists: false } // Conversations with an empty history
-      });
-
-      // Iterate over each conversation document and delete it
-      // Iterate over each conversation and delete it
-      for (const conversation of conversationsToDelete) {
-        await Conversation.deleteOne({ _id: conversation._id });
+      const ragApplication = req.ragApplication;
+      if (!ragApplication) {
+          throw new Error('RAG Application is not initialized');
       }
 
-      console.log(`Deleted ${conversationsToDelete.length} old conversations.`);
-    } catch (error) {
-      console.error('Error deleting old conversations:', error);
-    }
+      const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
+
+      const newConversation = new Conversation({
+          userId,
+          constructor: { contentObject, course, _skillsFramework },
+      });
+
+      newConversation.conversationId = newConversation._id.toString(); // Set conversationId to the string of the _id created
+
+      await newConversation.save();
+
+      res.status(201).json({ id: newConversation._id });
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
 }
 
-async function setRating(conversationId, entryId, rating, message) {
+async function getConversations(req, res) {
     try {
-        // Find the conversation by conversationId
-        const conversation = await Conversation.findOne({ _id: conversationId });
+        const userId = req.user._id;
 
-        if (!conversation) {
-            throw new Error('Conversation not found');
-        }
+        const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
 
-        // Find the entry with the given entryId in the conversation
-        const entry = conversation.entries.find(e => e._id === entryId);
-
-        if (!entry) {
-            throw new Error('Entry not found');
-        }
-
-        // Update the rating and message of the entry
-        entry.rating = { rating, comment: message };
-
-        // Save the updated conversation
-        await conversation.save();
-
-        return { success: true, message: 'Rating updated successfully' };
+        const conversations = await Conversation.find({ userId });
+        res.json(conversations);
     } catch (error) {
-        console.error('Error setting rating:', error);
-        return { success: false, error: error.message };
+        res.status(500).json({ error: error.message });
     }
 }
 
-//Delete old conversations
-deleteOldConversations();
-const interval = setInterval(deleteOldConversations, 3600000);
+async function getConversation(req, res) {
+    const conversationId = req.params.conversationId;
+    try {
+        const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
 
-export { createConversation, getConversations, getConversation, getMessages, setRating, deleteOldConversations };
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        if (req.accepts('html')) {
+            res.locals.pageTitle = "Chat";
+            res.render('pages/chat', { conversation });
+        } else {
+            res.json(conversation);
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+async function updateConversation(req, res) {
+    const conversationId = req.params.conversationId;
+    const updateData = req.body;
+    try {
+        const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
+
+        const updatedConversation = await Conversation.findByIdAndUpdate(
+            conversationId,
+            { $set: updateData },
+            { new: true }
+        );
+
+        if (!updatedConversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        res.json(updatedConversation);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+async function deleteConversation(req, res) {
+    const conversationId = req.params.conversationId;
+    try {
+        const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
+
+        const deletedConversation = await Conversation.findByIdAndDelete(conversationId);
+        if (!deletedConversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        res.sendStatus(204);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+async function getMessages(req, res) {
+    const conversationId = req.params.conversationId;
+    try {
+        const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        res.json(conversation.entries);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+async function postMessage(req, res) {
+    try {
+        const conversationId = req.params.conversationId;
+        const { message, sender } = req.body;
+        const ragApplication = req.ragApplication;
+
+        if (!ragApplication) {
+            throw new Error('RAG Application is not initialized');
+        }
+
+        if (!sender || sender !== 'HUMAN' || !message) {
+            return res.status(400).json({ error: 'Invalid message format. Must include sender "HUMAN" and message.' });
+        }
+
+        const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        let contextQuery = message; // Default contextQuery is just the new query
+        const messages = conversation.entries;
+
+        if (messages.length > 0) {
+            const humanMessages = messages.filter(msg => msg.content.sender === 'HUMAN');
+            const contextMessages = humanMessages.slice(-2);
+
+            if (contextMessages.length === 1) {
+                contextQuery = `${contextMessages[0].content.message} ${message}`;
+            } else if (contextMessages.length === 2) {
+                contextQuery = `${contextMessages[0].content.message} ${contextMessages[1].content.message} ${message}`;
+            }
+        }
+
+        const chunks = await ragApplication.getContext(contextQuery);
+        const ragResponse = await ragApplication.query(message, conversationId, chunks);
+
+        res.status(200).json(ragResponse);
+    } catch (error) {
+        console.error("Error in /:ragId/completion/:conversationId route:", error);
+        res.status(error.status || 500).json({ error: error.message });
+    }
+}
+
+export { createConversation, getConversations, getConversation, updateConversation, deleteConversation, getMessages, postMessage };
