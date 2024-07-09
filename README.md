@@ -2,7 +2,7 @@
 
 ## Overview
 
-EmbedJS-RAG-Frontend-ODI is a frontend and API interface for EmbedJS. It is designed to allow users to create custom RAG (Retrieve and Generate) systems and share these with other users. This platform enables administrators to create new RAG systems, share them with other administrators for managing sources, and with users who can use them. Currently, this system is designed to work exclusively with MongoDB Atlas as the backend for storage. Future updates will allow users to tailor their choice of embedding and GenAI models for each RAG system.
+EmbedJS-RAG-Frontend-ODI is a frontend and API interface for EmbedJS. It is designed to allow users to create custom RAG (Retrieve and Generate) systems and share these with other users. This platform enables administrators to create new RAG systems, share them with other administrators for managing sources, and with users who can use them. Currently, this system is designed to work exclusively with MongoDB Atlas as the backend for storage and a the master admin user in config.env MUST be able to create new databases for each RAG system. Future updates will allow users to tailor their choice of embedding and GenAI models for each RAG system.
 
 ## Features
 
