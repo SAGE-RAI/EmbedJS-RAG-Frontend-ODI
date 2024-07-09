@@ -2,10 +2,11 @@
 
 ## Overview
 
-EmbedJS-RAG-Frontend-ODI is a frontend and API interface for EmbedJS, designed to facilitate conversations between users and a Retrieve and Generate (RAG) system. This platform allows administrators to manage sources and provides various functionalities for both end-users and administrators. Note that currently, this system is designed to work exclusively with MongoDB Atlas.
+EmbedJS-RAG-Frontend-ODI is a frontend and API interface for EmbedJS. It is designed to allow users to create custom RAG (Retrieve and Generate) systems and share these with other users. This platform enables administrators to create new RAG systems, share them with other administrators for managing sources, and with users who can use them. Currently, this system is designed to work exclusively with MongoDB Atlas as the backend for storage. Future updates will allow users to tailor their choice of embedding and GenAI models for each RAG system.
 
 ## Features
 
+- **Multiple RAG Instances**: Support for multiple RAG instances, allowing users to switch between different RAG systems.
 - **User Conversations**: Users can engage in conversations with the RAG system.
 - **Message Rating**: Users can rate messages for quality and feedback.
 - **Source Management**: Administrators can manage sources through the interface.
@@ -47,10 +48,10 @@ EmbedJS-RAG-Frontend-ODI is a frontend and API interface for EmbedJS, designed t
    npm install
    ```
 
-3. Manual install SAGE-RAI embedJS
+3. Manually install SAGE-RAI embedJS:
     ```bash
     cd ..
-    git clone [git@github.com:SAGE-RAI/embedJs.git](https://github.com/SAGE-RAI/embedJs.git)
+    git clone https://github.com/SAGE-RAI/embedJs.git
     cd embedJs
     npm i
     npm run build
@@ -82,15 +83,35 @@ The application will be accessible at `http://localhost:3080` or `http://localho
 
 ### Admin Interface
 
+- **RAG Instances Management**: Administrators can create and manage multiple RAG instances.
 - **Source Management**: Administrators can add, update, and delete sources used by the RAG system.
 
 ## API Endpoints
 
 - **User Authentication**: OAuth2 with Google and Django.
-- **Conversations**: Create, update, delete, and fetch conversations.
-- **Message Rating**: Rate messages within conversations.
-- **Source Management**: Add, update, delete, and fetch sources.
-- **Token Management**: Initialize tokens for external application communication.
+- **RAG Instances**:
+  - `GET /instances` - List all RAG instances accessible to the user.
+  - `POST /instances` - Create a new RAG instance.
+  - `PUT /instances/:ragId` - Update an existing RAG instance.
+  - `DELETE /instances/:ragId` - Delete an existing RAG instance.
+
+- **Source Management**:
+  - `POST /instances/:ragId/sources/add` - Add a new source.
+  - `GET /instances/:ragId/sources` - List all sources.
+  - `GET /instances/:ragId/sources/:loaderId` - Get a specific source.
+  - `PUT /instances/:ragId/sources/:loaderId` - Update a specific source.
+  - `DELETE /instances/:ragId/sources/:loaderId` - Delete a specific source.
+
+- **Conversations**:
+  - `POST /instances/:ragId/conversations/create` - Create a new conversation.
+  - `GET /instances/:ragId/conversations` - List all conversations.
+  - `GET /instances/:ragId/conversations/:conversationId` - Get a specific conversation.
+  - `POST /instances/:ragId/conversations/:conversationId` - Update a specific conversation.
+  - `DELETE /instances/:ragId/conversations/:conversationId` - Delete a specific conversation.
+
+- **Messages/Completion**:
+  - `GET /instances/:ragId/conversations/:conversationId/messages` - Get messages of a specific conversation.
+  - `POST /instances/:ragId/conversations/:conversationId/messages` - Add a message to a conversation.
 
 ## Contributing
 
