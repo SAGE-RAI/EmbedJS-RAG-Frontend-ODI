@@ -94,7 +94,6 @@ db.once('open', () => {
   app.use('/instances', instancesRoutes);
 
   app.use('/instances/:instanceId', canAccessInstance, (req, res, next) => {
-    console.log('set instance');
     setActiveInstance(req, res, next);
   });
 

@@ -30,6 +30,12 @@ router.delete('/', ensureAuthenticated, canAdminInstance, deleteInstance);
 // Add user to instance
 router.post('/sharedWith', ensureAuthenticated, canAdminInstance, addUserToInstance);
 
+// Route to view sharedWith management page
+router.get('/sharedWith', ensureAuthenticated, canAdminInstance, (req, res) => {
+    res.locals.pageTitle = "Manage Shared Users";
+    res.render('pages/instance/sharedWith', { instanceId: req.params.instanceId });
+});
+
 // Remove user from instance
 router.delete('/sharedWith/:email', ensureAuthenticated, canAdminInstance, removeUserFromInstance);
 

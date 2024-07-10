@@ -28,9 +28,8 @@
                 }
             },
             columns: [
-                { data: 'name', title: 'Name', defaultContent: '' },
-                { data: 'description', title: 'Description', defaultContent: '' },
-                { data: 'dbName', title: 'Database Name', defaultContent: '' },
+                { data: 'name', title: 'Name', defaultContent: '', width: '10%'},
+                { data: 'description', title: 'Description', defaultContent: '', width: '30%'},
                 {
                     data: 'createdAt',
                     title: 'Created Date',
@@ -40,19 +39,21 @@
                         return date.toLocaleString();
                     }
                 },
-                { data: 'public', title: 'Public', defaultContent: '', width: '5%' },
+                { data: 'public', title: 'Public', defaultContent: '', width: '10%' },
                 {
                     title: 'Actions',
                     render: function (data, type, row) {
                         return '<button class="editBtn" data-instanceid="' + row._id + '">Edit</button>' +
                                '<button class="deleteBtn" data-instanceid="' + row._id + '">Delete</button>' +
                                '<button class="manageSourcesBtn" data-instanceid="' + row._id + '">Manage Sources</button>' +
+                               '<button class="manageSharesBtn" data-instanceid="' + row._id + '">Share</button>' +
                                '<button class="chatBtn" data-instanceid="' + row._id + '">Chat</button>';
-                    }
+                    },
+                    width: '50%'
                 }
             ],
             order: [[0, 'asc']],
-            dom: 'Bfrtip',
+            dom: 'frtipB',
             buttons: [
                 'copy', 'csv', 'excel', 'pdf', 'print'
             ]
@@ -90,6 +91,10 @@
         $('#instanceTable').on('click', '.manageSourcesBtn', function () {
             var instanceId = $(this).data('instanceid');
             window.location.href = '/instances/' + instanceId + '/sources';
+        });
+        $('#instanceTable').on('click', '.manageSharesBtn', function () {
+            var instanceId = $(this).data('instanceid');
+            window.location.href = '/instances/' + instanceId + '/sharedWith';
         });
 
         $('#instanceTable').on('click', '.chatBtn', function () {

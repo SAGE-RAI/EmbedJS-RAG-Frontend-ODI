@@ -69,7 +69,6 @@ export const canAccessInstance = async (req, res, next) => {
         }
 
         // Check if the user has access to this instance
-        console.log(instance);
         const userAccess = instance.sharedWith.find(user => user.email === userEmail);
         const hasAccess = instance.createdBy.equals(userId) || userAccess || instance.public;
 

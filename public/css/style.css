@@ -144,6 +144,16 @@ sidebar .admin-menu {
   margin-left:0.5em;
   li:before { content: '> '}
 }
+
+.dt-buttons {
+  text-align: center;
+  margin-top: 10px;
+}
+#addUserForm label, #addUserForm select, #addUserForm input {
+  display: inline;
+  margin-right: 10px;
+}
+
 .conversations {
   overflow-y: scroll;
   overflow-x: hidden;
