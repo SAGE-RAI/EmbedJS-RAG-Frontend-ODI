@@ -11,8 +11,8 @@ const CACHE_COLLECTION_NAME = process.env.EMBEDDINGS_CACHE_COLLECTION;
 const CONVERSATIONS_COLLECTION_NAME = process.env.CONVERSATIONS_COLLECTION;
 
 // Function to initialize the RAG application
-async function initializeRAGApplication(ragInstance) {
-    const { dbName } = ragInstance;
+async function initializeRAGApplication(instance) {
+    const { dbName } = instance;
 
     const db = new MongoDb({
         connectionString: MONGODB_URI,

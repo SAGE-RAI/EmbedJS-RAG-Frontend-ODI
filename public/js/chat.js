@@ -160,10 +160,10 @@ async function loadConversation(conversationId) {
     const listCont = document.querySelector('.list_cont');
     listCont.innerHTML = "";
     document.getElementById('conversationId').value = null;
-    const ragId = getRagIdFromPath();
+    const instanceId = getInstanceIdFromPath();
     try {
         // Fetch conversation data from the server
-        const response = await fetch(`/instances/${ragId}/conversations/${conversationId}`, {
+        const response = await fetch(`/instances/${instanceId}/conversations/${conversationId}`, {
             headers: {
                 'Accept': 'application/json'
             }
@@ -180,7 +180,7 @@ async function loadConversation(conversationId) {
         });
         document.getElementById('conversationId').value = conversationId;
         // Update the address bar with the conversation ID
-        window.history.pushState({}, '', `/instances/${ragId}/conversations/${conversationId}`);
+        window.history.pushState({}, '', `/instances/${instanceId}/conversations/${conversationId}`);
     } catch (error) {
         console.error('Error loading conversation:', error);
         // Handle error (e.g., show error message)
@@ -188,7 +188,7 @@ async function loadConversation(conversationId) {
 }
 
 async function renderSources(sources, element) {
-    const ragId = getRagIdFromPath();
+    const instanceId = getInstanceIdFromPath();
     if (sources && sources.length > 0) {
         const sourcesHeading = document.createElement('h3');
         sourcesHeading.textContent = 'Sources';
@@ -208,10 +208,10 @@ async function renderSources(sources, element) {
             const listItem = document.createElement('li');
             const link = document.createElement('a');
 
-            // If loaderId is present, fetch title from /rag/sources/:loaderId
+            // If loaderId is present, fetch title from /instances/sources/:loaderId
             if (sourceObj.loaderId) {
                 try {
-                    const response = await fetch(`/instances/${ragId}/sources/${sourceObj.loaderId}`);
+                    const response = await fetch(`/instances/${instanceId}/sources/${sourceObj.loaderId}`);
                     const data = await response.json();
                     // Set link text to the title if available, otherwise use source URL
                     link.textContent = data.loader.title || sourceObj.source;
@@ -422,7 +422,7 @@ async function handleRating(element, entryId, starRating, message) {
     try {
         // Get the conversation ID from the hidden input field
         const conversationId = document.getElementById('conversationId').value;
-        const ragId = getRagIdFromPath();
+        const instanceId = getInstanceIdFromPath();
 
         // Construct the rating object
         const ratingData = {
@@ -431,7 +431,7 @@ async function handleRating(element, entryId, starRating, message) {
         };
 
         // Perform a POST request to update the rating
-        const response = await fetch(`/instances/${ragId}/conversations/${conversationId}/messages/${entryId}`, {
+        const response = await fetch(`/instances/${instanceId}/conversations/${conversationId}/messages/${entryId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -501,9 +501,9 @@ function createResponseNode() {
 
 async function newConversation() {
     try {
-        const ragId = getRagIdFromPath();
+        const instanceId = getInstanceIdFromPath();
         // Make a POST request to /conversations/create
-        const response = await fetch(`/instances/${ragId}/conversations/create`, {
+        const response = await fetch(`/instances/${instanceId}/conversations/create`, {
             method: 'POST'
         });
 
@@ -514,7 +514,7 @@ async function newConversation() {
         const data = await response.json();
 
         // Update the address bar with the conversation ID
-        window.history.pushState({}, '', `/instances/${ragId}/conversations/${data.id}`);
+        window.history.pushState({}, '', `/instances/${instanceId}/conversations/${data.id}`);
 
         // Return the conversation ID
         return data.id;
@@ -571,10 +571,10 @@ async function sendMessage(conversationId, message) {
     const responseLi = createResponseNode();
     messageInput.value = ''; // Clear the input field
 
-    const ragId = getRagIdFromPath();
+    const instanceId = getInstanceIdFromPath();
 
     try {
-        const response = await fetch(`/instances/${ragId}/conversations/${conversationId}/messages`, {
+        const response = await fetch(`/instances/${instanceId}/conversations/${conversationId}/messages`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -595,7 +595,7 @@ async function sendMessage(conversationId, message) {
     }
 }
 
-function getRagIdFromPath() {
+function getInstanceIdFromPath() {
     const pathSegments = window.location.pathname.split('/');
-    return pathSegments[2]; // Assumes /instances/:ragId/... structure
+    return pathSegments[2]; // Assumes /instances/:instanceId/... structure
 }

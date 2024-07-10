@@ -1,50 +1,50 @@
-import RagInstance from '../models/ragInstance.js';
+import Instance from '../models/instance.js';
 import { initializeRAGApplication } from '../ragInitializer.js';
 import { getUserIDFromToken, verifyToken } from '../controllers/token.js';
 import { getConversationModel } from '../models/conversation.js';
 
-const ragCache = new Map(); // In-memory cache for RAG applications
+const instanceCache = new Map(); // In-memory cache for RAG applications
 
-export const setRagLocals = (req, res, next) => {
-    if (req.session.activeRagInstance) {
-        res.locals.activeRagInstance = req.session.activeRagInstance;
-        res.locals.ragId = req.session.activeRagInstance.id;
+export const setInstanceLocals = (req, res, next) => {
+    if (req.session.activeInstance) {
+        res.locals.activeInstance = req.session.activeInstance;
+        res.locals.instanceId = req.session.activeInstance.id;
     }
     next();
 }
 
 // Middleware to set and initialize the active RAG instance
-export const setActiveRag = async (req, res, next) => {
+export const setActiveInstance = async (req, res, next) => {
     try {
-        const ragId = req.params.ragId;
+        const instanceId = req.params.instanceId;
 
-        const ragInstance = await RagInstance.findById(ragId);
+        const instance = await Instance.findById(instanceId);
 
-        if (!ragInstance) {
-            return res.status(404).json({ error: 'RAG instance not found' });
+        if (!instance) {
+            return res.status(404).json({ error: 'Instance not found' });
         }
 
         // Check if the RAG application is already in the cache
-        let ragApplication = ragCache.get(ragId);
+        let ragApplication = instanceCache.get(instanceId);
 
         // Check if the RAG application is already initialized and the same as the requested RAG ID
-        if (req.session.activeRagInstance?.id === ragId && ragApplication) {
-            req.session.activeRagInstance = ragInstance;
+        if (req.session.activeInstance?.id === instanceId && ragApplication) {
+            req.session.activeInstance = Instance;
             req.ragApplication = ragApplication;
-            res.locals.activeRagInstance = ragInstance;
-            res.locals.ragId = ragId;
+            res.locals.activeInstance = Instance;
+            res.locals.instanceId = instanceId;
             return next();
         }
 
         // Initialize the RAG application
-        ragApplication = await initializeRAGApplication(ragInstance);
-        ragCache.set(ragId, ragApplication);
+        ragApplication = await initializeRAGApplication(Instance);
+        instanceCache.set(instanceId, ragApplication);
 
         // Store the initialized RAG application and its ID in the session
-        req.session.activeRagInstance = ragInstance;
+        req.session.activeInstance = instance;
         req.ragApplication = ragApplication;
-        res.locals.activeRagInstance = ragInstance;
-        res.locals.ragId = ragId;
+        res.locals.activeInstance = instance;
+        res.locals.instanceId = instanceId;
 
         next();
     } catch (error) {
@@ -53,30 +53,29 @@ export const setActiveRag = async (req, res, next) => {
 };
 
 // Middleware to check if the user can access the RAG instance
-export const canAccessRag = async (req, res, next) => {
+export const canAccessInstance = async (req, res, next) => {
     try {
-        const ragId = req.params.ragId;
+        const instanceId = req.params.instanceId;
         const userId = req.user._id;
 
         if (!userId) {
-            console.log("no user id");
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const ragInstance = await RagInstance.findById(ragId);
+        const instance = await Instance.findById(instanceId);
 
-        if (!ragInstance) {
-            return res.status(404).json({ error: 'RAG instance not found' });
+        if (!instance) {
+            return res.status(404).json({ error: 'Isnstance not found' });
         }
 
         // Check if the user has access to this RAG instance
-        const hasAccess = ragInstance.createdBy.equals(userId) || ragInstance.sharedWith.includes(userId) || ragInstance.public;
+        const hasAccess = instance.createdBy.equals(userId) || instance.sharedWith.includes(userId) || instance.public;
 
         if (!hasAccess) {
             return res.status(403).json({ error: 'Forbidden' });
         }
 
-        req.session.activeRagInstance = ragInstance;
+        req.session.activeInstance = instance;
         next();
     } catch (error) {
         next(error);
@@ -98,7 +97,7 @@ export const verifyConversationMiddleware = async (req, res, next) => {
         // Extract the conversation ID from the request params
         const conversationId = req.params.conversationId;
 
-        const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
+        const Conversation = getConversationModel(req.session.activeInstance.dbName);
 
         // Check if the conversation ID belongs to the user
         const conversation = await Conversation.findOne({ _id: conversationId, userId: userId });
@@ -137,8 +136,8 @@ export const ensureAuthenticated = (req, res, next) => {
 };
 
 export const checkOwnership = async (req, res, next) => {
-    const ragInstance = await RagInstance.findById(req.params.ragId);
-    if (req.isAdmin || ragInstance.createdBy.equals(req.user._id)) {
+    const instance = await Instance.findById(req.params.instanceId);
+    if (req.isAdmin || instance.createdBy.equals(req.user._id)) {
         next();
     } else {
         res.status(403).send('Permission denied');

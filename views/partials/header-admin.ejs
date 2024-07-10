@@ -23,15 +23,15 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const ragInstanceSelect = document.getElementById('ragInstanceSelect');
+        const instanceSelect = document.getElementById('instanceSelect');
         const currentPath = window.location.pathname;
-        const activeRagId = '<%= typeof activeRagInstance !== 'undefined' && activeRagInstance ? activeRagInstance._id : "" %>';
+        const activeinstanceId = '<%= typeof activeInstance !== 'undefined' && activeInstance ? activeInstance._id : "" %>';
 
         // Add default option
         const defaultOption = document.createElement('option');
         defaultOption.value = "";
         defaultOption.text = "Select instance";
-        ragInstanceSelect.appendChild(defaultOption);
+        instanceSelect.appendChild(defaultOption);
 
         // Fetch the user's RAG instances and populate the select dropdown
         fetch('/instances', {
@@ -45,21 +45,21 @@
                 const option = document.createElement('option');
                 option.value = instance._id;
                 option.text = instance.name;
-                if (instance._id === activeRagId) {
+                if (instance._id === activeinstanceId) {
                     option.selected = true;
                 }
-                ragInstanceSelect.appendChild(option);
+                instanceSelect.appendChild(option);
             });
         })
         .catch(error => console.error('Error fetching RAG instances:', error));
     });
 
-    function switchRagInstance() {
-        const ragInstanceSelect = document.getElementById('ragInstanceSelect');
-        const selectedRagId = ragInstanceSelect.value;
-        if (selectedRagId) {
-            const currentPath = window.location.pathname.split('/').slice(3).join('/'); // Get the current path without the ragId
-            window.location.href = `/instances/${selectedRagId}/${currentPath}`;
+    function switchInstance() {
+        const instanceSelect = document.getElementById('instanceSelect');
+        const selectedinstanceId = instanceSelect.value;
+        if (selectedinstanceId) {
+            const currentPath = window.location.pathname.split('/').slice(3).join('/'); // Get the current path without the instanceId
+            window.location.href = `/instances/${selectedinstanceId}/${currentPath}`;
         }
     }
 </script>
@@ -75,24 +75,24 @@
             <nav>
               <h2 style="margin-top: 0;">Admin menu</h2>
               <h3>RAG Instances</h3>
-              <select id="ragInstanceSelect" onchange="switchRagInstance()">
+              <select id="instanceSelect" onchange="switchInstance()">
                   <!-- Populate this select with the user's RAG instances -->
               </select>
-              <% if (typeof activeRagInstance !== 'undefined' && activeRagInstance) { %>
+              <% if (typeof activeInstance !== 'undefined' && activeInstance) { %>
                 <h3>Conversations</h3>
                 <ul class="admin-menu">
-                    <li><a href="/instances/<%= activeRagInstance._id %>/conversations">My conversations</a></li>
+                    <li><a href="/instances/<%= activeInstance._id %>/conversations">My conversations</a></li>
                 </ul>
                 <h3>Sources</h3>
                 <ul class="admin-menu">
-                    <li><a href="/instances/<%= activeRagInstance._id %>/sources">Manage sources</a></li>
-                    <li><a href="/instances/<%= activeRagInstance._id %>/sources/add">Add new source</a></li>
-                    <li><a href="/instances/<%= activeRagInstance._id %>/sources/import">Bulk import</a></li>
+                    <li><a href="/instances/<%= activeInstance._id %>/sources">Manage sources</a></li>
+                    <li><a href="/instances/<%= activeInstance._id %>/sources/add">Add new source</a></li>
+                    <li><a href="/instances/<%= activeInstance._id %>/sources/import">Bulk import</a></li>
                 </ul>
                 <h3>Ratings</h3>
                 <ul class="admin-menu">
-                    <li><a href="/instances/<%= activeRagInstance._id %>/ratings">View ratings</a></li>
-                    <li><a href="/instances/<%= activeRagInstance._id %>/ratings/choices">Rating choices</a></li>
+                    <li><a href="/instances/<%= activeInstance._id %>/ratings">View ratings</a></li>
+                    <li><a href="/instances/<%= activeInstance._id %>/ratings/choices">Rating choices</a></li>
                 </ul>
               <% } %>
             </nav>

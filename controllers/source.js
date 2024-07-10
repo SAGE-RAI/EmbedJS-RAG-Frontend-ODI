@@ -10,7 +10,7 @@ async function addSource(req, res) {
             throw new Error('RAG Application is not initialized');
         }
 
-        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeRagInstance.dbName);
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.dbName);
 
         let loader;
         if (sourceText) {
@@ -42,7 +42,7 @@ async function addSource(req, res) {
 
 async function getSources(req, res, returnRawData = false) {
     try {
-        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeRagInstance.dbName);
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.dbName);
 
         const loaders = await EmbeddingsCache.find({ loaderId: { $ne: "LOADERS_LIST_CACHE_KEY" } });
         if (returnRawData) {
@@ -62,7 +62,7 @@ async function getSources(req, res, returnRawData = false) {
 async function getSource(req, res, returnRawData = false) {
     const uniqueId = req.params.loaderId;
     try {
-        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeRagInstance.dbName);
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.dbName);
 
         const loader = await EmbeddingsCache.findOne({ loaderId: uniqueId });
         if (!loader) {
@@ -86,7 +86,7 @@ async function updateSource(req, res) {
     const loaderId = req.params.loaderId;
     const { title, type, overrideUrl } = req.body;
     try {
-        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeRagInstance.dbName);
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.dbName);
 
         const updateObject = { title, type, overrideUrl };
         const updateResult = await EmbeddingsCache.findOneAndUpdate(

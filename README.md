@@ -92,26 +92,26 @@ The application will be accessible at `http://localhost:3080` or `http://localho
 - **RAG Instances**:
   - `GET /instances` - List all RAG instances accessible to the user.
   - `POST /instances` - Create a new RAG instance.
-  - `PUT /instances/:ragId` - Update an existing RAG instance.
-  - `DELETE /instances/:ragId` - Delete an existing RAG instance.
+  - `PUT /instances/:instanceId` - Update an existing RAG instance.
+  - `DELETE /instances/:instanceId` - Delete an existing RAG instance.
 
 - **Source Management**:
-  - `POST /instances/:ragId/sources/add` - Add a new source.
-  - `GET /instances/:ragId/sources` - List all sources.
-  - `GET /instances/:ragId/sources/:loaderId` - Get a specific source.
-  - `PUT /instances/:ragId/sources/:loaderId` - Update a specific source.
-  - `DELETE /instances/:ragId/sources/:loaderId` - Delete a specific source.
+  - `POST /instances/:instanceId/sources/add` - Add a new source.
+  - `GET /instances/:instanceId/sources` - List all sources.
+  - `GET /instances/:instanceId/sources/:loaderId` - Get a specific source.
+  - `PUT /instances/:instanceId/sources/:loaderId` - Update a specific source.
+  - `DELETE /instances/:instanceId/sources/:loaderId` - Delete a specific source.
 
 - **Conversations**:
-  - `POST /instances/:ragId/conversations/create` - Create a new conversation.
-  - `GET /instances/:ragId/conversations` - List all conversations.
-  - `GET /instances/:ragId/conversations/:conversationId` - Get a specific conversation.
-  - `POST /instances/:ragId/conversations/:conversationId` - Update a specific conversation.
-  - `DELETE /instances/:ragId/conversations/:conversationId` - Delete a specific conversation.
+  - `POST /instances/:instanceId/conversations/create` - Create a new conversation.
+  - `GET /instances/:instanceId/conversations` - List all conversations.
+  - `GET /instances/:instanceId/conversations/:conversationId` - Get a specific conversation.
+  - `POST /instances/:instanceId/conversations/:conversationId` - Update a specific conversation.
+  - `DELETE /instances/:instanceId/conversations/:conversationId` - Delete a specific conversation.
 
 - **Messages/Completion**:
-  - `GET /instances/:ragId/conversations/:conversationId/messages` - Get messages of a specific conversation.
-  - `POST /instances/:ragId/conversations/:conversationId/messages` - Add a message to a conversation.
+  - `GET /instances/:instanceId/conversations/:conversationId/messages` - Get messages of a specific conversation.
+  - `POST /instances/:instanceId/conversations/:conversationId/messages` - Add a message to a conversation.
 
 ## Contributing
 

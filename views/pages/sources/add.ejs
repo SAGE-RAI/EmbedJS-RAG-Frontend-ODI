@@ -25,11 +25,11 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(schema => {
             // Check if loaderId is present in the URL
             const loaderId = '<%= typeof loaderId !== "undefined" ? loaderId : "" %>';
-            const ragId = '<%= ragId %>';
+            const instanceId = '<%= instanceId %>';
 
             // Fetch existing data if loaderId is present
             if (loaderId) {
-                fetch(`/instances/${ragId}/sources/${loaderId}`)
+                fetch(`/instances/${instanceId}/sources/${loaderId}`)
                     .then(response => response.json())
                     .then(existingData => {
                         // Populate the form with existing data
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             form: schema.form,
                             value: existingData.loader, // Assuming loader is the key containing the existing data
                             onSubmit: function (errors, values) {
-                                updateSource(errors, values, ragId);
+                                updateSource(errors, values, instanceId);
                             }
                         });
                     })
@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     form: schema.form,
                     value: data,
                     onSubmit: function (errors, values) {
-                        addSource(errors, values, ragId);
+                        addSource(errors, values, instanceId);
                     }
                 });
             }
@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 });
 
-function updateSource(errors, values, ragId) {
+function updateSource(errors, values, instanceId) {
     if (errors) {
         $('#res').html('<p>Please correct the errors in your form</p>');
     } else {
@@ -71,7 +71,7 @@ function updateSource(errors, values, ragId) {
         // Display a message while submitting
         $('#res').html('<p>Updating, please wait...</p>');
         var inputObject = values;
-        var postUrl = `/instances/${ragId}/sources`;
+        var postUrl = `/instances/${instanceId}/sources`;
 
         if (inputObject.loaderId) {
             postUrl += '/' + inputObject.loaderId;
@@ -100,7 +100,7 @@ function updateSource(errors, values, ragId) {
     }
 }
 
-function addSource(errors, values, ragId) {
+function addSource(errors, values, instanceId) {
     if (errors) {
         $('#res').html('<p>Please correct the errors in your form</p>');
     } else {
@@ -109,7 +109,7 @@ function addSource(errors, values, ragId) {
         // Display a message while submitting
         $('#res').html('<p>Submitting, please wait while vector embeddings are calculated</p>');
         var inputObject = values;
-        var postUrl = `/instances/${ragId}/sources`;
+        var postUrl = `/instances/${instanceId}/sources`;
 
         // Post the input object to the appropriate URL
         fetch(postUrl, {

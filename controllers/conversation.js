@@ -11,7 +11,7 @@ async function createConversation(req, res) {
           throw new Error('RAG Application is not initialized');
       }
 
-      const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
+      const Conversation = getConversationModel(req.session.activeInstance.dbName);
 
       const newConversation = new Conversation({
           userId,
@@ -32,7 +32,7 @@ async function getConversations(req, res) {
     try {
         const userId = req.user._id;
 
-        const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
+        const Conversation = getConversationModel(req.session.activeInstance.dbName);
 
         const conversations = await Conversation.find({ userId });
         res.json(conversations);
@@ -44,7 +44,7 @@ async function getConversations(req, res) {
 async function getConversation(req, res) {
     const conversationId = req.params.conversationId;
     try {
-        const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
+        const Conversation = getConversationModel(req.session.activeInstance.dbName);
 
         const conversation = await Conversation.findById(conversationId);
         if (!conversation) {
@@ -66,7 +66,7 @@ async function updateConversation(req, res) {
     const conversationId = req.params.conversationId;
     const updateData = req.body;
     try {
-        const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
+        const Conversation = getConversationModel(req.session.activeInstance.dbName);
 
         const updatedConversation = await Conversation.findByIdAndUpdate(
             conversationId,
@@ -87,7 +87,7 @@ async function updateConversation(req, res) {
 async function deleteConversation(req, res) {
     const conversationId = req.params.conversationId;
     try {
-        const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
+        const Conversation = getConversationModel(req.session.activeInstance.dbName);
 
         const deletedConversation = await Conversation.findByIdAndDelete(conversationId);
         if (!deletedConversation) {
@@ -103,7 +103,7 @@ async function deleteConversation(req, res) {
 async function getMessages(req, res) {
     const conversationId = req.params.conversationId;
     try {
-        const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
+        const Conversation = getConversationModel(req.session.activeInstance.dbName);
 
         const conversation = await Conversation.findById(conversationId);
         if (!conversation) {
@@ -130,7 +130,7 @@ async function postMessage(req, res) {
             return res.status(400).json({ error: 'Invalid message format. Must include sender "HUMAN" and message.' });
         }
 
-        const Conversation = getConversationModel(req.session.activeRagInstance.dbName);
+        const Conversation = getConversationModel(req.session.activeInstance.dbName);
 
         const conversation = await Conversation.findById(conversationId);
         if (!conversation) {
@@ -156,7 +156,7 @@ async function postMessage(req, res) {
 
         res.status(200).json(ragResponse);
     } catch (error) {
-        console.error("Error in /:ragId/completion/:conversationId route:", error);
+        console.error("Error in /:instanceId/completion/:conversationId route:", error);
         res.status(error.status || 500).json({ error: error.message });
     }
 }

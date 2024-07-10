@@ -8,11 +8,11 @@ import cors from 'cors';
 import passport from './passport.js';
 import logger from 'morgan';
 import { retrieveOrCreateUser } from './controllers/user.js';
-import { setActiveRag, canAccessRag, setRagLocals } from './middleware/auth.js';
+import { setActiveInstance, canAccessInstance, setInstanceLocals } from './middleware/auth.js';
 import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
-import ragInstances from './routes/ragInstances.js';
-import ragRoutes from './routes/rag.js';
+import instancesRoutes from './routes/instances.js';
+import instanceRoutes from './routes/instance.js';
 import sourceRoutes from './routes/source.js';
 import conversationRoutes from './routes/conversation.js';
 import { deleteOldTokens } from './controllers/token.js';
@@ -78,7 +78,7 @@ db.once('open', () => {
   });
 
   // Middleware to set locals
-  app.use(setRagLocals);
+  app.use(setInstanceLocals);
 
   app.get('/', (req, res) => {
     if (req.session.passport) {
@@ -89,26 +89,18 @@ db.once('open', () => {
     }
   });
 
-  // Define the routes that require the active RAG instance
-  const routesRequiringActiveRag = ['/sources', '/conversation', '/completion'];
-
   app.use('/auth', authRoutes);
   app.use('/admin', adminRoutes);
-  app.use('/instances', ragInstances);
+  app.use('/instances', instancesRoutes);
 
-  app.use('/instances/:ragId', canAccessRag, (req, res, next) => {
-    const path = req.path;
-    const isRagRoute = routesRequiringActiveRag.some(route => path.startsWith(route));
-    if (isRagRoute) {
-      setActiveRag(req, res, next);
-    } else {
-      next();
-    }
+  app.use('/instances/:instanceId', canAccessInstance, (req, res, next) => {
+    console.log('set instance');
+    setActiveInstance(req, res, next);
   });
 
-  app.use('/instances/:ragId/', ragRoutes);
-  app.use('/instances/:ragId/sources', sourceRoutes);
-  app.use('/instances/:ragId/conversations', conversationRoutes);
+  app.use('/instances/:instanceId/', instanceRoutes);
+  app.use('/instances/:instanceId/sources', sourceRoutes);
+  app.use('/instances/:instanceId/conversations', conversationRoutes);
 
   app.get('*', (req, res) => {
     res.locals.pageTitle = "404 Not Found";
