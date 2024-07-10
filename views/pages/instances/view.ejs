@@ -1,4 +1,3 @@
-<!-- views/pages/instances/view.ejs -->
 <%- include('../../partials/header-admin') %>
 <style>
     /* Add your custom styles here */
@@ -45,10 +44,10 @@
                 {
                     title: 'Actions',
                     render: function (data, type, row) {
-                        return '<button class="editBtn" data-instanceId="' + row._id + '">Edit</button>' +
-                               '<button class="deleteBtn" data-instanceId="' + row._id + '">Delete</button>' +
-                               '<button class="manageSourcesBtn" data-instanceId="' + row._id + '">Manage Sources</button>' +
-                               '<button class="chatBtn" data-instanceId="' + row._id + '">Chat</button>';
+                        return '<button class="editBtn" data-instanceid="' + row._id + '">Edit</button>' +
+                               '<button class="deleteBtn" data-instanceid="' + row._id + '">Delete</button>' +
+                               '<button class="manageSourcesBtn" data-instanceid="' + row._id + '">Manage Sources</button>' +
+                               '<button class="chatBtn" data-instanceid="' + row._id + '">Chat</button>';
                     }
                 }
             ],
@@ -60,26 +59,26 @@
         });
 
         $('#instanceTable').on('click', '.editBtn', function () {
-            var instanceId = $(this).data('instanceId');
+            var instanceId = $(this).data('instanceid');
             window.location.href = '/instances/' + instanceId + '/edit';
         });
 
         $('#instanceTable').on('click', '.deleteBtn', function () {
-            var instanceId = $(this).data('instanceId');
-            if (confirm('Are you sure you want to delete this RAG instance?')) {
+            var instanceId = $(this).data('instanceid');
+            if (confirm('Are you sure you want to delete this instance?')) {
                 $('#res').html('<p>Deleting, please wait.</p>');
                 $.ajax({
                     url: '/instances/' + instanceId,
                     type: 'DELETE',
                     success: function (result) {
-                        $('#res').html('<p>RAG instance deleted successfully.</p>');
+                        $('#res').html('<p>Instance deleted successfully.</p>');
                         instanceTable.ajax.reload();
                         setTimeout(function () {
                             $('#res').html('');
                         }, 5000);
                     },
                     error: function (xhr, status, error) {
-                        $('#res').html('<p>Error deleting RAG instance: ' + error + '</p>');
+                        $('#res').html('<p>Error deleting instance: ' + error + '</p>');
                         setTimeout(function () {
                             $('#res').html('');
                         }, 5000);
@@ -89,13 +88,12 @@
         });
 
         $('#instanceTable').on('click', '.manageSourcesBtn', function () {
-            var instanceId = $(this).data('instanceId');
-            console.log('/instances/' + instanceId + '/sources');
+            var instanceId = $(this).data('instanceid');
             window.location.href = '/instances/' + instanceId + '/sources';
         });
 
         $('#instanceTable').on('click', '.chatBtn', function () {
-            var instanceId = $(this).data('instanceId');
+            var instanceId = $(this).data('instanceid');
             window.location.href = '/instances/' + instanceId + '/conversations';
         });
     });

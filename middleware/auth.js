@@ -11,13 +11,12 @@ export const setInstanceLocals = (req, res, next) => {
         res.locals.instanceId = req.session.activeInstance.id;
     }
     next();
-}
+};
 
 // Middleware to set and initialize the active RAG instance
 export const setActiveInstance = async (req, res, next) => {
     try {
         const instanceId = req.params.instanceId;
-
         const instance = await Instance.findById(instanceId);
 
         if (!instance) {
@@ -29,15 +28,15 @@ export const setActiveInstance = async (req, res, next) => {
 
         // Check if the RAG application is already initialized and the same as the requested RAG ID
         if (req.session.activeInstance?.id === instanceId && ragApplication) {
-            req.session.activeInstance = Instance;
+            req.session.activeInstance = instance;
             req.ragApplication = ragApplication;
-            res.locals.activeInstance = Instance;
+            res.locals.activeInstance = instance;
             res.locals.instanceId = instanceId;
             return next();
         }
 
         // Initialize the RAG application
-        ragApplication = await initializeRAGApplication(Instance);
+        ragApplication = await initializeRAGApplication(instance);
         instanceCache.set(instanceId, ragApplication);
 
         // Store the initialized RAG application and its ID in the session
@@ -52,35 +51,60 @@ export const setActiveInstance = async (req, res, next) => {
     }
 };
 
-// Middleware to check if the user can access the RAG instance
+// Middleware to check if the user can access the instance
 export const canAccessInstance = async (req, res, next) => {
     try {
         const instanceId = req.params.instanceId;
         const userId = req.user._id;
+        const userEmail = req.user.email;
 
-        if (!userId) {
+        if (!userId || !userEmail) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
         const instance = await Instance.findById(instanceId);
 
         if (!instance) {
-            return res.status(404).json({ error: 'Isnstance not found' });
+            return res.status(404).json({ error: 'Instance not found' });
         }
 
-        // Check if the user has access to this RAG instance
-        const hasAccess = instance.createdBy.equals(userId) || instance.sharedWith.includes(userId) || instance.public;
+        // Check if the user has access to this instance
+        console.log(instance);
+        const userAccess = instance.sharedWith.find(user => user.email === userEmail);
+        const hasAccess = instance.createdBy.equals(userId) || userAccess || instance.public;
 
         if (!hasAccess) {
             return res.status(403).json({ error: 'Forbidden' });
         }
 
         req.session.activeInstance = instance;
+        req.userAccess = userAccess;
         next();
     } catch (error) {
         next(error);
     }
 };
+
+// Middleware to check if the user has source editor access
+export const canEditSources = (req, res, next) => {
+    const userAccess = req.userAccess;
+    if (req.isAdmin || req.session.activeInstance.createdBy.equals(req.user._id) || (userAccess && userAccess.role === 'contentEditor')) {
+        next();
+    } else {
+        res.status(403).send('Permission denied');
+    }
+};
+
+// Middleware to check if the user has instance admin access
+export const canAdminInstance = (req, res, next) => {
+    const userAccess = req.userAccess;
+    if (req.isAdmin || req.session.activeInstance.createdBy.equals(req.user._id) || (userAccess && userAccess.role === 'instanceAdmin')) {
+        next();
+    } else {
+        res.status(403).send('Permission denied');
+    }
+};
+
 
 export const verifyConversationMiddleware = async (req, res, next) => {
     try {

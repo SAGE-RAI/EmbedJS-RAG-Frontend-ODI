@@ -1,22 +1,22 @@
 import express from 'express';
 import { addSource, getSources, getSource, updateSource, deleteSource } from '../controllers/source.js';
-import { ensureAuthenticated, checkOwnership, canAccessInstance } from '../middleware/auth.js';
+import { ensureAuthenticated, checkOwnership, canAccessInstance, canEditSources } from '../middleware/auth.js';
 
 const router = express.Router({ mergeParams: true });
 
 // Route to view and add sources
-router.get('/add', ensureAuthenticated, canAccessInstance, (req, res) => {
+router.get('/add', ensureAuthenticated, canAccessInstance, canEditSources, (req, res) => {
     res.locals.pageTitle = "Add Source";
     res.render('pages/sources/add', { instanceId: req.params.instanceId });
 });
 
 // Route to view and add sources
-router.get('/import', ensureAuthenticated, canAccessInstance, (req, res) => {
+router.get('/import', ensureAuthenticated, canAccessInstance, canEditSources, (req, res) => {
     res.locals.pageTitle = "Bulk Import";
     res.render('pages/sources/import', { instanceId: req.params.instanceId });
 });
 
-router.post('/', ensureAuthenticated, checkOwnership, addSource);
+router.post('/', ensureAuthenticated, canAccessInstance, canEditSources, addSource);
 
 // Route to list sources with content negotiation
 router.get('/', ensureAuthenticated, canAccessInstance, async (req, res) => {
@@ -35,7 +35,6 @@ router.get('/', ensureAuthenticated, canAccessInstance, async (req, res) => {
     }
 });
 
-
 // Route to get a specific source with content negotiation
 router.get('/:loaderId', ensureAuthenticated, canAccessInstance, async (req, res) => {
     try {
@@ -53,7 +52,7 @@ router.get('/:loaderId', ensureAuthenticated, canAccessInstance, async (req, res
     }
 });
 
-router.put('/:loaderId', ensureAuthenticated, checkOwnership, updateSource);
-router.delete('/:loaderId', ensureAuthenticated, checkOwnership, deleteSource);
+router.put('/:loaderId', ensureAuthenticated, canAccessInstance, canEditSources, updateSource);
+router.delete('/:loaderId', ensureAuthenticated, canAccessInstance, canEditSources, deleteSource);
 
 export default router;

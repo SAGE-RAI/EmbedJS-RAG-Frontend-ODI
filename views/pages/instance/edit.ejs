@@ -1,0 +1,211 @@
+<%- include('../../partials/header-admin') %>
+<style>
+    .longText {
+        min-width: 80%;
+    }
+    .submit {
+        margin-top: 2em;
+    }
+</style>
+<h1>Edit Instance</h1>
+<div id="res" class="alert"></div>
+<form id="dataForm"></form>
+
+<h2>Shared With</h2>
+<table id="sharedWithTable" class="display" style="width:100%"></table>
+
+<h2>Add User</h2>
+<form id="addUserForm">
+    <label for="userEmail">User Email:</label>
+    <input type="email" id="userEmail" name="userEmail" required>
+    <br>
+    <label for="userRole">Role:</label>
+    <select id="userRole" name="userRole">
+        <option value="">Viewer</option>
+        <option value="contentEditor">Content Editor</option>
+        <option value="instanceAdmin">Instance Admin</option>
+    </select>
+    <br>
+    <button type="button" onclick="addUser()">Add User</button>
+</form>
+
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.7.0/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.7.0/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.7.0/js/buttons.print.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.13.5/css/buttons.dataTables.min.css">
+
+<script>
+    const instanceId = "<%= instanceId %>";
+    const data = {};
+
+    $(document).ready(function () {
+        fetchInstanceDetails();
+
+        $('#sharedWithTable').DataTable({
+            ajax: {
+                url: `/instances/${instanceId}`,
+                dataSrc: 'sharedWith',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Accept', 'application/json');
+                }
+            },
+            columns: [
+                { data: 'email', title: 'Email', defaultContent: '' },
+                { data: 'role', title: 'Role', defaultContent: 'Viewer' },
+                {
+                    title: 'Actions',
+                    render: function (data, type, row) {
+                        return '<button class="deleteUserBtn" data-email="' + row.email + '">Delete</button>';
+                    }
+                }
+            ],
+            order: [[0, 'asc']],
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ]
+        });
+
+        $('#sharedWithTable').on('click', '.deleteUserBtn', function () {
+            var email = $(this).data('email');
+            if (confirm('Are you sure you want to remove this user?')) {
+                $('#res').html('<p>Removing user, please wait.</p>');
+                fetch(`/instances/${instanceId}/sharedWith/${email}`, {
+                    method: 'DELETE',
+                })
+                .then(response => {
+                    if (response.ok) {
+                        $('#res').html('<p>User removed successfully.</p>');
+                        $('#sharedWithTable').DataTable().ajax.reload();
+                        setTimeout(function () {
+                            $('#res').html('');
+                        }, 5000);
+                    } else {
+                        $('#res').html('<p>Error removing user.</p>');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error removing user:', error);
+                    $('#res').html('<p>Error removing user.</p>');
+                });
+            }
+        });
+    });
+
+    function fetchInstanceDetails() {
+        fetch(`/instances/${instanceId}`, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(instance => {
+            $('#dataForm').jsonForm({
+                schema: {
+                    name: {
+                        type: 'string',
+                        title: 'Name',
+                        required: true
+                    },
+                    description: {
+                        type: 'string',
+                        title: 'Description',
+                        required: false
+                    },
+                    public: {
+                        type: 'boolean',
+                        title: 'Public',
+                        required: true
+                    }
+                },
+                form: [
+                    "name",
+                    {
+                        key: "description",
+                        type: "textarea"
+                    },
+                    {
+                        key: "public",
+                        type: "checkbox"
+                    },
+                    {
+                        type: "submit",
+                        title: "Update Instance"
+                    }
+                ],
+                value: {
+                    name: instance.name,
+                    description: instance.description,
+                    public: instance.public
+                },
+                onSubmit: function (errors, values) {
+                    if (errors) {
+                        $('#res').html('<p>Please correct the errors in your form</p>');
+                    } else {
+                        updateInstance(values);
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching instance details:', error);
+            $('#res').html('<p>Error fetching instance details.</p>');
+        });
+    }
+
+    function updateInstance(values) {
+        $('#res').html('<p>Updating, please wait...</p>');
+        fetch(`/instances/${instanceId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(values)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data._id) {
+                $('#res').html('<p>Instance updated successfully.</p>');
+            } else if (data.error) {
+                $('#res').html('<p>Error: ' + data.error + '</p>');
+            } else {
+                $('#res').html('<p>Unknown error occurred</p>');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating instance:', error);
+            $('#res').html('<p>An error occurred while processing your request</p>');
+        });
+    }
+
+    function addUser() {
+        const instanceId = '<%= instanceId %>';
+        const email = $('#userEmail').val();
+        const role = $('#userRole').val();
+
+        $.ajax({
+            url: '/instances/' + instanceId + '/sharedWith',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ email, role }),
+            success: function (data) {
+                $('#res').html('<p>User added successfully.</p>');
+                $('#sharedUsersTable').DataTable().ajax.reload();
+                $('#userEmail').val('');
+                $('#userRole').val('');
+                setTimeout(function () {
+                    $('#res').html('');
+                }, 5000);
+            },
+            error: function (xhr, status, error) {
+                $('#res').html('<p>Error adding user: ' + error + '</p>');
+                setTimeout(function () {
+                    $('#res').html('');
+                }, 5000);
+            }
+        });
+    }
+</script>
+<%- include('../../partials/footer-admin') %>

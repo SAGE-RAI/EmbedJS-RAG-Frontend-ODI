@@ -1,19 +1,53 @@
-// models/ragInstance.js
-
 import mongoose from 'mongoose';
 
-// Create RAG instance schema and model
-const instanceSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    description: String,
-    dbName: { type: String, required: true },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    sharedWith: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    public: { type: Boolean, default: false },
+const sharedWithSchema = new mongoose.Schema({
+  email: {
+    type: String,
+    required: true
+  },
+  role: {
+    type: String,
+    enum: ['contentEditor', 'instanceAdmin', ''],
+    default: ''
+  }
 }, {
-    collection: 'Instances' // Specify the collection name
+  _id: false // Prevent Mongoose from creating _id for subdocuments
 });
 
-const RagInstance = mongoose.model('Instance', instanceSchema);
+const instanceSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String
+  },
+  dbName: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  public: {
+    type: Boolean,
+    default: false,
+    required: true
+  },
+  random: {
+    type: Boolean,
+    default: true,
+    required: true
+  },
+  sharedWith: [sharedWithSchema],
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  }
+},{
+  timestamps: true,
+  collection: 'Instances' // Specify the collection name
+});
 
-export default RagInstance;
+const Instance = mongoose.model('Instance', instanceSchema);
+
+export default Instance;
