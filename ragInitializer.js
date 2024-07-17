@@ -1,6 +1,6 @@
 // ragInitializer.js
 
-import { RAGApplicationBuilder, OpenAi } from 'embedjs' // from '@llm-tools/embedjs';
+import { RAGApplicationBuilder, AzureAIInferenceModel } from 'embedjs' // from '@llm-tools/embedjs';
 import { MongoDb } from 'embedjs' // from '@llm-tools/embedjs/vectorDb/mongodb';
 import { MongoCache } from 'embedjs' // from '@llm-tools/embedjs/cache/mongo';
 import { MongoConversations } from 'embedjs' // from '@llm-tools/embedjs/conversations/mongo';
@@ -32,7 +32,12 @@ async function initializeRAGApplication(MONGODB_URI, DB_NAME, COLLECTION_NAME, C
 
     try {
         const ragApplication = await new RAGApplicationBuilder()
-            .setModel(new OpenAi({ modelName: 'gpt-4o' }))
+            .setModel(new AzureAIInferenceModel(
+                { 
+                    modelName: process.env.AZURE_AI_MODEL_NAME,
+                    endpointUrl: process.env.AZURE_AI_ENDPOINT_URL,
+                    apiKey: process.env.AZURE_AI_API_KEY
+             }))
             .setVectorDb(db)
             .setCache(cachedb)
             .setConversations(conversationsdb)
