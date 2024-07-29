@@ -11,7 +11,8 @@ const CACHE_COLLECTION_NAME = process.env.EMBEDDINGS_CACHE_COLLECTION;
 const CONVERSATIONS_COLLECTION_NAME = process.env.CONVERSATIONS_COLLECTION;
 
 // Function to initialize the RAG application
-async function initializeRAGApplication(instanceId) {
+async function initializeRAGApplication(instance) {
+    const instanceId = instance.id;
 
     const db = new MongoDb({
         connectionString: MONGODB_URI,
@@ -41,6 +42,7 @@ async function initializeRAGApplication(instanceId) {
             .setVectorDb(db)
             .setCache(cachedb)
             .setConversations(conversationsdb)
+            .setQueryTemplate(instance.systemPrompt)
             .build();
 
         console.log('RAG Application is ready with OpenAI gpt-4o-mini Turbo and MongoDB!');

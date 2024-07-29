@@ -36,7 +36,10 @@ async function getConversations(req, res) {
 
         const Conversation = getConversationModel(req.session.activeInstance.id);
 
-        const conversations = await Conversation.find({ userId });
+        const conversations = await Conversation.find({
+            userId,
+            entries: { $exists: true, $not: { $size: 0 } }
+        });
         res.json(conversations);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -123,7 +126,7 @@ async function postMessage(req, res) {
         const conversationId = req.params.conversationId;
         const { message, sender } = req.body;
         const ragApplication = req.ragApplication;
-
+        console.log(message);
         if (!ragApplication) {
             throw new Error('RAG Application is not initialized');
         }
@@ -162,7 +165,7 @@ async function postMessage(req, res) {
 
         const chunks = await ragApplication.getContext(contextQuery);
         /// Calculate the number of tokens required for the message and chunks
-        const messageTokens = encode(message.message).length;
+        const messageTokens = encode(message).length;
 
         let chunkTokens = 0;
         for (const chunk of chunks) {

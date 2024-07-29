@@ -27,6 +27,9 @@ const instanceSchema = new mongoose.Schema({
     default: false,
     required: true
   },
+  systemPrompt: {
+    type: String
+  },
   sharedWith: [sharedWithSchema],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,

@@ -566,6 +566,7 @@ async function handleSubmit(event) {
 async function sendMessage(conversationId, message) {
     let newMessage = {};
     newMessage.content = message;
+    console.log(message);
     renderMessage(newMessage, null, true);
     const messageInput = document.getElementById('txt');
     const responseLi = createResponseNode();
@@ -579,7 +580,7 @@ async function sendMessage(conversationId, message) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ message, sender: 'HUMAN' }) // Ensure correct format
+            body: JSON.stringify(message) // Ensure correct format
         });
 
         if (!response.ok) {

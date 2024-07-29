@@ -34,6 +34,11 @@ async function getInstance(req, res) {
             // If the user is not an admin and doesn't have instanceAdmin role, remove sharedWith
             delete instance.sharedWith;
         }
+        if (!instance.systemPrompt) {
+            console.log('in here');
+            console.log(req.ragApplication.queryTemplate);
+            instance.systemPrompt = req.ragApplication.queryTemplate;
+        }
 
         res.json(instance);
     } catch (error) {

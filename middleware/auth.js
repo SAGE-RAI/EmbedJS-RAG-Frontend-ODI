@@ -36,9 +36,8 @@ export const setActiveInstance = async (req, res, next) => {
         }
 
         // Initialize the RAG application
-        ragApplication = await initializeRAGApplication(instanceId);
+        ragApplication = await initializeRAGApplication(instance);
         instanceCache.set(instanceId, ragApplication);
-
         // Store the initialized RAG application and its ID in the session
         req.session.activeInstance = instance;
         req.ragApplication = ragApplication;
