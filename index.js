@@ -59,7 +59,6 @@ db.once('open', () => {
     const user = req.session.passport ? req.session.passport.user : req.session.user;
     if (user) {
       res.locals.user = await retrieveOrCreateUser(user);
-      res.locals.user.isAdmin = req.session.authMethod === 'google';
     } else {
       res.locals.user = user;
     }

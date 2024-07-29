@@ -22,19 +22,9 @@ const instanceSchema = new mongoose.Schema({
   description: {
     type: String
   },
-  dbName: {
-    type: String,
-    required: true,
-    unique: true
-  },
   public: {
     type: Boolean,
     default: false,
-    required: true
-  },
-  random: {
-    type: Boolean,
-    default: true,
     required: true
   },
   sharedWith: [sharedWithSchema],

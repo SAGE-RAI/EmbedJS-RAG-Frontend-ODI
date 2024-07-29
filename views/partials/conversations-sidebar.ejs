@@ -1,3 +1,15 @@
+<sidebar>
+    <div class="conversations">
+        <ul class="new">
+            <li class="conversation">
+                <a href="javascript:loadConversation('')">New conversation</a>
+            </li>
+        </ul>
+        <h2>Conversations</h2>
+    </div>
+</sidebar>
+
+
 <script>
     function updateConversations() {
         const instanceId = '<%= activeInstance ? activeInstance._id : "" %>';
@@ -247,12 +259,3 @@
     //setInterval(updateConversations, 5000);
 
 </script>
-
-<div class="conversations">
-    <ul class="new">
-        <li class="conversation">
-            <a href="javascript:loadConversation('')">New conversation</a>
-        </li>
-    </ul>
-    <h2>Conversations</h2>
-</div>

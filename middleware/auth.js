@@ -36,7 +36,7 @@ export const setActiveInstance = async (req, res, next) => {
         }
 
         // Initialize the RAG application
-        ragApplication = await initializeRAGApplication(instance);
+        ragApplication = await initializeRAGApplication(instanceId);
         instanceCache.set(instanceId, ragApplication);
 
         // Store the initialized RAG application and its ID in the session
@@ -87,7 +87,7 @@ export const canAccessInstance = async (req, res, next) => {
 // Middleware to check if the user has source editor access
 export const canEditSources = (req, res, next) => {
     const userAccess = req.userAccess;
-    if (req.isAdmin || req.session.activeInstance.createdBy.equals(req.user._id) || (userAccess && userAccess.role === 'contentEditor')) {
+    if (req.session.activeInstance.createdBy.equals(req.user._id) || (userAccess && userAccess.role === 'contentEditor')) {
         next();
     } else {
         res.status(403).send('Permission denied');
@@ -97,7 +97,7 @@ export const canEditSources = (req, res, next) => {
 // Middleware to check if the user has instance admin access
 export const canAdminInstance = (req, res, next) => {
     const userAccess = req.userAccess;
-    if (req.isAdmin || req.session.activeInstance.createdBy.equals(req.user._id) || (userAccess && userAccess.role === 'instanceAdmin')) {
+    if (req.session.activeInstance.createdBy.equals(req.user._id) || (userAccess && userAccess.role === 'instanceAdmin')) {
         next();
     } else {
         res.status(403).send('Permission denied');
@@ -120,7 +120,7 @@ export const verifyConversationMiddleware = async (req, res, next) => {
         // Extract the conversation ID from the request params
         const conversationId = req.params.conversationId;
 
-        const Conversation = getConversationModel(req.session.activeInstance.dbName);
+        const Conversation = getConversationModel(req.session.activeInstance.id);
 
         // Check if the conversation ID belongs to the user
         const conversation = await Conversation.findOne({ _id: conversationId, userId: userId });
@@ -135,18 +135,6 @@ export const verifyConversationMiddleware = async (req, res, next) => {
     } catch (error) {
         console.error('Error in verifyConversationMiddleware:', error);
         res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
-
-export const isAdmin = (req, res, next) => {
-    if (!req.isAuthenticated()) {
-        return res.redirect('/auth/google');
-    }
-    if (req.session.authMethod === 'google') {
-        req.isAdmin = true;
-        next();
-    } else {
-        res.status(403).send('Permission denied');
     }
 };
 

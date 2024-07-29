@@ -9,6 +9,9 @@ const embeddingsCacheSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  tokens: {
+    type: Number
+  },
   source: {
     type: String,
     required: true

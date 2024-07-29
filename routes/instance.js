@@ -1,6 +1,6 @@
 import express from 'express';
 import { getInstance, updateInstance, deleteInstance, addUserToInstance, removeUserFromInstance } from '../controllers/instance.js'
-import { ensureAuthenticated, canAccessInstance, isAdmin, canAdminInstance } from '../middleware/auth.js';
+import { ensureAuthenticated, canAccessInstance, canAdminInstance } from '../middleware/auth.js';
 
 const router = express.Router({ mergeParams: true });
 
@@ -19,7 +19,7 @@ router.get('/', ensureAuthenticated, canAccessInstance, async (req, res) => {
     }
 });
 
-router.get('/edit', ensureAuthenticated, isAdmin, canAdminInstance, (req, res) => {
+router.get('/edit', ensureAuthenticated, canAdminInstance, (req, res) => {
     res.locals.pageTitle = "Edit Instance";
     res.render('pages/instance/edit', { instanceId: req.params.instanceId });
 });

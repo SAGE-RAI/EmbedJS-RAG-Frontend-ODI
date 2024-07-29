@@ -1,11 +1,5 @@
 import Instance from '../models/instance.js';
-import sanitize from 'sanitize-filename';
 import mongoose from 'mongoose';
-
-// Function to generate a sanitized database name
-function generateDatabaseName(userId, instanceName) {
-    return `${userId}_${sanitize(instanceName).replace(/\s+/g, '_')}`;
-}
 
 async function createInstance(req, res) {
     try {
@@ -13,11 +7,9 @@ async function createInstance(req, res) {
         const userId = req.user.id;
 
         // Generate the database name
-        const dbName = generateDatabaseName(userId, name);
         const newInstance = new Instance({
             name,
             description,
-            dbName,
             createdBy: userId,
             public: isPublic || false
         });
@@ -38,7 +30,7 @@ async function getInstance(req, res) {
 
         const userAccess = req.userAccess;
 
-        if (!req.isAdmin && (!userAccess || userAccess.role !== 'instanceAdmin')) {
+        if (!userAccess || userAccess.role !== 'instanceAdmin') {
             // If the user is not an admin and doesn't have instanceAdmin role, remove sharedWith
             delete instance.sharedWith;
         }
@@ -66,26 +58,33 @@ async function deleteInstance(req, res) {
     try {
         const instanceId = req.params.instanceId;
 
-        // Find the RAG instance to get the database name
+        // Find the instance to ensure it exists
         const instance = await Instance.findById(instanceId);
         if (!instance) {
             return res.status(404).json({ error: 'Instance not found' });
         }
 
-        const dbName = instance.dbName;
         const mongoUri = process.env.MONGO_URI;
+        const dbName = instanceId; // Using instanceId as the database name
 
-        // Drop the associated database
         try {
-            const connection = mongoose.createConnection(`${mongoUri}/${dbName}`, {});
+            // Connect to the associated database
+            const connection = await mongoose.createConnection(`${mongoUri}/${dbName}`, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+            });
 
+            // Drop the associated database
             await connection.dropDatabase();
             await connection.close();
-        } catch(err) {
+        } catch (err) {
+            console.log('Failed to delete database');
+            console.log(err);
+            return res.status(500).json({ error: 'Failed to delete associated database' });
         }
 
-        // Delete the RAG instance from the master database
-        await Instance.findByIdAndDelete(instanceId);
+        // Delete the instance from the master database
+        //await Instance.findByIdAndDelete(instanceId);
 
         res.sendStatus(204);
     } catch (error) {

@@ -18,8 +18,21 @@ router.get('/', ensureAuthenticated, async (req, res) => {
             ]
         });
 
+        const result = instances.map(instance => {
+            if (instance.createdBy.equals(userId)) {
+                return instance;
+            } else {
+                return {
+                    _id: instance._id,
+                    name: instance.name,
+                    description: instance.description,
+                    public: instance.public
+                };
+            }
+        });
+
         if (req.accepts(['json', 'html']) === 'json') {
-            res.json(instances);
+            res.json(result);
         } else if (req.accepts(['html', 'json']) === 'html') {
             res.locals.pageTitle = "Instances";
             res.render('pages/instances/view');

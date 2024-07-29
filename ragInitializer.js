@@ -11,24 +11,23 @@ const CACHE_COLLECTION_NAME = process.env.EMBEDDINGS_CACHE_COLLECTION;
 const CONVERSATIONS_COLLECTION_NAME = process.env.CONVERSATIONS_COLLECTION;
 
 // Function to initialize the RAG application
-async function initializeRAGApplication(instance) {
-    const { dbName } = instance;
+async function initializeRAGApplication(instanceId) {
 
     const db = new MongoDb({
         connectionString: MONGODB_URI,
-        dbName: dbName,
+        dbName: instanceId,
         collectionName: COLLECTION_NAME
     });
 
     const cachedb = new MongoCache({
         uri: MONGODB_URI,
-        dbName: dbName,
+        dbName: instanceId,
         collectionName: CACHE_COLLECTION_NAME
     });
 
     const conversationsdb = new MongoConversations({
         uri: MONGODB_URI,
-        dbName: dbName,
+        dbName: instanceId,
         collectionName: CONVERSATIONS_COLLECTION_NAME
     });
 
@@ -38,13 +37,13 @@ async function initializeRAGApplication(instance) {
 
     try {
         const ragApplication = await new RAGApplicationBuilder()
-            .setModel(new OpenAi({ modelName: 'gpt-4o' }))
+            .setModel(new OpenAi({ modelName: 'gpt-4o-mini' }))
             .setVectorDb(db)
             .setCache(cachedb)
             .setConversations(conversationsdb)
             .build();
 
-        console.log('RAG Application is ready with OpenAI GPT-4o Turbo and MongoDB!');
+        console.log('RAG Application is ready with OpenAI gpt-4o-mini Turbo and MongoDB!');
         return ragApplication;
     } catch (error) {
         console.error('Failed to setup RAG Application:', error);

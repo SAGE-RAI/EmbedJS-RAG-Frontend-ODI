@@ -4,7 +4,7 @@ body {
   max-width: 100%;
 }
 main {
-  height: calc(100vh - 150px);
+  height: calc(100vh - 70px);
   overflow: hidden;
 }
 .container {
@@ -27,7 +27,7 @@ main {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: calc(100vh - 150px);
+  height: calc(100vh - 70px);
 }
 
 .login-block > .box {
@@ -58,7 +58,74 @@ main {
   font-size: 16px;
   font-weight: bold;
 }
+/* HEADER */
+.header .main-nav {
+  position: absolute;
+  right: 10px;
+}
+.header .main-nav ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+}
 
+.header .main-nav ul li {
+  padding: 8px 0px 8px 20px;
+}
+.header .main-nav ul .selected {
+  text-decoration: underline;
+}
+
+.header .main-nav ul a,
+.header .main-nav ul button {
+  cursor: pointer;
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  font-weight: bold;
+  padding: 0px;
+  border-radius: 25px;
+  border: none;
+  text-decoration: none;
+  background: none;
+}
+
+@media (min-width: 768px) {
+  .header .main-nav ul a,
+  .header .main-nav ul button {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .header .main-nav ul a,
+  .header .main-nav ul button {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .header .main-nav ul a,
+  .header .main-nav ul button {
+    font-size: 1rem;
+  }
+}
+
+.header .main-nav ul img {
+  margin-left: 8px;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin-top: -4px;
+}
+
+.header .main-nav ul .logout {
+  padding-left: 0px;
+  padding-right: 0px;
+}
 /* FOOTER */
 nav > .pull-right {
   float: right;
@@ -128,7 +195,7 @@ sidebar {
   width: 200px;
   float: left;
   padding: 10px;
-  height: calc(100vh - 70px);
+  height: calc(100vh);
   border-right: 1px solid gray;
 }
 sidebar > nav {

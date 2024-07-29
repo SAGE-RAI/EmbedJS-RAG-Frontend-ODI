@@ -579,18 +579,19 @@ async function sendMessage(conversationId, message) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(message)
+            body: JSON.stringify({ message, sender: 'HUMAN' }) // Ensure correct format
         });
 
         if (!response.ok) {
-            throw new Error('Failed to send message.');
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to send message.');
         }
 
         const responseMessage = await response.json();
         renderMessage(responseMessage, responseLi, true); // Render the message
     } catch (error) {
         console.error('Error sending message:', error);
-        alert('Failed to send message. Please try again.');
+        alert(`Failed to send message: ${error.message}`); // Display the specific error message
         responseLi.remove();
     }
 }

@@ -1,6 +1,7 @@
-<!-- views/partials/header.ejs -->
+<!-- views/partials/header-admin.ejs -->
 <!DOCTYPE html>
-<html prefix="dct: http://purl.org/dc/terms/
+<html class="dark" data-bs-theme="dark"
+      prefix="dct: http://purl.org/dc/terms/
               rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
               dcat: http://www.w3.org/ns/dcat#
               odrs: http://schema.theodi.org/odrs#">
@@ -9,20 +10,84 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><%= pageTitle %></title>
 
-<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-<script src="//unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
-<script src="//unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-<script src="//unpkg.com/react-markdown@4.3.1/umd/react-markdown.js"></script>
+<script type="text/javascript" src="/lib/jquery-3.7.1.min.js"></script>
+<script type="text/javascript" src="/lib/underscore.js"></script>
+<script type="text/javascript" src="/lib/jquery-ui.js"></script>
+<script type="text/javascript" src="/lib/jsv.js"></script>
+<script type="text/javascript" src="/lib/jsonform.js"></script>
 
 <link href="/css/water.css" rel="stylesheet">
 <link href="/css/glyphicon.css" rel="stylesheet">
 <link href="/css/style.css" rel="stylesheet">
 <link rel="shortcut icon" href="/images/odifavicon32.ico">
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const instanceSelect = document.getElementById('instanceSelect');
+        const currentPath = window.location.pathname;
+        const activeinstanceId = '<%= typeof activeInstance !== 'undefined' && activeInstance ? activeInstance._id : "" %>';
+
+        // Add default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = "";
+        defaultOption.text = "Select instance";
+        instanceSelect.appendChild(defaultOption);
+
+        // Fetch the user's RAG instances and populate the select dropdown
+        fetch('/instances', {
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(instance => {
+                const option = document.createElement('option');
+                option.value = instance._id;
+                option.text = instance.name;
+                if (instance._id === activeinstanceId) {
+                    option.selected = true;
+                }
+                instanceSelect.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error fetching RAG instances:', error));
+    });
+
+    function switchInstance() {
+        const instanceSelect = document.getElementById('instanceSelect');
+        const selectedinstanceId = instanceSelect.value;
+        if (selectedinstanceId) {
+            const currentPath = window.location.pathname.split('/').slice(3).join('/'); // Get the current path without the instanceId
+            window.location.href = `/instances/${selectedinstanceId}/${currentPath}`;
+        }
+    }
+</script>
+
 </head>
 <body>
-	<div class="topper">
-		<div class="icon"></div>
-		<div class="name"><%= pageTitle %></div>
-	</div>
-	<main>
+    <div class="topper header">
+        <div class="icon"></div>
+        <div class="name">ODI Chat</div>
+        <nav class="main-nav" aria-label="Main Menu">
+            <ul>
+            <% if(user) { %>
+                <li><a href="/instances">Instances</a><img src="/images/dashboard.svg" alt="Dashboard Icon" width="24" height="26" /></li>
+                <% if (user.authMethod === 'google') { %>
+                    <li><a href="/auth/local/reset-password">View/Change local password</a></li>
+                <% } %>
+                <li><a href="/about" id="privacy-link">Your privacy</a><img src="/images/privacy.svg" alt="Privacy Icon" width="24" height="26" /></li>
+                <li>
+                    <a style="padding: 0;" href="/profile"><%= user ? (user.displayName || (user.first_name && user.last_name ? user.first_name + ' ' + user.last_name : user.email)) : 'Guest' %></a><br/>Tokens: <span id="userTokens"><%= user.tokens %></span>
+                    <form style="display: inline-flex;" id="logout_form" action="/logout" method="post">
+                         &nbsp;(<a href="javascript:;" onclick="document.getElementById('logout_form').submit();">Logout)</a>
+                    </form>
+                </li>
+            <% } else { %>
+                <li><a href="/about" id="privacy-link">Your privacy</a><img src="/images/privacy.svg" alt="Privacy Icon" width="24" height="26" /></li>
+                <li><a href="/auth/django" class="toggle-link">Login</a></li>
+            <% } %>
+            </ul>
+        </nav>
+    </div>
+    <main>

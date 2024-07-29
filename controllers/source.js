@@ -1,6 +1,7 @@
 import { WebLoader, TextLoader, PdfLoader } from '@llm-tools/embedjs';
 import { getEmbeddingsCacheModel } from '../models/embeddingsCache.js';
-import { getConversationModel } from '../models/conversation.js';
+import User from '../models/user.js';
+import { encode } from 'gpt-tokenizer/model/text-embedding-ada-002';
 
 async function addSource(req, res) {
     const { source, title, type, overrideUrl, sourceText } = req.body;
@@ -10,7 +11,7 @@ async function addSource(req, res) {
             throw new Error('RAG Application is not initialized');
         }
 
-        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.dbName);
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
 
         let loader;
         if (sourceText) {
@@ -20,9 +21,34 @@ async function addSource(req, res) {
         } else {
             loader = new WebLoader({ urlOrContent: source });
         }
+
+        // Retrieve the user's token information from the database
+        const userId = req.session.user.id; // Assume user ID is stored in session
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        // Retrieve chunks from the loader and calculate total tokens required
+        let totalTokens = 0;
+        for await (const chunk of loader.getChunks()) {
+            const tokenCount = encode(chunk.pageContent).length; // Using gpt-tokenizer to count tokens
+            totalTokens += tokenCount;
+
+            if (totalTokens > user.tokens) {
+                return res.status(400).json({ error: 'Insufficient tokens to load the source' });
+            }
+        }
+
+        // Only add the loader after confirming enough tokens
         await ragApplication.addLoader(loader);
         const uniqueId = loader.getUniqueId();
-        const updateObject = { source, loadedDate: new Date(), title, type, overrideUrl };
+
+        // Deduct the tokens from user's account and update in the database
+        user.tokens -= totalTokens;
+        await user.save();
+
+        const updateObject = { tokens: totalTokens, source, loadedDate: new Date(), title, type, overrideUrl };
 
         const updateResult = await EmbeddingsCache.findOneAndUpdate(
             { loaderId: uniqueId },
@@ -42,7 +68,7 @@ async function addSource(req, res) {
 
 async function getSources(req, res, returnRawData = false) {
     try {
-        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.dbName);
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
 
         const loaders = await EmbeddingsCache.find({ loaderId: { $ne: "LOADERS_LIST_CACHE_KEY" } });
         if (returnRawData) {
@@ -62,7 +88,7 @@ async function getSources(req, res, returnRawData = false) {
 async function getSource(req, res, returnRawData = false) {
     const uniqueId = req.params.loaderId;
     try {
-        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.dbName);
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
 
         const loader = await EmbeddingsCache.findOne({ loaderId: uniqueId });
         if (!loader) {
@@ -86,7 +112,7 @@ async function updateSource(req, res) {
     const loaderId = req.params.loaderId;
     const { title, type, overrideUrl } = req.body;
     try {
-        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.dbName);
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
 
         const updateObject = { title, type, overrideUrl };
         const updateResult = await EmbeddingsCache.findOneAndUpdate(
