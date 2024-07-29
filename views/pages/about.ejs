@@ -1,14 +1,80 @@
-<!-- views/profile.ejs -->
+<!-- views/about.ejs -->
 <%- include('../partials/header') %>
+<sidebar>
+</sidebar>
   <div class="container">
-    <h1>About</h1>
-      <h1><a href='http://www.theodi.org'>Open Data Institute</a></h1>
-      <p><a href='http://www.openstreetmap.org/?lat=51.534780900551354&amp;lon=-0.12180447578430176&amp;zoom=16&amp;layers=T&amp;mlat=51.53478&amp;mlon=-0.12180'>Open Data Institute</a><span>, 4th Floor, Kings Place, 90 York Way, London N1 9AG</span></p>
-      <p><a href='mailto:info@theodi.org'>info@theodi.org</a> · Company <a href='http://opencorporates.com/companies/gb/08030289'>08030289</a>	· <span>VAT</span> <span>143 7796 80</span></p>
+    <!-- Table of Contents -->
+    <div id="toc" class="toc">
+      <h1>Contents</h1>
       <ul>
-        <li><a target="_blank" href="http://www.theodi.org/terms-of-use">Terms of use</a></li>
-        <li><a target="_blank" href="http://www.theodi.org/about">About</a></li>
-        <li><a target="_blank" href="http://www.theodi.org/contact">Get in touch</a></li>
+        <li><a href="#privacy">Your Privacy</a></li>
+        <li><a href="#terms">Terms of Use</a></li>
+        <li><a href="#about">About</a></li>
       </ul>
+    </div>
+
+    <h1 id="privacy">Your Privacy</h1>
+    <p>Content for privacy...</p>
+
+    <h1 id="terms">Terms of Use</h1>
+    <p>Content for terms of use...</p>
+
+    <h1 id="about">About</h1>
+    <h1><a href='http://www.theodi.org'>Open Data Institute</a></h1>
+    <p><a href='http://www.openstreetmap.org/?lat=51.534780900551354&amp;lon=-0.12180447578430176&amp;zoom=16&amp;layers=T&amp;mlat=51.53478&amp;mlon=-0.12180'>Open Data Institute</a><span>, 4th Floor, Kings Place, 90 York Way, London N1 9AG</span></p>
+    <p><a href='mailto:info@theodi.org'>info@theodi.org</a> · Company <a href='http://opencorporates.com/companies/gb/08030289'>08030289</a>	· <span>VAT</span> <span>143 7796 80</span></p>
   </div>
+
+  <!-- Back to Top Button -->
+  <button id="backToTop" class="back-to-top">Back to Top</button>
+
 <%- include('../partials/footer') %>
+
+<!-- Add the following scripts at the end of your file -->
+<script>
+  // Smooth scroll for table of contents
+  document.querySelectorAll('#toc a').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      document.querySelector(this.getAttribute('href')).scrollIntoView({
+        behavior: 'smooth'
+      });
+    });
+  });
+
+  // Back to top button functionality
+  const backToTopButton = document.getElementById('backToTop');
+
+  window.addEventListener('scroll', () => {
+    if (window.pageYOffset > 300) {
+      backToTopButton.style.display = 'block';
+    } else {
+      backToTopButton.style.display = 'none';
+    }
+  });
+
+  backToTopButton.addEventListener('click', () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  });
+</script>
+<style>
+.back-to-top {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .back-to-top:hover {
+    background-color: #0056b3;
+  }
+</style>

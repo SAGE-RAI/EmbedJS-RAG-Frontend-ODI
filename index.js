@@ -88,6 +88,11 @@ db.once('open', () => {
     }
   });
 
+  app.get('/about', (req, res) => {
+      res.locals.pageTitle = "Privacy and Terms";
+      res.render('pages/about');
+  });
+
   app.use('/auth', authRoutes);
   app.use('/admin', adminRoutes);
   app.use('/instances', instancesRoutes);

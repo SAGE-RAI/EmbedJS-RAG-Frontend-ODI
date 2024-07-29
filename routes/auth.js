@@ -2,6 +2,7 @@ import express from 'express';
 import passport from '../passport.js'; // Require the passport module
 import { retrieveOrCreateUser } from '../controllers/user.js'; // Import necessary functions from controllers
 import { processToken } from '../controllers/token.js';
+import { ensureAuthenticated } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -50,5 +51,18 @@ router.get('/django/callback', passport.authenticate('django', { failureRedirect
     await processLogin(req, res);
     res.redirect('/instances/');
 });
+
+router.get('/profile', ensureAuthenticated, (req, res) => {
+    res.locals.pageTitle = "Profile";
+    res.render('pages/profile');
+});
+
+router.post('/logout', (req, res) => {
+    req.logout(err => {
+      if (err) return next(err);
+      res.redirect('/');
+    });
+  });
+
 
 export default router;
