@@ -158,6 +158,13 @@ function renderMessage(entry, existingElement = null, newMessage = false) {
 async function loadConversation(conversationId) {
     const listCont = document.querySelector('.list_cont');
     listCont.innerHTML = "";
+
+    // Remove suggestion container if it exists
+    const suggestionContainer = document.querySelector('.suggestion-container');
+    if (suggestionContainer) {
+        suggestionContainer.remove();
+    }
+
     document.getElementById('conversationId').value = null;
     const instanceId = getInstanceIdFromPath();
     if (conversationId === "") {
