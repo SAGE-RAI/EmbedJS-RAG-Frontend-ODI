@@ -1,6 +1,6 @@
 import express from 'express';
 import { verifyTokenMiddleware, verifyConversationMiddleware, setActiveInstance, canAccessInstance, canAdminInstance, ensureAuthenticated } from '../middleware/auth.js'; // Import your middleware functions
-import { getConversation, getConversations, createConversation, getMessages, deleteConversation, updateConversation, postMessage, setRating, getRatingsReport } from '../controllers/conversation.js'; // Import necessary functions from controllers
+import { getConversation, getConversations, createConversation, getMessages, deleteConversation, updateConversation, postMessage, setRating } from '../controllers/conversation.js'; // Import necessary functions from controllers
 
 const router = express.Router({ mergeParams: true });
 
@@ -22,9 +22,6 @@ router.get("/", verifyTokenMiddleware, canAccessInstance, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
-// Get ratings report
-router.get("/ratingsReport", ensureAuthenticated, canAdminInstance, getRatingsReport);
 
 // Route handler for getting a specific conversation
 router.get("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, getConversation);
