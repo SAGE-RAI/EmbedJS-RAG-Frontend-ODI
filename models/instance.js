@@ -27,6 +27,17 @@ const suggestionSchema = new mongoose.Schema({
   }
 });
 
+// Define the schema for the rating responses
+const ratingResponsesSchema = new mongoose.Schema({
+  '1': [String],
+  '2': [String],
+  '3': [String],
+  '4': [String],
+  '5': [String]
+}, {
+  _id: false // Prevent Mongoose from creating _id for subdocuments
+});
+
 // Define the main instance schema
 const instanceSchema = new mongoose.Schema({
   name: {
@@ -46,6 +57,7 @@ const instanceSchema = new mongoose.Schema({
   },
   sharedWith: [sharedWithSchema],
   suggestions: [suggestionSchema],
+  ratingResponses: ratingResponsesSchema,
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

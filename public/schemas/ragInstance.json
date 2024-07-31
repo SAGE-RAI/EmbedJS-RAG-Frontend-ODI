@@ -35,6 +35,52 @@
                     }
                 }
             }
+        },
+        "ratingResponses": {
+            "type": "object",
+            "title": "Rating Responses",
+            "properties": {
+                "1": {
+                    "type": "array",
+                    "title": "1 Star Rating responses",
+                    "items": {
+                        "type": "string",
+                        "title": "Response"
+                    }
+                },
+                "2": {
+                    "type": "array",
+                    "title": "2 Star Rating responses",
+                    "items": {
+                        "type": "string",
+                        "title": "Response"
+                    }
+                },
+                "3": {
+                    "type": "array",
+                    "title": "3 Star Rating responses",
+                    "items": {
+                        "type": "string",
+                        "title": "Response"
+                    }
+                },
+                "4": {
+                    "type": "array",
+                    "title": "4 Star Rating responses",
+                    "items": {
+                        "type": "string",
+                        "title": "Response"
+                    }
+                },
+                "5": {
+                    "type": "array",
+                    "title": "5 Star Rating responses",
+                    "items": {
+                        "type": "string",
+                        "title": "Response"
+                    }
+                }
+            }
         }
     },
     "form": [
@@ -54,6 +100,7 @@
             "type": "array",
             "key": "suggestions",
             "title": "Suggestions",
+            "htmlClass": "suggestions",
             "items": [
                 {
                     "type": "fieldset",
@@ -70,6 +117,12 @@
                     ]
                 }
             ]
+        },
+        {
+            "type": "fieldset",
+            "key": "ratingResponses",
+            "title": "Rating Responses",
+            "htmlClass": "ratingResponses"
         },
         {
             "type": "submit",

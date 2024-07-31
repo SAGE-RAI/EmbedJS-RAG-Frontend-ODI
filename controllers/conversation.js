@@ -197,4 +197,43 @@ async function postMessage(req, res) {
     }
 }
 
-export { createConversation, getConversations, getConversation, updateConversation, deleteConversation, getMessages, postMessage };
+async function setRating(req, res) {
+    try {
+        const { conversationId, messageId } = req.params; // Extract conversationId and messageId from request params
+        const { rating, comment } = req.body; // Extract rating and comment from request body
+        console.log(req.body);
+
+        // Validate input
+        if (!rating || typeof rating !== 'number') {
+            return res.status(400).json({ error: 'Invalid rating. Rating must be a number.' });
+        }
+
+        // Find the conversation by conversationId
+        const Conversation = getConversationModel(req.session.activeInstance.id);
+        const conversation = await Conversation.findById(conversationId);
+
+        if (!conversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        // Find the entry with the given messageId in the conversation
+        const entry = conversation.entries.find(e => e._id.toString() === messageId);
+
+        if (!entry) {
+            return res.status(404).json({ error: 'Message not found' });
+        }
+
+        // Update the rating and comment of the entry
+        entry.rating = { rating, comment };
+
+        // Save the updated conversation
+        await conversation.save();
+
+        return res.status(200).json({ success: true, message: 'Rating updated successfully' });
+    } catch (error) {
+        console.error('Error setting rating:', error);
+        return res.status(error.status || 500).json({ error: error.message });
+    }
+}
+
+export { createConversation, getConversations, getConversation, updateConversation, deleteConversation, getMessages, postMessage, setRating };

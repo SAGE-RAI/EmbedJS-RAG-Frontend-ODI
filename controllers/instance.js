@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 
 async function createInstance(req, res) {
     try {
-        const { name, description, isPublic, systemPrompt, suggestions } = req.body;
+        const { name, description, isPublic, systemPrompt, suggestions, ratingResponses } = req.body;
         const userId = req.user.id;
 
         // Validate the required fields
@@ -11,16 +11,18 @@ async function createInstance(req, res) {
             return res.status(400).json({ error: 'Name and systemPrompt are required' });
         }
 
-        // Generate the database name
+        // Create the new instance
         const newInstance = new Instance({
             name,
             description,
             public: isPublic || false,
             systemPrompt,
             suggestions: suggestions || [], // Default to empty array if not provided
+            ratingResponses: ratingResponses || { '1': [], '2': [], '3': [], '4': [], '5': [] }, // Default to empty arrays if not provided
             createdBy: userId
         });
 
+        // Save the instance to the database
         await newInstance.save();
         res.status(201).json(newInstance);
     } catch (error) {

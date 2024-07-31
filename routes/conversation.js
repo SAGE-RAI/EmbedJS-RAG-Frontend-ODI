@@ -1,6 +1,6 @@
 import express from 'express';
 import { verifyTokenMiddleware, verifyConversationMiddleware, setActiveInstance, canAccessInstance } from '../middleware/auth.js'; // Import your middleware functions
-import { getConversation, getConversations, createConversation, getMessages, deleteConversation, updateConversation, postMessage } from '../controllers/conversation.js'; // Import necessary functions from controllers
+import { getConversation, getConversations, createConversation, getMessages, deleteConversation, updateConversation, postMessage, setRating } from '../controllers/conversation.js'; // Import necessary functions from controllers
 
 const router = express.Router({ mergeParams: true });
 
@@ -37,5 +37,8 @@ router.get("/:conversationId/messages", verifyTokenMiddleware, verifyConversatio
 
 // Route to post a message to a specific conversation
 router.post("/:conversationId/messages", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, postMessage);
+
+// Route to post a message to a specific conversation
+router.post("/:conversationId/messages/:messageId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, setRating);
 
 export default router;

@@ -167,61 +167,67 @@ async function loadConversation(conversationId) {
 
     document.getElementById('conversationId').value = null;
     const instanceId = getInstanceIdFromPath();
-    if (conversationId === "") {
-        try {
-            // Fetch instance suggestions
-            const response = await fetch(`/instances/${instanceId}`, {
-                headers: { 'Accept': 'application/json' }
-            });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch suggestions.');
-            }
+    try {
+        // Fetch instance data including ratingResponses and suggestions
+        const response = await fetch(`/instances/${instanceId}`, {
+            headers: { 'Accept': 'application/json' }
+        });
 
+        if (!response.ok) {
+            throw new Error('Failed to fetch instance data.');
+        }
 
-            const data = await response.json();
-            const suggestions = data.suggestions;
-            console.log(suggestions);
+        instanceData = await response.json();
 
-            // Render suggestions in the center of the screen
+        // Extract suggestions and ratingResponses from instanceData
+        const suggestions = instanceData.suggestions;
+        const ratingResponses = instanceData.ratingResponses;
+
+        // Store ratingResponses globally for future use
+        window.ratingResponses = ratingResponses;
+
+        // Handle conversation if conversationId is provided
+        if (conversationId === "") {
+            // Render suggestions in the center of the screen if available
             if (suggestions.length > 0) {
                 renderSuggestions(suggestions);
             }
-
             // Update the address bar with the empty conversation ID
             window.history.pushState({}, '', `/instances/${instanceId}/conversations/`);
-        } catch (error) {
-            console.error('Error loading suggestions:', error);
-            // Handle error (e.g., show error message)
-        }
-        window.history.pushState({}, '', `/instances/${instanceId}/conversations/`);
-    } else {
-        try {
-            // Fetch conversation data from the server
-            const response = await fetch(`/instances/${instanceId}/conversations/${conversationId}`, {
-                headers: {
-                    'Accept': 'application/json'
+        } else {
+            try {
+                // Fetch conversation data from the server
+                const conversationResponse = await fetch(`/instances/${instanceId}/conversations/${conversationId}`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!conversationResponse.ok) {
+                    throw new Error('Failed to fetch conversation data.');
                 }
-            });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch conversation data.');
+                const conversation = await conversationResponse.json();
+                // Iterate over the entries object
+                conversation.entries.forEach(entry => {
+                    renderMessage(entry, null, false);
+                });
+                document.getElementById('conversationId').value = conversationId;
+                // Update the address bar with the conversation ID
+                window.history.pushState({}, '', `/instances/${instanceId}/conversations/${conversationId}`);
+            } catch (error) {
+                console.error('Error loading conversation:', error);
+                // Handle error (e.g., show error message)
             }
-
-            const conversation = await response.json();
-            // Iterate over the entries object
-            conversation.entries.forEach(entry => {
-                renderMessage(entry, null, false);
-            });
-            document.getElementById('conversationId').value = conversationId;
-            // Update the address bar with the conversation ID
-            window.history.pushState({}, '', `/instances/${instanceId}/conversations/${conversationId}`);
-        } catch (error) {
-            console.error('Error loading conversation:', error);
-            // Handle error (e.g., show error message)
         }
+    } catch (error) {
+        console.error('Error loading instance data:', error);
+        // Handle error (e.g., show error message)
     }
 }
+
+
 
 async function renderSources(sources, element) {
     const instanceId = getInstanceIdFromPath();
@@ -374,7 +380,7 @@ function renderRating(rating, element) {
 }
 
 function displayResponseChoices(element, messageId, rating) {
-    const responses = defaultRatingResponses[rating.rating];
+    const responses = window.ratingResponses[rating.rating] || defaultRatingResponses[rating.rating];
     const choicesContainer = document.createElement('div');
     choicesContainer.classList.add('response-choices');
 
@@ -413,6 +419,7 @@ function displayResponseChoices(element, messageId, rating) {
 
     element.appendChild(choicesContainer);
 }
+
 
 function clearChoicesAndDisplayInput(element, messageId, rating) {
     // Remove all buttons
@@ -471,7 +478,7 @@ async function handleRating(element, entryId, starRating, message) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ rating: ratingData })
+            body: JSON.stringify(ratingData)
         });
 
         if (!response.ok) {
@@ -484,13 +491,12 @@ async function handleRating(element, entryId, starRating, message) {
             displayResponseChoices(element, entryId, ratingData);
         }
 
-        // Optionally, handle success response
-
     } catch (error) {
         console.error('Error handling rating:', error);
         // Optionally, handle error
     }
 }
+
 
 function handleRatingHover(messageId, rating) {
     // Get the message container element by its ID

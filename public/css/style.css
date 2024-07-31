@@ -223,19 +223,40 @@ sidebar .admin-menu {
 .draggable {
   display: none;
 }
-#dataForm ._jsonform-array-buttons {
+#dataForm input[type="text"] {
+  min-width: 500px;
+}
+#dataForm .ratingResponses input[type="text"] {
+  min-width: 300px;
+}
+#dataForm .ratingResponses {
+  max-width: 350px;
+}
+#dataForm .suggestions ._jsonform-array-buttons, #dataForm .ratingResponses ._jsonform-array-buttons {
   position: relative;
   left: 10px;
+}
+#dataForm .ratingResponses ul li ._jsonform-array-buttons {
+  float: right;
+  top: -40px;
+  left: auto;
+  position: relative;
+}
+#dataForm .ratingResponses ul li label {
+  display: none;
 }
 #dataForm ._jsonform-array-buttons ._jsonform-array-deletelast {
   display: none;
 }
-#dataForm ul li ._jsonform-array-buttons {
+#dataForm .suggestions ul li ._jsonform-array-buttons {
   float: right;
   top: -280px;
-  right: 10px;
+  right: 30px;
   left: auto;
   position: relative;
+}
+#dataForm .suggestions ul li {
+  max-width: 90%;
 }
 #dataForm ul  {
   padding-left: 0px;

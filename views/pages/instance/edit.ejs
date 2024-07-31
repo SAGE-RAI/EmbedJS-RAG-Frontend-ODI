@@ -14,7 +14,43 @@
 
 <script>
     const instanceId = "<%= instanceId %>";
-    const data = {};
+    const defaultRatingResponses = {
+        1: [
+            "Don't like the style",
+            "Not factually correct",
+            "Didn't fully follow instructions",
+            "Refused when it shouldn't have",
+            "Wrong or no sources"
+        ],
+        2: [
+            "Not helpful",
+            "Confusing response",
+            "Didn't provide enough detail",
+            "Incomplete information",
+            "Wrong or no sources"
+        ],
+        3: [
+            "Somewhat helpful",
+            "Partially correct",
+            "Room for improvement",
+            "Average response",
+            "Needs more detail"
+        ],
+        4: [
+            "Quite helpful",
+            "Mostly correct",
+            "Good response",
+            "Well-written",
+            "Informative"
+        ],
+        5: [
+            "Very helpful",
+            "Completely correct",
+            "Excellent response",
+            "Clear and concise",
+            "Highly informative"
+        ]
+    };
 
     $(document).ready(function () {
         // Fetch the instance data
@@ -25,6 +61,18 @@
         })
         .then(response => response.json())
         .then(instance => {
+            // Ensure ratingResponses is set to default if not present
+            if (!instance.ratingResponses) {
+                instance.ratingResponses = defaultRatingResponses;
+            } else {
+                // Set default responses if any rating level is missing
+                Object.keys(defaultRatingResponses).forEach(level => {
+                    if (!instance.ratingResponses[level]) {
+                        instance.ratingResponses[level] = defaultRatingResponses[level];
+                    }
+                });
+            }
+
             // Fetch the schema
             fetch('/schemas/ragInstance.json')
                 .then(response => response.json())
@@ -55,6 +103,7 @@
     });
 
     function updateInstance(values) {
+        console.log(values);
         $('#res').html('<p>Updating, please wait...</p>');
         fetch(`/instances/${instanceId}`, {
             method: 'PUT',
