@@ -1,11 +1,11 @@
-<sidebar>
+<sidebar class="conversations-sidebar">
+    <h2>Chat bot</h2>
+    <select id="instanceSelect" onchange="switchInstance()">
+        <!-- Populate this select with the user's RAG instances -->
+    </select>
+    <h2>Conversations</h2>
+    <button onclick="javascript:loadConversation('')">New Conversation</button>
     <div class="conversations">
-        <ul class="new">
-            <li class="conversation">
-                <a href="javascript:loadConversation('')">New conversation</a>
-            </li>
-        </ul>
-        <h2>Conversations</h2>
     </div>
 </sidebar>
 
@@ -22,7 +22,6 @@
         .then(conversations => {
             try {
                 const conversationsContainer = document.querySelector('.conversations');
-                conversationsContainer.innerHTML = `<a href="javascript:loadConversation('')">New conversation</a>`;
 
                 // Group conversations by date categories
                 const categorizedConversations = categorizeConversations(conversations);
@@ -44,7 +43,6 @@
 
                     if (categorizedConversations[category].length > 0) {
                         categorizedConversations[category].forEach(conversation => {
-                            console.log(conversation);
                             const conversationItem = document.createElement('li');
 
                             // Create conversation link
@@ -61,7 +59,16 @@
                             // Create menu button (three dots)
                             const menuButton = document.createElement('button');
                             menuButton.classList.add('menu-button');
-                            menuButton.innerHTML = '&#x22EE;'; // Vertical ellipsis (three dots)
+
+                            // Create the icon span and set its content
+                            const menuIcon = document.createElement('span');
+                            menuIcon.classList.add('menu-icon');
+                            menuIcon.innerHTML = '&#x22EE;'; // Vertical ellipsis (three dots)
+
+                            // Append the icon to the button
+                            menuButton.appendChild(menuIcon);
+
+                            // Add click event listener to the button
                             menuButton.onclick = (event) => {
                                 event.stopPropagation();
                                 closeAllMenus();

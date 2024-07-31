@@ -229,35 +229,47 @@ sidebar .admin-menu {
 .conversations.expanded {
   display: inline;
 }
-.conversations h2,
-.conversations h3 {
-  padding: 0px;
-  margin: 10px 0px;
+.conversations-sidebar #instanceSelect {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
 }
-.conversations h2 {
-  font-size: 1em;
-}
-.conversations h3 {
-  font-size: 0.8em;
-  font-weight: normal;
+.conversations-sidebar h2,
+.conversations-sidebar h3 {
+  font-size: 0.7em;
+  color: #aaa;
 }
 .conversations ul {
   margin: 0;
   padding-left: 2px;
-  font-size: 0.8em;
+  font-size: 0.9em;
 }
 .conversations li {
   list-style: none;
   line-height: 32px;
-  text-decoration: underline;
   cursor: pointer;
 }
 .menu-button {
-  background: none;
+  background: radial-gradient(circle, #202b38 0%, transparent 70%);
   border: none;
   cursor: pointer;
-  font-size: 16px;
-  padding: 10px 6px;
+  font-size: 22px;
+  padding: 5px 15px;
+  position: fixed;
+  left: 182px;
+  margin-top: 8px;
+}
+
+/* Style the icon and hide it initially */
+.menu-button .menu-icon {
+  display: none; /* Hide by default */
+  font-size: 22px;
+  color: white;
+}
+
+/* Show the icon when hovering over the button */
+.menu-button:hover .menu-icon {
+  display: inline; /* Show when hovered */
 }
 
 .menu {
@@ -291,7 +303,12 @@ sidebar .admin-menu {
 
 .conversation {
   flex-grow: 1;
-  margin-right: 10px;
+  color: white;
+}
+
+.conversation:hover {
+  text-decoration: none;
+  background-color: #000;
 }
 
 .topper {

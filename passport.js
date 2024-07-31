@@ -14,6 +14,7 @@ passport.use('google', new GoogleStrategy({
   profile.email = profile.emails[0].value;
   profile.name = profile.displayName;
   profile.currentToken = req.session.accessToken;
+  profile.authMethod = 'google';
   return done(null, profile);
 }));
 

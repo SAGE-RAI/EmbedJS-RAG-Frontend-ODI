@@ -1,6 +1,6 @@
 import express from 'express';
 import { createInstance } from '../controllers/instance.js';
-import { ensureAuthenticated } from '../middleware/auth.js';
+import { ensureAuthenticated, isAdmin } from '../middleware/auth.js';
 import Instance from '../models/instance.js';
 
 const router = express.Router();
@@ -45,7 +45,7 @@ router.get('/', ensureAuthenticated, async (req, res) => {
 });
 
 router.post('/', ensureAuthenticated, createInstance);
-router.get('/add', ensureAuthenticated, (req, res) => {
+router.get('/add', ensureAuthenticated, isAdmin, (req, res) => {
     res.locals.pageTitle = "Add Instance";
     res.render('pages/instances/add');
 });

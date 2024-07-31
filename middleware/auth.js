@@ -145,6 +145,18 @@ export const ensureAuthenticated = (req, res, next) => {
     }
 };
 
+export const isAdmin = (req, res, next) => {
+    if (!req.isAuthenticated()) {
+        return res.redirect('/auth/google');
+    }
+    if (req.session.authMethod === 'google') {
+        req.isAdmin = true;
+        next();
+    } else {
+        res.status(403).send('Permission denied');
+    }
+}
+
 export const checkOwnership = async (req, res, next) => {
     const instance = await Instance.findById(req.params.instanceId);
     if (req.isAdmin || instance.createdBy.equals(req.user._id)) {

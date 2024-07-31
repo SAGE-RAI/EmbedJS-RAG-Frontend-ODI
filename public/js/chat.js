@@ -155,35 +155,38 @@ function renderMessage(entry, existingElement = null, newMessage = false) {
     }
 }
 
-
 async function loadConversation(conversationId) {
     const listCont = document.querySelector('.list_cont');
     listCont.innerHTML = "";
     document.getElementById('conversationId').value = null;
     const instanceId = getInstanceIdFromPath();
-    try {
-        // Fetch conversation data from the server
-        const response = await fetch(`/instances/${instanceId}/conversations/${conversationId}`, {
-            headers: {
-                'Accept': 'application/json'
+    if (conversationId === "") {
+        window.history.pushState({}, '', `/instances/${instanceId}/conversations/`);
+    } else {
+        try {
+            // Fetch conversation data from the server
+            const response = await fetch(`/instances/${instanceId}/conversations/${conversationId}`, {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch conversation data.');
             }
-        });
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch conversation data.');
+            const conversation = await response.json();
+            // Iterate over the entries object
+            conversation.entries.forEach(entry => {
+                renderMessage(entry, null, false);
+            });
+            document.getElementById('conversationId').value = conversationId;
+            // Update the address bar with the conversation ID
+            window.history.pushState({}, '', `/instances/${instanceId}/conversations/${conversationId}`);
+        } catch (error) {
+            console.error('Error loading conversation:', error);
+            // Handle error (e.g., show error message)
         }
-
-        const conversation = await response.json();
-        // Iterate over the entries object
-        conversation.entries.forEach(entry => {
-            renderMessage(entry, null, false);
-        });
-        document.getElementById('conversationId').value = conversationId;
-        // Update the address bar with the conversation ID
-        window.history.pushState({}, '', `/instances/${instanceId}/conversations/${conversationId}`);
-    } catch (error) {
-        console.error('Error loading conversation:', error);
-        // Handle error (e.g., show error message)
     }
 }
 
@@ -214,10 +217,10 @@ async function renderSources(sources, element) {
                     const response = await fetch(`/instances/${instanceId}/sources/${sourceObj.loaderId}`);
                     const data = await response.json();
                     // Set link text to the title if available, otherwise use source URL
-                    link.textContent = data.loader.title || sourceObj.source;
+                    link.textContent = data.title || sourceObj.source;
 
                     // Set href to overrideUrl if available, otherwise use source URL
-                    link.href = data.loader.overrideUrl || sourceObj.source;
+                    link.href = data.overrideUrl || sourceObj.source;
                 } catch (error) {
                     console.error('Error fetching source title:', error);
                     // If there's an error, use source URL for both link text and href
@@ -296,7 +299,6 @@ const defaultRatingResponses = {
 };
 
 function renderRating(rating, element) {
-    console.log(rating);
     element.innerHTML = '';
     const ratingContainer = document.createElement('div');
     ratingContainer.classList.add('rating-container');
@@ -458,8 +460,6 @@ async function handleRating(element, entryId, starRating, message) {
 }
 
 function handleRatingHover(messageId, rating) {
-    console.log(messageId);
-    console.log(rating);
     // Get the message container element by its ID
     const messageContainer = document.getElementById(messageId);
     if (!messageContainer) return; // Exit if message container not found
@@ -566,7 +566,6 @@ async function handleSubmit(event) {
 async function sendMessage(conversationId, message) {
     let newMessage = {};
     newMessage.content = message;
-    console.log(message);
     renderMessage(newMessage, null, true);
     const messageInput = document.getElementById('txt');
     const responseLi = createResponseNode();
