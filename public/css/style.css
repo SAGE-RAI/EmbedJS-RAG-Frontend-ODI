@@ -220,7 +220,26 @@ sidebar .admin-menu {
   display: inline;
   margin-right: 10px;
 }
-
+.draggable {
+  display: none;
+}
+#dataForm ._jsonform-array-buttons {
+  position: relative;
+  left: 10px;
+}
+#dataForm ._jsonform-array-buttons ._jsonform-array-deletelast {
+  display: none;
+}
+#dataForm ul li ._jsonform-array-buttons {
+  float: right;
+  top: -280px;
+  right: 10px;
+  left: auto;
+  position: relative;
+}
+#dataForm ul  {
+  padding-left: 0px;
+}
 .conversations {
   overflow-y: scroll;
   overflow-x: hidden;
@@ -464,6 +483,47 @@ sidebar .admin-menu {
 
 .msgs_cont .AI .rating .stars .star {
   cursor: pointer;
+}
+.suggestion-container {
+  display: flex;
+  flex-direction: column; /* Stack items vertically */
+  align-items: center;    /* Center items horizontally */
+  justify-content: center; /* Center items vertically within this container */
+  padding: 10px;          /* Add some padding around the container */
+  border-radius: 10px;    /* Optional: rounded corners */
+  position: relative;     /* Allow positioning based on parent container */
+  top: 40%;               /* Move container to vertical center */
+  left: 50%;              /* Move container to horizontal center */
+  transform: translate(-50%, -50%); /* Center container based on its own size */
+  max-width: 90%;         /* Optional: constrain width to fit in viewport */
+  box-sizing: border-box; /* Include padding and border in element's total width and height */
+}
+
+.suggestion-icon {
+  width: 60px; /* Adjust size as needed */
+  height: 60px; /* Adjust size as needed */
+  margin-bottom: 30px; /* Space between the icon and suggestion boxes */
+  border-radius: 50%; /* Optional: make the icon circular */
+  object-fit: cover; /* Ensures the image covers the space without distortion */
+}
+
+.boxes-container {
+  display: flex; /* Display boxes in a row */
+  flex-wrap: wrap; /* Allow wrapping if there are too many boxes to fit in one row */
+  gap: 10px; /* Space between suggestion boxes */
+  justify-content: center; /* Center boxes horizontally */
+}
+.suggestion-box {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+  max-width: 150px;
+  text-align: center;
+}
+.suggestion-box:hover {
+  background-color: rgba(100, 100, 100, 0.8); /* Lighten by adjusting opacity */
 }
 .copy-button {
   padding: 5px 10px;

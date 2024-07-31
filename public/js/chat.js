@@ -161,6 +161,32 @@ async function loadConversation(conversationId) {
     document.getElementById('conversationId').value = null;
     const instanceId = getInstanceIdFromPath();
     if (conversationId === "") {
+        try {
+            // Fetch instance suggestions
+            const response = await fetch(`/instances/${instanceId}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch suggestions.');
+            }
+
+
+            const data = await response.json();
+            const suggestions = data.suggestions;
+            console.log(suggestions);
+
+            // Render suggestions in the center of the screen
+            if (suggestions.length > 0) {
+                renderSuggestions(suggestions);
+            }
+
+            // Update the address bar with the empty conversation ID
+            window.history.pushState({}, '', `/instances/${instanceId}/conversations/`);
+        } catch (error) {
+            console.error('Error loading suggestions:', error);
+            // Handle error (e.g., show error message)
+        }
         window.history.pushState({}, '', `/instances/${instanceId}/conversations/`);
     } else {
         try {
@@ -524,20 +550,66 @@ async function newConversation() {
     }
 }
 
+function renderSuggestions(suggestions) {
+    // Create the suggestion container
+    const suggestionContainer = document.createElement('div');
+    suggestionContainer.classList.add('suggestion-container');
+
+    // Create the icon element
+    const icon = document.createElement('img');
+    icon.src = 'https://avatars.githubusercontent.com/u/2492770?s=200&v=4';
+    icon.alt = 'Suggestions Icon'; // Provide alternative text for accessibility
+    icon.classList.add('suggestion-icon'); // Add a class for styling
+
+    // Append the icon to the suggestion container
+    suggestionContainer.appendChild(icon);
+
+    // Create the suggestion boxes container
+    const boxesContainer = document.createElement('div');
+    boxesContainer.classList.add('boxes-container');
+
+    // Create suggestion boxes
+    suggestions.forEach(suggestion => {
+        const suggestionBox = document.createElement('div');
+        suggestionBox.classList.add('suggestion-box');
+        suggestionBox.textContent = suggestion.shortText; // Display shortText or a similar property
+
+        suggestionBox.addEventListener('click', () => {
+            suggestionContainer.remove();
+            sendMessageToConversation(suggestion.fullPrompt, null);
+        });
+
+        boxesContainer.appendChild(suggestionBox);
+    });
+
+    // Append the boxes container to the suggestion container
+    suggestionContainer.appendChild(boxesContainer);
+
+    // Append the suggestion container to the messages container
+    const msgs_cont = document.querySelector('.msgs_cont');
+    msgs_cont.appendChild(suggestionContainer);
+}
+
+
+
 async function handleSubmit(event) {
     event.preventDefault(); // Prevent the default form submission behavior
 
     const form = event.target; // Get the form element
     const messageInput = form.querySelector('#txt'); // Get the message input field within the form
     const content = messageInput.value.trim(); // Get the message content from the input field
+    const conversationIdInput = form.querySelector('#conversationId'); // Get the conversation ID input field within the form
+    let conversationId = conversationIdInput.value; // Get the conversation ID value from the input field
 
     if (content === '') {
         alert('Please enter a message.');
         return;
     }
 
-    const conversationIdInput = form.querySelector('#conversationId'); // Get the conversation ID input field within the form
-    let conversationId = conversationIdInput.value; // Get the conversation ID value from the input field
+    sendMessageToConversation(content, conversationId);
+}
+
+async function sendMessageToConversation(content, conversationId) {
 
     const messageData = {
         message: content,
@@ -551,6 +623,7 @@ async function handleSubmit(event) {
             conversationId = await newConversation();
 
             // Update the conversation ID input field with the new conversation ID
+            const conversationIdInput = document.querySelector('#conversationId');
             conversationIdInput.value = conversationId;
         } catch (error) {
             console.error('Error creating conversation:', error);
