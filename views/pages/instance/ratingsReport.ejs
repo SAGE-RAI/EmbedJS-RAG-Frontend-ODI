@@ -1,0 +1,130 @@
+<%- include('../../partials/header-admin') %>
+<style>
+    /* Add your custom styles here */
+    #ratingsTable {
+        width: 100%;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+        padding-top: 60px;
+    }
+    .modal-content {
+        background-color:rgb(33, 37, 41);
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+</style>
+<h1>Ratings Report</h1>
+<div id="res" class="alert"></div>
+
+<table id="ratingsTable" class="display" style="width:100%"></table>
+
+<!-- The Modal -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.7.0/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.7.0/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.7.0/js/buttons.print.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.13.5/css/buttons.dataTables.min.css">
+
+<script>
+    $(document).ready(function () {
+        const instanceId = '<%= instanceId %>'; // Assume instanceId is passed to the EJS template
+        const ratingsTable = $('#ratingsTable').DataTable({
+            ajax: {
+                url: `/instances/${instanceId}/ratingsReport`,
+                dataSrc: 'ratings',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Accept', 'application/json');
+                }
+            },
+            columns: [
+                { data: 'dateOfRating', title: 'Date of Rating', render: function(data) {
+                    const date = new Date(data);
+                    return date.toLocaleString();
+                }},
+                { data: 'rating', title: 'Rating' },
+                { data: 'ratingMessage', title: 'Rating Message' },
+                {
+                    title: 'Actions',
+                    render: function (data, type, row) {
+                        return '<button class="viewMessagesBtn" data-date="' + row.dateOfRating + '" data-rating="' + row.rating + '" data-ratingmessage="' + row.ratingMessage + '" data-humanmessage="' + row.HuamnMessage + '" data-airesponse="' + row.AIResponse + '">View Messages</button>';
+                    }
+                }
+            ],
+            dom: 'frtipB',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ]
+        });
+
+        // Get the modal element
+        const modal = $('#modal');
+        const modalContent = $('#modalBody');
+        const closeBtn = $('.close');
+
+        // Show the modal with conversation details
+        $('#ratingsTable').on('click', '.viewMessagesBtn', function () {
+            const dateOfRating = $(this).data('date');
+            const rating = $(this).data('rating');
+            const ratingMessage = $(this).data('ratingmessage');
+            const humanMessage = $(this).data('humanmessage');
+            const aiResponse = $(this).data('airesponse');
+
+            // Render message details in the modal
+            modalContent.html(
+                '<h2>Rating Details</h2>' +
+                '<strong>Date of Rating:</strong> ' + new Date(dateOfRating).toLocaleString() + '<br>' +
+                '<strong>Rating:</strong> ' + rating + '<br>' +
+                '<strong>Rating Message:</strong> ' + ratingMessage + '<br>' +
+                '<strong>Human Message:</strong><br><pre>' + humanMessage + '</pre><br>' +
+                '<strong>AI Response:</strong><br><pre>' + aiResponse + '</pre>'
+            );
+            modal.show();
+        });
+
+        // Close the modal
+        closeBtn.on('click', function () {
+            modal.hide();
+        });
+
+        // Close the modal if the user clicks outside of it
+        $(window).on('click', function (event) {
+            if ($(event.target).is(modal)) {
+                modal.hide();
+            }
+        });
+    });
+</script>
+<%- include('../../partials/footer') %>

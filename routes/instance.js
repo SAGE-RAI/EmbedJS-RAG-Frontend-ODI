@@ -1,6 +1,7 @@
 import express from 'express';
 import { getInstance, updateInstance, deleteInstance, addUserToInstance, removeUserFromInstance } from '../controllers/instance.js'
 import { ensureAuthenticated, canAccessInstance, canAdminInstance } from '../middleware/auth.js';
+import { getRatingsReport } from '../controllers/conversation.js';
 
 const router = express.Router({ mergeParams: true });
 
@@ -22,6 +23,22 @@ router.get('/', ensureAuthenticated, canAccessInstance, async (req, res) => {
 router.get('/edit', ensureAuthenticated, canAdminInstance, (req, res) => {
     res.locals.pageTitle = "Edit Instance";
     res.render('pages/instance/edit', { instanceId: req.params.instanceId });
+});
+
+// Get ratings report
+router.get("/ratingsReport", ensureAuthenticated, canAdminInstance, async (req, res) => {
+    try {
+        if (req.accepts(['json', 'html']) === 'json') {
+            return getRatingsReport(req, res);
+        } else if (req.accepts(['html', 'json']) === 'html') {
+            res.locals.pageTitle = "Ratings report";
+            res.render('pages/instance/ratingsReport', { instanceId: req.params.instanceId });
+        } else {
+            res.status(406).send('Not Acceptable');
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 router.put('/', ensureAuthenticated, canAdminInstance, updateInstance);

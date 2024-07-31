@@ -1,6 +1,6 @@
 import express from 'express';
-import { verifyTokenMiddleware, verifyConversationMiddleware, setActiveInstance, canAccessInstance } from '../middleware/auth.js'; // Import your middleware functions
-import { getConversation, getConversations, createConversation, getMessages, deleteConversation, updateConversation, postMessage, setRating } from '../controllers/conversation.js'; // Import necessary functions from controllers
+import { verifyTokenMiddleware, verifyConversationMiddleware, setActiveInstance, canAccessInstance, canAdminInstance, ensureAuthenticated } from '../middleware/auth.js'; // Import your middleware functions
+import { getConversation, getConversations, createConversation, getMessages, deleteConversation, updateConversation, postMessage, setRating, getRatingsReport } from '../controllers/conversation.js'; // Import necessary functions from controllers
 
 const router = express.Router({ mergeParams: true });
 
@@ -23,8 +23,12 @@ router.get("/", verifyTokenMiddleware, canAccessInstance, async (req, res) => {
     }
 });
 
+// Get ratings report
+router.get("/ratingsReport", ensureAuthenticated, canAdminInstance, getRatingsReport);
+
 // Route handler for getting a specific conversation
 router.get("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, getConversation);
+// Route handler for getting a specific conversation
 
 // Route to update a specific conversation
 router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, updateConversation);
@@ -38,7 +42,7 @@ router.get("/:conversationId/messages", verifyTokenMiddleware, verifyConversatio
 // Route to post a message to a specific conversation
 router.post("/:conversationId/messages", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, postMessage);
 
-// Route to post a message to a specific conversation
+// Route to post a rating to a specific message
 router.post("/:conversationId/messages/:messageId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, setRating);
 
 export default router;

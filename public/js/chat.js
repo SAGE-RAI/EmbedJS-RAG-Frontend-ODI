@@ -1,3 +1,42 @@
+ // Need to move this somewhere.
+ const defaultRatingResponses = {
+    1: [
+        "Don't like the style",
+        "Not factually correct",
+        "Didn't fully follow instructions",
+        "Refused when it shouldn't have",
+        "Wrong or no sources"
+    ],
+    2: [
+        "Not helpful",
+        "Confusing response",
+        "Didn't provide enough detail",
+        "Incomplete information",
+        "Wrong or no sources",
+    ],
+    3: [
+        "Somewhat helpful",
+        "Partially correct",
+        "Room for improvement",
+        "Average response",
+        "Needs more detail"
+    ],
+    4: [
+        "Quite helpful",
+        "Mostly correct",
+        "Good response",
+        "Well-written",
+        "Informative"
+    ],
+    5: [
+        "Very helpful",
+        "Completely correct",
+        "Excellent response",
+        "Clear and concise",
+        "Highly informative"
+    ]
+};
+
 // Function to render Markdown content using React
 async function renderMarkdown(markdown, container, callback) {
     const React = window.React;
@@ -227,8 +266,6 @@ async function loadConversation(conversationId) {
     }
 }
 
-
-
 async function renderSources(sources, element) {
     const instanceId = getInstanceIdFromPath();
     if (sources && sources.length > 0) {
@@ -297,45 +334,6 @@ async function renderSources(sources, element) {
         });
     }
 }
-
- // Need to move this somewhere.
-const defaultRatingResponses = {
-    1: [
-        "Don't like the style",
-        "Not factually correct",
-        "Didn't fully follow instructions",
-        "Refused when it shouldn't have",
-        "Wrong or no sources"
-    ],
-    2: [
-        "Not helpful",
-        "Confusing response",
-        "Didn't provide enough detail",
-        "Incomplete information",
-        "Wrong or no sources",
-    ],
-    3: [
-        "Somewhat helpful",
-        "Partially correct",
-        "Room for improvement",
-        "Average response",
-        "Needs more detail"
-    ],
-    4: [
-        "Quite helpful",
-        "Mostly correct",
-        "Good response",
-        "Well-written",
-        "Informative"
-    ],
-    5: [
-        "Very helpful",
-        "Completely correct",
-        "Excellent response",
-        "Clear and concise",
-        "Highly informative"
-    ]
-};
 
 function renderRating(rating, element) {
     element.innerHTML = '';
@@ -420,7 +418,6 @@ function displayResponseChoices(element, messageId, rating) {
     element.appendChild(choicesContainer);
 }
 
-
 function clearChoicesAndDisplayInput(element, messageId, rating) {
     // Remove all buttons
     element.innerHTML = '';
@@ -496,7 +493,6 @@ async function handleRating(element, entryId, starRating, message) {
         // Optionally, handle error
     }
 }
-
 
 function handleRatingHover(messageId, rating) {
     // Get the message container element by its ID
@@ -602,8 +598,6 @@ function renderSuggestions(suggestions) {
     const msgs_cont = document.querySelector('.msgs_cont');
     msgs_cont.appendChild(suggestionContainer);
 }
-
-
 
 async function handleSubmit(event) {
     event.preventDefault(); // Prevent the default form submission behavior

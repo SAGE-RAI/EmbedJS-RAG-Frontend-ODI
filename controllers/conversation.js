@@ -126,7 +126,6 @@ async function postMessage(req, res) {
         const conversationId = req.params.conversationId;
         const { message, sender } = req.body;
         const ragApplication = req.ragApplication;
-        console.log(message);
         if (!ragApplication) {
             throw new Error('RAG Application is not initialized');
         }
@@ -180,7 +179,7 @@ async function postMessage(req, res) {
         }
 
         // Deduct the tokens from user's account and save in the database
-        user.tokens -= totalTokensRequired;
+        user.tokens -= messageTokens + chunkTokens;
         await user.save();
 
         const ragResponse = await ragApplication.query(message, conversationId, chunks);
@@ -201,7 +200,6 @@ async function setRating(req, res) {
     try {
         const { conversationId, messageId } = req.params; // Extract conversationId and messageId from request params
         const { rating, comment } = req.body; // Extract rating and comment from request body
-        console.log(req.body);
 
         // Validate input
         if (!rating || typeof rating !== 'number') {
@@ -236,4 +234,50 @@ async function setRating(req, res) {
     }
 }
 
-export { createConversation, getConversations, getConversation, updateConversation, deleteConversation, getMessages, postMessage, setRating };
+async function getRatingsReport(req, res) {
+    try {
+        // Query all conversations
+        const Conversation = getConversationModel(req.session.activeInstance.id);
+        const conversations = await Conversation.find({});
+
+        const ratingsReport = conversations.reduce((report, conversation) => {
+            // Filter entries that have a valid rating
+            const ratedEntries = conversation.entries.filter(entry => {
+                return entry.rating && typeof entry.rating.rating === 'number';
+            });
+
+            ratedEntries.forEach(entry => {
+                const { rating, comment } = entry.rating;
+                const AIResponse = entry.content.message;
+
+                // Find the previous HUMAN message in the conversation
+                const humanMessages = conversation.entries.filter(
+                    e => e.content.sender === 'HUMAN'
+                );
+                const previousHumanMessage = humanMessages.reverse().find(
+                    message => message._id !== entry._id
+                );
+
+                if (previousHumanMessage) {
+                    report.push({
+                        dateOfRating: entry.timestamp, // Assuming there's a timestamp field
+                        rating,
+                        ratingMessage: comment,
+                        HuamnMessage: previousHumanMessage.content.message,
+                        AIResponse,
+                    });
+                }
+            });
+
+            return report;
+        }, []);
+
+        // Send the report as JSON
+        res.status(200).json({ ratings: ratingsReport });
+    } catch (error) {
+        console.error('Error retrieving ratings report:', error);
+        res.status(500).json({ error: 'Failed to retrieve ratings report' });
+    }
+}
+
+export { createConversation, getConversations, getConversation, updateConversation, deleteConversation, getMessages, postMessage, setRating, getRatingsReport };
