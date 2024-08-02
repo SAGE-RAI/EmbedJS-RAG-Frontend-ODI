@@ -381,10 +381,14 @@ sidebar .admin-menu {
   font-size: 18px;
   letter-spacing: 2px;
 }
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
 
 .bottom {
   width: calc(100vw - 240px);
-  height: 63px;
   background: #595656;
   z-index: 1;
   bottom: 0;
@@ -393,8 +397,9 @@ sidebar .admin-menu {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: absolute;
-  max-height: 100px;
+  position: relative; /* Changed to relative */
+  max-height: 200px; /* Max height */
+  height: auto; /* Dynamic height */
 }
 
 .bottom #input {
@@ -416,6 +421,28 @@ sidebar .admin-menu {
   background: transparent;
   color: #fff;
   font-size: 16px;
+}
+
+.bottom #input textarea {
+  min-height: 50px; /* Adjust min-height as needed */
+  max-height: 150px; /* Max height for textarea */
+  resize: none; /* Disable manual resizing by the user */
+  scrollbar-width: thin; /* Make the scrollbar thinner */
+  scrollbar-color: #ffffff #f2f2f2; /* Set the color of the thumb and track */
+}
+
+.bottom #input textarea::-webkit-scrollbar-track {
+  background: #f2f2f2; /* Color of the track */
+}
+
+.bottom #input textarea::-webkit-scrollbar-thumb {
+  background: #ffffff; /* Color of the thumb */
+  border-radius: 6px; /* Rounded corners of the thumb */
+  border: 3px solid #f2f2f2; /* Space around the thumb */
+}
+
+.bottom #input textarea::-webkit-scrollbar-thumb:hover {
+  background: #e0e0e0; /* Color of the thumb when hovered */
 }
 
 .bottom #input input::placeholder {
@@ -442,6 +469,8 @@ sidebar .admin-menu {
 .aichat {
   float: right;
   width: calc(100vw - 221px);
+  display: flex;
+  height: 100%;
 }
 
 .msgs_cont {
@@ -452,7 +481,7 @@ sidebar .admin-menu {
   color: #f2f2f2;
   transition: height 0.3s ease;
   overflow-x: hidden;
-  height: calc(100vh - 150px);
+  flex: 1; /* Allow to grow and shrink as needed */
 }
 
 .msgs_cont > ul {

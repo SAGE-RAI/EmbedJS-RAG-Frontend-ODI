@@ -22,6 +22,7 @@
         .then(conversations => {
             try {
                 const conversationsContainer = document.querySelector('.conversations');
+                conversationsContainer.innerHTML = "";
 
                 // Group conversations by date categories
                 const categorizedConversations = categorizeConversations(conversations);
@@ -194,6 +195,15 @@
                 if (response.ok) {
                     // Reload conversations after deletion
                     updateConversations();
+                    // Extract the conversationId from the URL path
+                    const pathParts = window.location.pathname.split('/');
+                    const currentInstanceId = pathParts[2];
+                    const currentConversationId = pathParts[4];
+
+                    // If the deleted conversationId is the one currently viewed, reload the conversation view
+                    if (currentConversationId === conversationId) {
+                        loadConversation('');
+                    }
                 } else {
                     throw new Error('Failed to delete conversation');
                 }

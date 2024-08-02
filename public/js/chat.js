@@ -552,6 +552,7 @@ async function newConversation() {
         window.history.pushState({}, '', `/instances/${instanceId}/conversations/${data.id}`);
 
         // Return the conversation ID
+        setTimeout(updateConversations, 5000);
         return data.id;
     } catch (error) {
         console.error('Error creating conversation:', error);
@@ -601,8 +602,10 @@ function renderSuggestions(suggestions) {
 
 async function handleSubmit(event) {
     event.preventDefault(); // Prevent the default form submission behavior
+    const suggestionContainer = document.querySelector('.suggestion-container');
+    suggestionContainer.remove();
 
-    const form = event.target; // Get the form element
+    const form = document.querySelector('.aichat'); // Get the form element
     const messageInput = form.querySelector('#txt'); // Get the message input field within the form
     const content = messageInput.value.trim(); // Get the message content from the input field
     const conversationIdInput = form.querySelector('#conversationId'); // Get the conversation ID input field within the form
@@ -613,15 +616,22 @@ async function handleSubmit(event) {
         return;
     }
 
+    messageInput.value = ''; // Clear the input field
+
     sendMessageToConversation(content, conversationId);
 }
 
 async function sendMessageToConversation(content, conversationId) {
 
-    const messageData = {
+    const message = {
         message: content,
         sender: 'HUMAN'
     };
+
+    let newMessage = {};
+    newMessage.content = message;
+    renderMessage(newMessage, null);
+    const responseLi = createResponseNode();
 
     // If there's no existing conversation ID, call newConversation to get it
     if (!conversationId) {
@@ -640,16 +650,20 @@ async function sendMessageToConversation(content, conversationId) {
     }
 
     // Continue with sending the message
-    sendMessage(conversationId, messageData);
+    sendMessage(conversationId, message, responseLi);
 }
 
-async function sendMessage(conversationId, message) {
+async function sendMessage(conversationId, message, responseLi) {
+
+    const messageInput = document.getElementById('txt');
+    messageInput.value = ''; // Clear the input field
+
     let newMessage = {};
     newMessage.content = message;
-    renderMessage(newMessage, null, true);
-    const messageInput = document.getElementById('txt');
-    const responseLi = createResponseNode();
-    messageInput.value = ''; // Clear the input field
+    if (!responseLi) {
+        renderMessage(newMessage, null, true);
+        responseLi = createResponseNode();
+    }
 
     const instanceId = getInstanceIdFromPath();
 

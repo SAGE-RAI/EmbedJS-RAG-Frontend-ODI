@@ -5,14 +5,45 @@
 
 <%- include('../partials/conversations-sidebar') %>
 
-<form class="aichat" onsubmit="handleSubmit(event)">
-    <%- include('../partials/conversation', { conversation: conversation }) %>
-    <div class="bottom">
-        <div id="input">
-            <input type="hidden" id="conversationId" value="<%- conversation.id %>"></input>
-            <textarea id="txt" placeholder="Send a message" name="msg" rows="2"></textarea>
-            <button type="submit" class="uil uil-message"></button>
+    <form class="aichat" onsubmit="handleSubmit(event)">
+        <div class="chat-container">
+            <%- include('../partials/conversation', { conversation: conversation }) %>
+            <div class="bottom">
+                <div id="input">
+                    <input type="hidden" id="conversationId" value="<%- conversation.id %>"></input>
+                    <textarea id="txt" placeholder="Send a message" name="msg" rows="1"></textarea>
+                    <button type="submit" class="uil uil-message"></button>
+                </div>
+            </div>
         </div>
-    </div>
-</form>
+    </form>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConversation('');
+
+            const textarea = document.getElementById('txt');
+            const form = document.querySelector('.aichat');
+
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto'; // Reset the height
+                this.style.height = this.scrollHeight + 'px'; // Set the height based on the scroll height
+
+                // Ensure the height does not exceed the max height
+                if (this.scrollHeight > 150) {
+                    this.style.overflowY = 'scroll';
+                } else {
+                    this.style.overflowY = 'hidden';
+                }
+            });
+
+            textarea.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault(); // Prevent default enter behavior
+                    handleSubmit(event); // Explicitly call handleSubmit function
+                }
+            });
+
+            form.addEventListener('submit', handleSubmit); // Ensure the form calls handleSubmit on submit
+        });
+    </script>
 <%- include('../partials/footer') %>
