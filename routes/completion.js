@@ -3,6 +3,7 @@ import { verifyTokenMiddleware, verifyConversationMiddleware, processMessagesMid
 import Conversation from '../models/conversation.js'; // Import the conversation model
 import { getMessages } from '../controllers/conversation.js'; // Import necessary functions from controllers
 import OpenAI from 'openai';
+import { Template } from 'ejs';
 
 const router = express.Router();
 
@@ -61,9 +62,9 @@ router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddlew
 
       // Get context embeddings for the contextQuery
       const chunks = await rag.getContext(contextQuery);
-
       // Use context embeddings along with the new message to query the RAG model
       const ragResponse = await rag.query(message, conversationId, chunks);
+
 
       // Return the response to the user
       res.status(200).json(ragResponse);

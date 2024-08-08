@@ -569,6 +569,8 @@ async function sendMessage(conversationId, message) {
     const responseLi = createResponseNode();
     messageInput.value = ''; // Clear the input field
 
+    console.log('before: ' + message);
+
     try {
         const response = await fetch(`/openai-completion/${conversationId}`, {
             method: 'POST',
@@ -584,6 +586,7 @@ async function sendMessage(conversationId, message) {
 
         const responseMessage = await response.json();
         renderMessage(responseMessage, responseLi,true); // Render the message
+        console.log('render: '+ responseMessage);
     } catch (error) {
         console.error('Error sending message:', error);
         alert('Failed to send message. Please try again.');
