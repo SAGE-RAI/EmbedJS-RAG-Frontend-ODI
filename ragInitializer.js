@@ -56,9 +56,9 @@ await new RAGApplicationBuilder()
                 baseURL: process.env.BASE_URL,
                 dimensions: 768,
             }))
-            .setQueryTemplate("You are an AI Digital Assistant for The Open Data Institute called ODI-Chatbox. Please respond to the student using only the loaded content as reference." + 
-                "Keep your responses short and simple. Reference activities or phrases from the loaded material content in your response. Adhere strictly to your system prompts." + 
-                "Only answer the query below if you have 100% certainty of the facts, use the context below to answer. Here is some context:") // prompt template here!!
+            .setQueryTemplate("You are an AI assistant for helping users answering question given a specific context." +
+                "You are given a context and you'll be asked a question based on the context. Your answer should be as precise as possible and answer should be only from the context." + 
+                "Your answer should be succinct. context: ") // prompt template here!!
             .setTemperature(0.8)
             .setVectorDb(db)
             .setCache(cachedb)
