@@ -2,32 +2,48 @@
 <script src="/js/chat.js"></script>
 <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-<sidebar>
-<%- include('../partials/conversations') %>
-<nav style="position: absolute; bottom: 0px;">
-	<ul>
-		<li style="display: inline-block;"">
-            <form style="display: inline-flex;" id="logout_form" action="/logout" method="post">
-                <a href="javascript:;" onclick="document.getElementById('logout_form').submit();">Logout</a>
-            </form>
-        </li>
-        <li style="display: inline-block;
-        padding-left: 1em;
-        border-left: 1px solid white;
-        margin-left: 1em;">
-            <a href="/admin">Admin</a></li>
-        </li>
-	</ul>
-</nav>
-</sidebar>
-<form class="aichat" onsubmit="handleSubmit(event)">
-    <%- include('../partials/conversation', { conversation: conversation }) %>
-    <div class="bottom">
-        <div id="input">
-            <input type="hidden" id="conversationId" value="<%- conversation.id %>"></input>
-            <textarea id="txt" placeholder="Send a message" name="msg" rows="2"></textarea>
-            <button type="submit" class="uil uil-message"></button>
+
+<%- include('../partials/conversations-sidebar') %>
+
+    <form class="aichat" onsubmit="handleSubmit(event)">
+        <div class="chat-container">
+            <%- include('../partials/conversation', { conversation: conversation }) %>
+            <div class="bottom">
+                <div id="input">
+                    <input type="hidden" id="conversationId" value="<%- conversation.id %>"></input>
+                    <textarea id="txt" placeholder="Send a message" name="msg" rows="1"></textarea>
+                    <button type="submit" class="uil uil-message"></button>
+                </div>
+            </div>
         </div>
-    </div>
-</form>
-<%- include('../partials/blankFooter') %>
+    </form>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConversation('');
+
+            const textarea = document.getElementById('txt');
+            const form = document.querySelector('.aichat');
+
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto'; // Reset the height
+                this.style.height = this.scrollHeight + 'px'; // Set the height based on the scroll height
+
+                // Ensure the height does not exceed the max height
+                if (this.scrollHeight > 150) {
+                    this.style.overflowY = 'scroll';
+                } else {
+                    this.style.overflowY = 'hidden';
+                }
+            });
+
+            textarea.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault(); // Prevent default enter behavior
+                    handleSubmit(event); // Explicitly call handleSubmit function
+                }
+            });
+
+            form.addEventListener('submit', handleSubmit); // Ensure the form calls handleSubmit on submit
+        });
+    </script>
+<%- include('../partials/footer') %>

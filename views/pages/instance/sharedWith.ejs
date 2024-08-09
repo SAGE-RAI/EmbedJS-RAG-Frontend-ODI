@@ -1,0 +1,120 @@
+<%- include('../../partials/header-admin') %>
+<style>
+    .longText {
+        min-width: 80%;
+    }
+    .submit {
+        margin-top: 2em;
+    }
+</style>
+<h1>Manage shares</h1>
+<div id="res" class="alert"></div>
+<h2>Share with new user:</h2>
+<form id="addUserForm">
+    <label for="userEmail">User Email:</label>
+    <input type="email" id="userEmail" name="userEmail" required>
+    <label for="userRole">Role:</label>
+    <select id="userRole" name="userRole">
+        <option value="">Viewer</option>
+        <option value="contentEditor">Content Editor</option>
+        <option value="instanceAdmin">Instance Admin</option>
+    </select>
+    <button type="button" onclick="addUser()">Add User</button>
+</form>
+<h2>Current shares</h2>
+<table id="sharedWithTable" class="display" style="width:100%"></table>
+
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.7.0/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.7.0/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.7.0/js/buttons.print.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.13.5/css/buttons.dataTables.min.css">
+
+<script>
+    const instanceId = "<%= instanceId %>";
+    const data = {};
+
+    $(document).ready(function () {
+
+        $('#sharedWithTable').DataTable({
+            ajax: {
+                url: `/instances/${instanceId}`,
+                dataSrc: 'sharedWith',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Accept', 'application/json');
+                }
+            },
+            columns: [
+                { data: 'email', title: 'Email', defaultContent: '' },
+                { data: 'role', title: 'Role', defaultContent: 'Viewer' },
+                {
+                    title: 'Actions',
+                    render: function (data, type, row) {
+                        return '<button class="deleteUserBtn" data-email="' + row.email + '">Delete</button>';
+                    }
+                }
+            ],
+            order: [[0, 'asc']],
+            dom: 'frtipB',
+            //dom: 'Bfrtip',
+            /*buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ]*/
+        });
+
+        $('#sharedWithTable').on('click', '.deleteUserBtn', function () {
+            var email = $(this).data('email');
+            if (confirm('Are you sure you want to remove this user?')) {
+                $('#res').html('<p>Removing user, please wait.</p>');
+                fetch(`/instances/${instanceId}/sharedWith/${email}`, {
+                    method: 'DELETE',
+                })
+                .then(response => {
+                    if (response.ok) {
+                        $('#res').html('<p>User removed successfully.</p>');
+                        $('#sharedWithTable').DataTable().ajax.reload();
+                        setTimeout(function () {
+                            $('#res').html('');
+                        }, 5000);
+                    } else {
+                        $('#res').html('<p>Error removing user.</p>');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error removing user:', error);
+                    $('#res').html('<p>Error removing user.</p>');
+                });
+            }
+        });
+    });
+
+    function addUser() {
+        const instanceId = '<%= instanceId %>';
+        const email = $('#userEmail').val();
+        const role = $('#userRole').val();
+
+        $.ajax({
+            url: '/instances/' + instanceId + '/sharedWith',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ email, role }),
+            success: function (data) {
+                $('#res').html('<p>User added successfully.</p>');
+                $('#sharedWithTable').DataTable().ajax.reload();
+                $('#userEmail').val('');
+                $('#userRole').val('');
+                setTimeout(function () {
+                    $('#res').html('');
+                }, 5000);
+            },
+            error: function (xhr, status, error) {
+                $('#res').html('<p>Error adding user: ' + error + '</p>');
+                setTimeout(function () {
+                    $('#res').html('');
+                }, 5000);
+            }
+        });
+    }
+</script>
+<%- include('../../partials/footer') %>

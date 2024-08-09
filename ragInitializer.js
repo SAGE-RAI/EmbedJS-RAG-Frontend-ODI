@@ -6,29 +6,37 @@ import { MongoCache } from 'embedjs' // from '@llm-tools/embedjs/cache/mongo';
 import { MongoConversations } from 'embedjs' // from '@llm-tools/embedjs/conversations/mongo';
 import { OpenAiGenericEmbeddings } from 'embedjs' // from '@llm-tools/embedjs';
 // import * as EmbedJS from '@llm-tools/embedjs';
+import mongoose from 'mongoose';
+
+// Central configuration for Mongo URI and collection names
+const MONGODB_URI = process.env.MONGO_URI;
+const COLLECTION_NAME = process.env.EMBEDDINGS_COLLECTION;
+const CACHE_COLLECTION_NAME = process.env.EMBEDDINGS_CACHE_COLLECTION;
+const CONVERSATIONS_COLLECTION_NAME = process.env.CONVERSATIONS_COLLECTION;
 
 // Function to initialize the RAG application
-async function initializeRAGApplication(MONGODB_URI, DB_NAME, COLLECTION_NAME, CACHE_COLLECTION_NAME, CONVERSATIONS_COLLECTION_NAME) {
+async function initializeRAGApplication(instance) {
+    const instanceId = instance.id;
+
     const db = new MongoDb({
         connectionString: MONGODB_URI,
-        dbName: DB_NAME,
+        dbName: instanceId,
         collectionName: COLLECTION_NAME
     });
 
     const cachedb = new MongoCache({
         uri: MONGODB_URI,
-        dbName: DB_NAME,
+        dbName: instanceId,
         collectionName: CACHE_COLLECTION_NAME
     });
 
     const conversationsdb = new MongoConversations({
         uri: MONGODB_URI,
-        dbName: DB_NAME,
+        dbName: instanceId,
         collectionName: CONVERSATIONS_COLLECTION_NAME
     });
 
     // Initialize the connection to MongoDB Atlas
-    //await db.init();
     await cachedb.init();
     await conversationsdb.init();
     // console.log(EmbedJS);
@@ -63,6 +71,7 @@ await new RAGApplicationBuilder()
             .setVectorDb(db)
             .setCache(cachedb)
             .setConversations(conversationsdb)
+            .setQueryTemplate(instance.systemPrompt)
             .build();
 
         console.log('RAG Application is ready with OpenAI Generic Models and MongoDB!');
@@ -73,4 +82,14 @@ await new RAGApplicationBuilder()
     }
 }
 
-export { initializeRAGApplication };
+function connectToRagDatabase(dbName) {
+    const connection = mongoose.createConnection(MONGODB_URI, {
+        dbName: dbName,
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    });
+
+    return connection;
+}
+
+export { initializeRAGApplication, connectToRagDatabase };

@@ -39,7 +39,7 @@ document.getElementById("selectAll").addEventListener("click", function() {
 let existingSources = {};
 
 // Fetch existing sources
-fetch('/rag/sources')
+fetch('<%= "/instances/" + instanceId + "/sources" %>')
     .then(response => response.json())
     .then(data => {
         data.loaders.forEach(source => {
@@ -95,7 +95,7 @@ function addSelectedSources() {
             let title = row.cells[1].textContent;
             let source = row.cells[2].textContent;
             let statusCell = row.cells[3];
-            let postUrl = '/rag/sources';
+            let postUrl = '<%= "/instances/" + instanceId + "/sources" %>';
             let inputObject = { title, source };
 
             fetch(postUrl, {
@@ -117,4 +117,4 @@ function addSelectedSources() {
     });
 }
 </script>
-<%- include('../../partials/footer-admin') %>
+<%- include('../../partials/footer') %>

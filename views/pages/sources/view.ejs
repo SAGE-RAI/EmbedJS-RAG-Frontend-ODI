@@ -6,7 +6,7 @@
 <h1>Sources</h1>
 <div id="res" class="alert"></div>
 
-<a href="/admin/sources/add"><button>Add source</button></a>
+<a href="/instances/<%= instanceId %>/sources/add"><button>Add source</button></a>
 <br/><br/>
 <table id="sourcesTable" class="display" style="width:100%"></table>
 
@@ -20,10 +20,14 @@
 
 <script>
     $(document).ready(function () {
+        const instanceId = '<%= instanceId %>';
         const sourcesTable = $('#sourcesTable').DataTable({
             ajax: {
-                url: '/rag/sources',
-                dataSrc: 'loaders'
+                url: '/instances/' + instanceId + '/sources',
+                dataSrc: '',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Accept', 'application/json');
+                }
             },
             columns: [
                 { data: 'title', title: 'Title', defaultContent: '' },
@@ -50,6 +54,7 @@
                     }
                 },
                 { data: 'chunkCount', title: 'Chunks', width: '5%' },
+                { data: 'tokens', title: 'Tokens', width: '5%' },
                 {
                     title: 'Actions',
                     render: function (data, type, row) {
@@ -68,7 +73,7 @@
 
         $('#sourcesTable').on('click', '.editBtn', function () {
             var loaderId = $(this).data('loaderid');
-            window.location.href = '/admin/sources/' + loaderId;
+            window.location.href = '/instances/' + instanceId + '/sources/' + loaderId;
         });
 
         $('#sourcesTable').on('click', '.deleteBtn', function () {
@@ -76,11 +81,9 @@
             if (confirm('Are you sure you want to delete this source?')) {
                 $('#res').html('<p>Deleting, please wait.</p>');
                 $.ajax({
-                    url: '/rag/sources/' + loaderId,
+                    url: '/instances/' + instanceId + '/sources/' + loaderId,
                     type: 'DELETE',
                     success: function (result) {
-                        // Remove row from table
-                        //table.row($(this).parents('tr')).remove().draw();
                         // Show success message
                         $('#res').html('<p>Source deleted successfully.</p>');
                         sourcesTable.ajax.reload();
@@ -107,21 +110,21 @@
 
             // Fetch metadata for the loader
             $.ajax({
-                url: '/rag/sources/' + loaderId,
+                url: '/instances/' + instanceId + '/sources/' + loaderId,
                 type: 'GET',
                 success: function (metadata) {
                     $('#res').html('<p>Metadata retrieved successfully, deleting existing record...');
                     metadata = metadata.loader;
                     // Call delete for the loader
                     $.ajax({
-                        url: '/rag/sources/' + loaderId,
+                        url: '/instances/' + instanceId + '/sources/' + loaderId,
                         type: 'DELETE',
                         success: function (result) {
                             $('#res').html('<p>Source deleted successfully. Now reloading, please wait...</p>');
 
                             // Call add for the loader with the retrieved metadata
                             $.ajax({
-                                url: '/rag/sources',
+                                url: '/instances/' + instanceId + '/sources',
                                 type: 'POST',
                                 contentType: 'application/json',
                                 data: JSON.stringify(metadata),
@@ -162,4 +165,4 @@
         });
     });
 </script>
-<%- include('../../partials/footer-admin') %>
+<%- include('../../partials/footer') %>

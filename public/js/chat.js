@@ -1,4 +1,42 @@
-// Function to render Markdown content using React
+ // Need to move this somewhere.
+ const defaultRatingResponses = {
+    1: [
+        "Don't like the style",
+        "Not factually correct",
+        "Didn't fully follow instructions",
+        "Refused when it shouldn't have",
+        "Wrong or no sources"
+    ],
+    2: [
+        "Not helpful",
+        "Confusing response",
+        "Didn't provide enough detail",
+        "Incomplete information",
+        "Wrong or no sources",
+    ],
+    3: [
+        "Somewhat helpful",
+        "Partially correct",
+        "Room for improvement",
+        "Average response",
+        "Needs more detail"
+    ],
+    4: [
+        "Quite helpful",
+        "Mostly correct",
+        "Good response",
+        "Well-written",
+        "Informative"
+    ],
+    5: [
+        "Very helpful",
+        "Completely correct",
+        "Excellent response",
+        "Clear and concise",
+        "Highly informative"
+    ]
+};
+
 // Function to render Markdown content using React
 async function renderMarkdown(markdown, container, callback) {
     const React = window.React;
@@ -156,38 +194,80 @@ function renderMessage(entry, existingElement = null, newMessage = false) {
     }
 }
 
-
 async function loadConversation(conversationId) {
     const listCont = document.querySelector('.list_cont');
     listCont.innerHTML = "";
+
+    // Remove suggestion container if it exists
+    const suggestionContainer = document.querySelector('.suggestion-container');
+    if (suggestionContainer) {
+        suggestionContainer.remove();
+    }
+
     document.getElementById('conversationId').value = null;
+    const instanceId = getInstanceIdFromPath();
+
     try {
-        // Fetch conversation data from the server
-        const response = await fetch(`/conversation/${conversationId}`, {
-            headers: {
-                'Accept': 'application/json'
-            }
+        // Fetch instance data including ratingResponses and suggestions
+        const response = await fetch(`/instances/${instanceId}`, {
+            headers: { 'Accept': 'application/json' }
         });
 
         if (!response.ok) {
-            throw new Error('Failed to fetch conversation data.');
+            throw new Error('Failed to fetch instance data.');
         }
 
-        const conversation = await response.json();
-        // Iterate over the entries object
-        conversation.entries.forEach(entry => {
-            renderMessage(entry,null,false)
-        });
-        document.getElementById('conversationId').value = conversationId;
-        // Update the address bar with the conversation ID
-        window.history.pushState({}, '', '/conversation/' + conversationId);
+        instanceData = await response.json();
+
+        // Extract suggestions and ratingResponses from instanceData
+        const suggestions = instanceData.suggestions;
+        const ratingResponses = instanceData.ratingResponses;
+
+        // Store ratingResponses globally for future use
+        window.ratingResponses = ratingResponses;
+
+        // Handle conversation if conversationId is provided
+        if (conversationId === "") {
+            // Render suggestions in the center of the screen if available
+            if (suggestions.length > 0) {
+                renderSuggestions(suggestions);
+            }
+            // Update the address bar with the empty conversation ID
+            window.history.pushState({}, '', `/instances/${instanceId}/conversations/`);
+        } else {
+            try {
+                // Fetch conversation data from the server
+                const conversationResponse = await fetch(`/instances/${instanceId}/conversations/${conversationId}`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!conversationResponse.ok) {
+                    throw new Error('Failed to fetch conversation data.');
+                }
+
+                const conversation = await conversationResponse.json();
+                // Iterate over the entries object
+                conversation.entries.forEach(entry => {
+                    renderMessage(entry, null, false);
+                });
+                document.getElementById('conversationId').value = conversationId;
+                // Update the address bar with the conversation ID
+                window.history.pushState({}, '', `/instances/${instanceId}/conversations/${conversationId}`);
+            } catch (error) {
+                console.error('Error loading conversation:', error);
+                // Handle error (e.g., show error message)
+            }
+        }
     } catch (error) {
-        console.error('Error loading conversation:', error);
+        console.error('Error loading instance data:', error);
         // Handle error (e.g., show error message)
     }
 }
 
 async function renderSources(sources, element) {
+    const instanceId = getInstanceIdFromPath();
     if (sources && sources.length > 0) {
         const sourcesHeading = document.createElement('h3');
         sourcesHeading.textContent = 'Sources';
@@ -207,16 +287,16 @@ async function renderSources(sources, element) {
             const listItem = document.createElement('li');
             const link = document.createElement('a');
 
-            // If loaderId is present, fetch title from /rag/sources/:loaderId
+            // If loaderId is present, fetch title from /instances/sources/:loaderId
             if (sourceObj.loaderId) {
                 try {
-                    const response = await fetch(`/rag/sources/${sourceObj.loaderId}`);
+                    const response = await fetch(`/instances/${instanceId}/sources/${sourceObj.loaderId}`);
                     const data = await response.json();
                     // Set link text to the title if available, otherwise use source URL
-                    link.textContent = data.loader.title || sourceObj.source;
+                    link.textContent = data.title || sourceObj.source;
 
                     // Set href to overrideUrl if available, otherwise use source URL
-                    link.href = data.loader.overrideUrl || sourceObj.source;
+                    link.href = data.overrideUrl || sourceObj.source;
                 } catch (error) {
                     console.error('Error fetching source title:', error);
                     // If there's an error, use source URL for both link text and href
@@ -255,47 +335,7 @@ async function renderSources(sources, element) {
     }
 }
 
- // Need to move this somewhere.
-const defaultRatingResponses = {
-    1: [
-        "Don't like the style",
-        "Not factually correct",
-        "Didn't fully follow instructions",
-        "Refused when it shouldn't have",
-        "Wrong or no sources"
-    ],
-    2: [
-        "Not helpful",
-        "Confusing response",
-        "Didn't provide enough detail",
-        "Incomplete information",
-        "Wrong or no sources",
-    ],
-    3: [
-        "Somewhat helpful",
-        "Partially correct",
-        "Room for improvement",
-        "Average response",
-        "Needs more detail"
-    ],
-    4: [
-        "Quite helpful",
-        "Mostly correct",
-        "Good response",
-        "Well-written",
-        "Informative"
-    ],
-    5: [
-        "Very helpful",
-        "Completely correct",
-        "Excellent response",
-        "Clear and concise",
-        "Highly informative"
-    ]
-};
-
 function renderRating(rating, element) {
-    console.log(rating);
     element.innerHTML = '';
     const ratingContainer = document.createElement('div');
     ratingContainer.classList.add('rating-container');
@@ -316,7 +356,6 @@ function renderRating(rating, element) {
         // Render empty stars for the remaining
         for (let i = rating.rating; i < 5; i++) {
             const star = document.createElement('span');
-            star.classList.add('star');
             star.innerHTML = '&#9734; '; // Unicode for empty star symbol
             starsContainer.appendChild(star);
         }
@@ -339,7 +378,7 @@ function renderRating(rating, element) {
 }
 
 function displayResponseChoices(element, messageId, rating) {
-    const responses = defaultRatingResponses[rating.rating];
+    const responses = window.ratingResponses[rating.rating] || defaultRatingResponses[rating.rating];
     const choicesContainer = document.createElement('div');
     choicesContainer.classList.add('response-choices');
 
@@ -422,6 +461,7 @@ async function handleRating(element, entryId, starRating, message) {
     try {
         // Get the conversation ID from the hidden input field
         const conversationId = document.getElementById('conversationId').value;
+        const instanceId = getInstanceIdFromPath();
 
         // Construct the rating object
         const ratingData = {
@@ -430,12 +470,12 @@ async function handleRating(element, entryId, starRating, message) {
         };
 
         // Perform a POST request to update the rating
-        const response = await fetch(`/conversation/${conversationId}/messages/${entryId}`, {
+        const response = await fetch(`/instances/${instanceId}/conversations/${conversationId}/messages/${entryId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ rating: ratingData })
+            body: JSON.stringify(ratingData)
         });
 
         if (!response.ok) {
@@ -443,12 +483,10 @@ async function handleRating(element, entryId, starRating, message) {
         }
 
         const responseData = await response.json();
-        renderRating(ratingData,element);
+        renderRating(ratingData, element);
         if (message === "") {
             displayResponseChoices(element, entryId, ratingData);
         }
-
-        // Optionally, handle success response
 
     } catch (error) {
         console.error('Error handling rating:', error);
@@ -457,8 +495,6 @@ async function handleRating(element, entryId, starRating, message) {
 }
 
 function handleRatingHover(messageId, rating) {
-    console.log(messageId);
-    console.log(rating);
     // Get the message container element by its ID
     const messageContainer = document.getElementById(messageId);
     if (!messageContainer) return; // Exit if message container not found
@@ -500,8 +536,9 @@ function createResponseNode() {
 
 async function newConversation() {
     try {
-        // Make a POST request to /conversation/create
-        const response = await fetch('/conversation/create', {
+        const instanceId = getInstanceIdFromPath();
+        // Make a POST request to /conversations/create
+        const response = await fetch(`/instances/${instanceId}/conversations/create`, {
             method: 'POST'
         });
 
@@ -512,9 +549,10 @@ async function newConversation() {
         const data = await response.json();
 
         // Update the address bar with the conversation ID
-        window.history.pushState({}, '', '/conversation/' + data.id);
+        window.history.pushState({}, '', `/instances/${instanceId}/conversations/${data.id}`);
 
         // Return the conversation ID
+        setTimeout(updateConversations, 5000);
         return data.id;
     } catch (error) {
         console.error('Error creating conversation:', error);
@@ -522,25 +560,78 @@ async function newConversation() {
     }
 }
 
+function renderSuggestions(suggestions) {
+    // Create the suggestion container
+    const suggestionContainer = document.createElement('div');
+    suggestionContainer.classList.add('suggestion-container');
+
+    // Create the icon element
+    const icon = document.createElement('img');
+    icon.src = 'https://avatars.githubusercontent.com/u/2492770?s=200&v=4';
+    icon.alt = 'Suggestions Icon'; // Provide alternative text for accessibility
+    icon.classList.add('suggestion-icon'); // Add a class for styling
+
+    // Append the icon to the suggestion container
+    suggestionContainer.appendChild(icon);
+
+    // Create the suggestion boxes container
+    const boxesContainer = document.createElement('div');
+    boxesContainer.classList.add('boxes-container');
+
+    // Create suggestion boxes
+    suggestions.forEach(suggestion => {
+        const suggestionBox = document.createElement('div');
+        suggestionBox.classList.add('suggestion-box');
+        suggestionBox.textContent = suggestion.shortText; // Display shortText or a similar property
+
+        suggestionBox.addEventListener('click', () => {
+            suggestionContainer.remove();
+            sendMessageToConversation(suggestion.fullPrompt, null);
+        });
+
+        boxesContainer.appendChild(suggestionBox);
+    });
+
+    // Append the boxes container to the suggestion container
+    suggestionContainer.appendChild(boxesContainer);
+
+    // Append the suggestion container to the messages container
+    const msgs_cont = document.querySelector('.msgs_cont');
+    msgs_cont.appendChild(suggestionContainer);
+}
+
 async function handleSubmit(event) {
     event.preventDefault(); // Prevent the default form submission behavior
+    const suggestionContainer = document.querySelector('.suggestion-container');
+    suggestionContainer.remove();
 
-    const form = event.target; // Get the form element
+    const form = document.querySelector('.aichat'); // Get the form element
     const messageInput = form.querySelector('#txt'); // Get the message input field within the form
     const content = messageInput.value.trim(); // Get the message content from the input field
+    const conversationIdInput = form.querySelector('#conversationId'); // Get the conversation ID input field within the form
+    let conversationId = conversationIdInput.value; // Get the conversation ID value from the input field
 
     if (content === '') {
         alert('Please enter a message.');
         return;
     }
 
-    const conversationIdInput = form.querySelector('#conversationId'); // Get the conversation ID input field within the form
-    let conversationId = conversationIdInput.value; // Get the conversation ID value from the input field
+    messageInput.value = ''; // Clear the input field
 
-    const messageData = {
+    sendMessageToConversation(content, conversationId);
+}
+
+async function sendMessageToConversation(content, conversationId) {
+
+    const message = {
         message: content,
         sender: 'HUMAN'
     };
+
+    let newMessage = {};
+    newMessage.content = message;
+    renderMessage(newMessage, null);
+    const responseLi = createResponseNode();
 
     // If there's no existing conversation ID, call newConversation to get it
     if (!conversationId) {
@@ -549,6 +640,7 @@ async function handleSubmit(event) {
             conversationId = await newConversation();
 
             // Update the conversation ID input field with the new conversation ID
+            const conversationIdInput = document.querySelector('#conversationId');
             conversationIdInput.value = conversationId;
         } catch (error) {
             console.error('Error creating conversation:', error);
@@ -558,38 +650,47 @@ async function handleSubmit(event) {
     }
 
     // Continue with sending the message
-    sendMessage(conversationId, messageData);
+    sendMessage(conversationId, message, responseLi);
 }
 
-async function sendMessage(conversationId, message) {
-    let newMessage = {};
-    newMessage.content = message;
-    renderMessage(newMessage,null,true);
+async function sendMessage(conversationId, message, responseLi) {
+
     const messageInput = document.getElementById('txt');
-    const responseLi = createResponseNode();
     messageInput.value = ''; // Clear the input field
 
-    console.log('before: ' + message);
+    let newMessage = {};
+    newMessage.content = message;
+    if (!responseLi) {
+        renderMessage(newMessage, null, true);
+        responseLi = createResponseNode();
+    }
+
+    const instanceId = getInstanceIdFromPath();
 
     try {
-        const response = await fetch(`/openai-completion/${conversationId}`, {
+        const response = await fetch(`/instances/${instanceId}/conversations/${conversationId}/messages`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(message)
+            body: JSON.stringify(message) // Ensure correct format
         });
 
         if (!response.ok) {
-            throw new Error('Failed to send message.');
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to send message.');
         }
 
         const responseMessage = await response.json();
-        renderMessage(responseMessage, responseLi,true); // Render the message
-        console.log('render: '+ responseMessage);
+        renderMessage(responseMessage, responseLi, true); // Render the message
     } catch (error) {
         console.error('Error sending message:', error);
-        alert('Failed to send message. Please try again.');
+        alert(`Failed to send message: ${error.message}`); // Display the specific error message
         responseLi.remove();
     }
+}
+
+function getInstanceIdFromPath() {
+    const pathSegments = window.location.pathname.split('/');
+    return pathSegments[2]; // Assumes /instances/:instanceId/... structure
 }
