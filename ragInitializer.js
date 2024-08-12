@@ -48,7 +48,6 @@ await new RAGApplicationBuilder()
             // .setModel(new OpenAi({ modelName: 'gpt-4o' }))
             .setModel(new AzureAIInferenceModel(
                 { 
-                    modelName: process.env.AZURE_AI_MODEL_NAME,
                     endpointUrl: process.env.AZURE_AI_ENDPOINT_URL,
                     apiKey: process.env.AZURE_AI_API_KEY
              }))
