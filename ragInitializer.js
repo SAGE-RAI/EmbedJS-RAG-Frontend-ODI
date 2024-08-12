@@ -58,7 +58,6 @@ await new RAGApplicationBuilder()
         // Use Azure model
         } else if (process.env.AZURE_AI_MODEL_NAME) {
             model = new AzureAIInferenceModel({
-                modelName: process.env.AZURE_AI_MODEL_NAME,
                 endpointUrl: process.env.AZURE_AI_ENDPOINT_URL,
                 apiKey: process.env.AZURE_AI_API_KEY
             });
