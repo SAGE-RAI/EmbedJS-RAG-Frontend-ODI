@@ -1,5 +1,4 @@
 // ragInitializer.js
-
 import { RAGApplicationBuilder, OpenAi, AzureAIInferenceModel } from 'embedjs' // from '@llm-tools/embedjs';
 import { MongoDb } from 'embedjs' // from '@llm-tools/embedjs/vectorDb/mongodb';
 import { MongoCache } from 'embedjs' // from '@llm-tools/embedjs/cache/mongo';
@@ -43,42 +42,69 @@ async function initializeRAGApplication(instance) {
 
 await new RAGApplicationBuilder()
 
+    // Get and use models based on config.env settings 
     try {
-        const ragApplication = await new RAGApplicationBuilder()
-            // .setModel(new OpenAi({ modelName: 'gpt-4o' }))
-            .setModel(new AzureAIInferenceModel(
-                { 
-                    endpointUrl: process.env.AZURE_AI_ENDPOINT_URL,
-                    apiKey: process.env.AZURE_AI_API_KEY
-             }))
-            //.setModel(new OpenAi({ modelName: 'phi-3-mini', baseURL: process.env.BASE_URL})) // using custom Open Ai compartible servicesfor LLMs
-            // .setModel(new AzureAIInferenceModel({ // Using the Azure AI Interface 
-            //     modelName: 'Meta-Llama-3-70B-Instruct-bznuk', // this actually is entirely ignored; will remove soon.
-            //     temperature: 0.2, // or whatever temperature you'd like
-            //     maxNewTokens: 128, // or however many max tokens you'd like 
-            //     endpointUrl: process.env.BASE_URL,
-            //     apiKey: process.env.OPENAI_API_KEY }) )
-            .setEmbeddingModel(new OpenAiGenericEmbeddings({ // using custom OpenAi compartible services for embeddings
-                modelName: 'nomic-embed', 
-                baseURL: process.env.BASE_URL,
+        let model;
+        let embeddingModel; 
+
+        // Use OpenAI model with GENERIC_BASE_URL
+        if (process.env.GENERIC_MODEL_NAME) {
+            model = new OpenAi({
+                modelName: process.env.GENERIC_MODEL_NAME,
+                baseURL: process.env.GENERIC_BASE_URL,
+                apiKey: process.env.GENERIC_API_KEY
+            });
+        
+        // Use Azure model
+        } else if (process.env.AZURE_AI_MODEL_NAME) {
+            model = new AzureAIInferenceModel({
+                modelName: process.env.AZURE_AI_MODEL_NAME,
+                endpointUrl: process.env.AZURE_AI_ENDPOINT_URL,
+                apiKey: process.env.AZURE_AI_API_KEY
+            });
+
+        // Use default OpenAI models 
+        } else if (process.env.OPENAI_MODEL_NAME) {
+            model = new OpenAi({
+                modelName: process.env.OPENAI_MODEL_NAME,
+                apiKey: process.env.OPENAI_API_KEY
+            });
+        } else {
+            throw new Error('No model configuration found in environment variables.');
+        }
+        
+        // Use OpenAI Generic Embeddings
+        if (process.env.EMBED_MODEL_NAME) {
+            embeddingModel = new OpenAiGenericEmbeddings({
+                modelName: process.env.EMBED_MODEL_NAME, 
+                apiKey: process.env.EMBED_API_KEY,
+                baseURL: process.env.EMBED_BASE_URL,
                 dimensions: 768,
-            }))
-            .setQueryTemplate("You are an AI assistant for helping users answering question given a specific context." +
-                "You are given a context and you'll be asked a question based on the context. Your answer should be as precise as possible and answer should be only from the context." + 
-                "Your answer should be succinct. context: ") // prompt template here!!
+            });
+        }
+
+        const ragApplicationBuilder = new RAGApplicationBuilder()
+            .setModel(model)
             .setTemperature(0.8)
             .setVectorDb(db)
             .setCache(cachedb)
             .setConversations(conversationsdb)
-            .setQueryTemplate(instance.systemPrompt)
-            .build();
+            .setQueryTemplate(instance.systemPrompt);
+        
+        // Conditionally set the embedding model
+        if (embeddingModel) {
+            ragApplicationBuilder.setEmbeddingModel(embeddingModel);
+        }
 
-        console.log('RAG Application is ready with OpenAI Generic Models and MongoDB!');
+        const ragApplication = await ragApplicationBuilder.build();
+
+        console.log('RAG Application is ready with the selected model and MongoDB!');
         return ragApplication;
     } catch (error) {
         console.error('Failed to setup RAG Application:', error);
         throw error;
     }
+
 }
 
 function connectToRagDatabase(dbName) {
