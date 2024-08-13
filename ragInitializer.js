@@ -1,9 +1,9 @@
 // ragInitializer.js
-import { RAGApplicationBuilder, OpenAi, AzureAIInferenceModel } from 'embedjs' // from '@llm-tools/embedjs';
-import { MongoDb } from 'embedjs' // from '@llm-tools/embedjs/vectorDb/mongodb';
-import { MongoCache } from 'embedjs' // from '@llm-tools/embedjs/cache/mongo';
-import { MongoConversations } from 'embedjs' // from '@llm-tools/embedjs/conversations/mongo';
-import { OpenAiGenericEmbeddings } from 'embedjs' // from '@llm-tools/embedjs';
+import { RAGApplicationBuilder, OpenAi, AzureAIInferenceModel } from '@llm-tools/embedjs';
+import { MongoDb } from '@llm-tools/embedjs/vectorDb/mongodb';
+import { MongoCache } from '@llm-tools/embedjs/cache/mongo';
+import { MongoConversations } from '@llm-tools/embedjs/conversations/mongo';
+import { OpenAiGenericEmbeddings } from '@llm-tools/embedjs';
 // import * as EmbedJS from '@llm-tools/embedjs';
 import mongoose from 'mongoose';
 
@@ -51,7 +51,7 @@ await new RAGApplicationBuilder()
         if (process.env.GENERIC_MODEL_NAME) {
             model = new OpenAi({
                 modelName: process.env.GENERIC_MODEL_NAME,
-                baseURL: process.env.GENERIC_BASE_URL,
+                baseUrl: process.env.GENERIC_BASE_URL,
                 apiKey: process.env.GENERIC_API_KEY
             });
         
@@ -77,7 +77,7 @@ await new RAGApplicationBuilder()
             embeddingModel = new OpenAiGenericEmbeddings({
                 modelName: process.env.EMBED_MODEL_NAME, 
                 apiKey: process.env.EMBED_API_KEY,
-                baseURL: process.env.EMBED_BASE_URL,
+                baseUrl: process.env.EMBED_BASE_URL,
                 dimensions: 768,
             });
         }

@@ -1,4 +1,4 @@
-import { WebLoader, TextLoader, PdfLoader } from 'embedjs';  //'@llm-tools/embedjs';
+import { WebLoader, TextLoader, PdfLoader } from '@llm-tools/embedjs';
 import { getEmbeddingsCacheModel } from '../models/embeddingsCache.js';
 import User from '../models/user.js';
 import { encode } from 'gpt-tokenizer/model/text-embedding-ada-002';
