@@ -14,11 +14,6 @@
 </form>
 <script>
 const data = {};
-data.stakeholders = [];
-let stakeholder = {};
-stakeholder.stakeholder = "";
-stakeholder.type = "";
-data.stakeholders.push(stakeholder);
 $('#dataForm').html("");
 $('#result').html("");
 $('form').show();
@@ -30,10 +25,11 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(schema => {
             // Check if loaderId is present in the URL
             const loaderId = '<%= typeof loaderId !== "undefined" ? loaderId : "" %>';
+            const instanceId = '<%= instanceId %>';
 
             // Fetch existing data if loaderId is present
             if (loaderId) {
-                fetch(`/rag/sources/${loaderId}`)
+                fetch(`/instances/${instanceId}/sources/${loaderId}`)
                     .then(response => response.json())
                     .then(existingData => {
                         // Populate the form with existing data
@@ -42,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             form: schema.form,
                             value: existingData.loader, // Assuming loader is the key containing the existing data
                             onSubmit: function (errors, values) {
-                                updateSource(errors, values);
+                                updateSource(errors, values, instanceId);
                             }
                         });
                     })
@@ -56,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     form: schema.form,
                     value: data,
                     onSubmit: function (errors, values) {
-                        addSource(errors, values);
+                        addSource(errors, values, instanceId);
                     }
                 });
             }
@@ -66,7 +62,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 });
 
-function updateSource(errors, values) {
+function updateSource(errors, values, instanceId) {
     if (errors) {
         $('#res').html('<p>Please correct the errors in your form</p>');
     } else {
@@ -75,7 +71,7 @@ function updateSource(errors, values) {
         // Display a message while submitting
         $('#res').html('<p>Updating, please wait...</p>');
         var inputObject = values;
-        var postUrl = '/rag/sources';
+        var postUrl = `/instances/${instanceId}/sources`;
 
         if (inputObject.loaderId) {
             postUrl += '/' + inputObject.loaderId;
@@ -104,7 +100,7 @@ function updateSource(errors, values) {
     }
 }
 
-function addSource(errors, values) {
+function addSource(errors, values, instanceId) {
     if (errors) {
         $('#res').html('<p>Please correct the errors in your form</p>');
     } else {
@@ -113,7 +109,7 @@ function addSource(errors, values) {
         // Display a message while submitting
         $('#res').html('<p>Submitting, please wait while vector embeddings are calculated</p>');
         var inputObject = values;
-        var postUrl = '/rag/sources';
+        var postUrl = `/instances/${instanceId}/sources`;
 
         // Post the input object to the appropriate URL
         fetch(postUrl, {
@@ -146,4 +142,4 @@ function addSource(errors, values) {
 }
 </script>
 
-<%- include('../../partials/footer-admin') %>
+<%- include('../../partials/footer') %>

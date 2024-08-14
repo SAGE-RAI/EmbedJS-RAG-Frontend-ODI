@@ -95,8 +95,5 @@ async function deleteOldTokens() {
   }
 }
 
-//Delete old tokens
-deleteOldTokens();
-const interval = setInterval(deleteOldTokens, 3600000);
 
-export { processToken , verifyToken, getUserIDFromToken };
+export { processToken , verifyToken, getUserIDFromToken, deleteOldTokens };

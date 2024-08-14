@@ -5,12 +5,15 @@ async function retrieveOrCreateUser(profile) {
     let user = await User.findOne({ email: profile.email });
 
     if (!user) {
-      user = new User({
-        name: profile.name,
-        email: profile.email,
-        lastLogin: new Date()
-      });
-      await user.save();
+        const defaultTokens = process.env.DEFAULT_TOKENS ? parseInt(process.env.DEFAULT_TOKENS, 10) : 0;
+        const tokens = profile.tokens !== undefined ? profile.tokens : defaultTokens;
+        user = new User({
+            name: profile.name,
+            email: profile.email,
+            tokens: tokens,
+            lastLogin: new Date()
+        });
+        await user.save();
     }
 
     return user;

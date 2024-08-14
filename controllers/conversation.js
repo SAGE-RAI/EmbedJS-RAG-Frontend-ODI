@@ -1,139 +1,283 @@
-import mongoose from 'mongoose';
-import Conversation from '../models/conversation.js'; // Import the Conversation model
+import { getConversationModel } from '../models/conversation.js';
+import { getUserIDFromToken } from '../controllers/token.js';
+import User from '../models/user.js';
+import { encode } from 'gpt-tokenizer/model/gpt-4o';
 
-async function createConversation(userId, contentObject, course, skillsFramework) {
-    const conversationData = {
-        userId: userId
-    };
+async function createConversation(req, res) {
+  try {
+      const userId = req.user._id;
+      const { contentObject, course, _skillsFramework } = req.body;
 
-    const constructor = {};
-    if (contentObject !== undefined && contentObject !== null) {
-        constructor.contentObject = contentObject;
-    }
-
-    if (course !== undefined && course !== null) {
-        constructor.course = course;
-    }
-
-    if (skillsFramework !== undefined && skillsFramework !== null) {
-        constructor._skillsFramework = skillsFramework;
-    }
-    conversationData.constructor = constructor; // Correct the typo: `construnctor` to `constructor`
-
-    const conversation = new Conversation(conversationData);
-
-    await conversation.save();
-
-    // Convert ObjectId to string and set it as conversationId
-    const conversationId = conversation._id.toString();
-
-    // Update the conversation with the string version of ObjectId
-    await Conversation.findByIdAndUpdate(conversation._id, { $set: { conversationId: conversationId } });
-
-    return conversationId;
-}
-
-async function getConversations(contentObjectId, userId) {
-    try {
-        let query = { 'userId': new mongoose.Types.ObjectId(userId) };
-        if (contentObjectId) {
-            query['constructor.contentObject.id'] = contentObjectId;
-        }
-        const conversations = await Conversation.find(query);
-
-        // Filter out conversations with empty or undefined history
-        const filteredConversations = conversations.filter(conversation => {
-            return conversation.entries && conversation.entries.length > 0;
-        });
-
-        return filteredConversations;
-    } catch (error) {
-        throw new Error('Error fetching conversations: ' + error.message);
-    }
-}
-
-// Function to fetch conversations by contentObject ID
-async function getConversation(conversationId) {
-    try {
-        const conversation = await Conversation.findOne({
-            '_id': new mongoose.Types.ObjectId(conversationId)
-        });
-        return conversation;
-    } catch (error) {
-        throw new Error('Error fetching conversation: ' + error.message);
-    }
-}
-
-// Function to fetch messages from conversation history by conversation ID
-async function getMessages(conversationId) {
-    try {
-        const conversation = await Conversation.findOne({
-            '_id': new mongoose.Types.ObjectId(conversationId)
-        });
-        if (!conversation) {
-            throw new Error('Conversation not found.');
-        }
-        return conversation.entries.map(entry => entry.content);
-    } catch (error) {
-        throw new Error('Error fetching messages: ' + error.message);
-    }
-}
-
-async function deleteOldConversations() {
-    console.log('finding old conversations');
-    try {
-      // Calculate the cutoff time (24 hours ago)
-      const cutoffTime = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-      // Find conversations that meet the criteria
-      const conversationsToDelete = await Conversation.find({
-        creationDate: { $lt: cutoffTime }, // Conversations created over 24 hours ago
-        'entries.0': { $exists: false } // Conversations with an empty history
-      });
-
-      // Iterate over each conversation document and delete it
-      // Iterate over each conversation and delete it
-      for (const conversation of conversationsToDelete) {
-        await Conversation.deleteOne({ _id: conversation._id });
+      const ragApplication = req.ragApplication;
+      if (!ragApplication) {
+          throw new Error('RAG Application is not initialized');
       }
 
-      console.log(`Deleted ${conversationsToDelete.length} old conversations.`);
+      const Conversation = getConversationModel(req.session.activeInstance.id);
+
+      const newConversation = new Conversation({
+          userId,
+          constructor: { contentObject, course, _skillsFramework },
+      });
+
+      newConversation.conversationId = newConversation._id.toString(); // Set conversationId to the string of the _id created
+
+      await newConversation.save();
+
+      res.status(201).json({ id: newConversation._id });
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
+}
+
+async function getConversations(req, res) {
+    try {
+        const userId = req.user._id;
+
+        const Conversation = getConversationModel(req.session.activeInstance.id);
+
+        const conversations = await Conversation.find({
+            userId,
+            entries: { $exists: true, $not: { $size: 0 } }
+        });
+        res.json(conversations);
     } catch (error) {
-      console.error('Error deleting old conversations:', error);
+        res.status(500).json({ error: error.message });
     }
 }
 
-async function setRating(conversationId, entryId, rating, message) {
+async function getConversation(req, res) {
+    const conversationId = req.params.conversationId;
     try {
+        const Conversation = getConversationModel(req.session.activeInstance.id);
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        if (req.accepts('html')) {
+            res.locals.pageTitle = "Chat";
+            res.render('pages/chat', { conversation });
+        } else {
+            res.json(conversation);
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+async function updateConversation(req, res) {
+    const conversationId = req.params.conversationId;
+    const updateData = req.body;
+    try {
+        const Conversation = getConversationModel(req.session.activeInstance.id);
+
+        const updatedConversation = await Conversation.findByIdAndUpdate(
+            conversationId,
+            { $set: updateData },
+            { new: true }
+        );
+
+        if (!updatedConversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        res.json(updatedConversation);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+async function deleteConversation(req, res) {
+    const conversationId = req.params.conversationId;
+    try {
+        const Conversation = getConversationModel(req.session.activeInstance.id);
+
+        const deletedConversation = await Conversation.findByIdAndDelete(conversationId);
+        if (!deletedConversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        res.sendStatus(204);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+async function getMessages(req, res) {
+    const conversationId = req.params.conversationId;
+    try {
+        const Conversation = getConversationModel(req.session.activeInstance.id);
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        res.json(conversation.entries);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+async function postMessage(req, res) {
+    try {
+        const conversationId = req.params.conversationId;
+        const { message, sender } = req.body;
+        const ragApplication = req.ragApplication;
+        if (!ragApplication) {
+            throw new Error('RAG Application is not initialized');
+        }
+
+        if (!sender || sender !== 'HUMAN' || !message) {
+            return res.status(400).json({ error: 'Invalid message format. Must include sender "HUMAN" and message.' });
+        }
+
+        const Conversation = getConversationModel(req.session.activeInstance.id);
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        // Retrieve the user's token information from the database
+        const userId = req.session.user.id; // Assume user ID is stored in session
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        let contextQuery = message; // Default contextQuery is just the new query
+        const messages = conversation.entries;
+
+        if (messages.length > 0) {
+            const humanMessages = messages.filter(msg => msg.content.sender === 'HUMAN');
+            const contextMessages = humanMessages.slice(-2);
+
+            if (contextMessages.length === 1) {
+                contextQuery = `${contextMessages[0].content.message} ${message}`;
+            } else if (contextMessages.length === 2) {
+                contextQuery = `${contextMessages[0].content.message} ${contextMessages[1].content.message} ${message}`;
+            }
+        }
+
+        const chunks = await ragApplication.getContext(contextQuery);
+        /// Calculate the number of tokens required for the message and chunks
+        const messageTokens = encode(message).length;
+
+        let chunkTokens = 0;
+        for (const chunk of chunks) {
+            chunkTokens += encode(chunk.pageContent).length;
+        }
+
+        // Check if the user has enough tokens
+        const totalTokensRequired = messageTokens + chunkTokens + 500; // +500 tokens for the response
+        //WARNING. This does not take into acount how much of the conversation history is sent on each request!
+        if (totalTokensRequired > user.tokens) {
+            return res.status(400).json({ error: 'Insufficient tokens to post the message' });
+        }
+
+        // Deduct the tokens from user's account and save in the database
+        user.tokens -= messageTokens + chunkTokens;
+        await user.save();
+
+        const ragResponse = await ragApplication.query(message, conversationId, chunks);
+
+        // Subtract the response tokens (multiplied by three) from the user's account
+        const responseTokens = ragResponse.content.message.length * 3;
+        user.tokens -= responseTokens;
+        await user.save();
+
+        res.status(200).json(ragResponse);
+    } catch (error) {
+        console.error("Error in /:instanceId/completion/:conversationId route:", error);
+        res.status(error.status || 500).json({ error: error.message });
+    }
+}
+
+async function setRating(req, res) {
+    try {
+        const { conversationId, messageId } = req.params; // Extract conversationId and messageId from request params
+        const { rating, comment } = req.body; // Extract rating and comment from request body
+
+        // Validate input
+        if (!rating || typeof rating !== 'number') {
+            return res.status(400).json({ error: 'Invalid rating. Rating must be a number.' });
+        }
+
         // Find the conversation by conversationId
-        const conversation = await Conversation.findOne({ _id: conversationId });
+        const Conversation = getConversationModel(req.session.activeInstance.id);
+        const conversation = await Conversation.findById(conversationId);
 
         if (!conversation) {
-            throw new Error('Conversation not found');
+            return res.status(404).json({ error: 'Conversation not found' });
         }
 
-        // Find the entry with the given entryId in the conversation
-        const entry = conversation.entries.find(e => e._id === entryId);
+        // Find the entry with the given messageId in the conversation
+        const entry = conversation.entries.find(e => e._id.toString() === messageId);
 
         if (!entry) {
-            throw new Error('Entry not found');
+            return res.status(404).json({ error: 'Message not found' });
         }
 
-        // Update the rating and message of the entry
-        entry.rating = { rating, comment: message };
+        // Update the rating and comment of the entry
+        entry.rating = { rating, comment };
 
         // Save the updated conversation
         await conversation.save();
 
-        return { success: true, message: 'Rating updated successfully' };
+        return res.status(200).json({ success: true, message: 'Rating updated successfully' });
     } catch (error) {
         console.error('Error setting rating:', error);
-        return { success: false, error: error.message };
+        return res.status(error.status || 500).json({ error: error.message });
     }
 }
 
-//Delete old conversations
-deleteOldConversations();
-const interval = setInterval(deleteOldConversations, 3600000);
+async function getRatingsReport(req, res) {
+    try {
+        // Query all conversations
+        const Conversation = getConversationModel(req.session.activeInstance.id);
+        const conversations = await Conversation.find({});
 
-export { createConversation, getConversations, getConversation, getMessages, setRating, deleteOldConversations };
+        const ratingsReport = conversations.reduce((report, conversation) => {
+            // Filter entries that have a valid rating
+            const ratedEntries = conversation.entries.filter(entry => {
+                return entry.rating && typeof entry.rating.rating === 'number';
+            });
+
+            ratedEntries.forEach(entry => {
+                const { rating, comment } = entry.rating;
+                const AIResponse = entry.content.message;
+
+                // Find the previous HUMAN message in the conversation
+                const humanMessages = conversation.entries.filter(
+                    e => e.content.sender === 'HUMAN'
+                );
+                const previousHumanMessage = humanMessages.reverse().find(
+                    message => message._id !== entry._id
+                );
+
+                if (previousHumanMessage) {
+                    report.push({
+                        dateOfRating: entry.timestamp, // Assuming there's a timestamp field
+                        rating,
+                        ratingMessage: comment,
+                        HuamnMessage: previousHumanMessage.content.message,
+                        AIResponse,
+                    });
+                }
+            });
+
+            return report;
+        }, []);
+
+        // Send the report as JSON
+        res.status(200).json({ ratings: ratingsReport });
+    } catch (error) {
+        console.error('Error retrieving ratings report:', error);
+        res.status(500).json({ error: 'Failed to retrieve ratings report' });
+    }
+}
+
+export { createConversation, getConversations, getConversation, updateConversation, deleteConversation, getMessages, postMessage, setRating, getRatingsReport };

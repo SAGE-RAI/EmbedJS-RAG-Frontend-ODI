@@ -9,6 +9,9 @@ const embeddingsCacheSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  tokens: {
+    type: Number
+  },
   source: {
     type: String,
     required: true
@@ -31,6 +34,14 @@ const embeddingsCacheSchema = new mongoose.Schema({
   collection: 'EmbeddingsCache' // Specify the collection name
 });
 
-const EmbeddingsCache = mongoose.model('EmbeddingsCache', embeddingsCacheSchema);
+function getEmbeddingsCacheModel(dbName) {
+  const connection = mongoose.connection.useDb(dbName, { useCache: true });
 
-export default EmbeddingsCache;
+  if (connection.models.EmbeddingsCache) {
+    return connection.models.EmbeddingsCache;
+  } else {
+    return connection.model('EmbeddingsCache', embeddingsCacheSchema);
+  }
+}
+
+export { getEmbeddingsCacheModel };

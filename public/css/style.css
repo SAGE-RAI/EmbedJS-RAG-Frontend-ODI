@@ -4,7 +4,7 @@ body {
   max-width: 100%;
 }
 main {
-  height: calc(100vh - 150px);
+  height: calc(100vh - 70px);
   overflow: hidden;
 }
 .container {
@@ -12,7 +12,7 @@ main {
   margin-right: 10px;
   float: right;
   width: calc(100vw - 250px);
-  max-height: calc(100vh - 160px);
+  max-height: calc(100vh - 70px);
   overflow-y: scroll;
   overflow-x: hidden;
 }
@@ -27,7 +27,7 @@ main {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: calc(100vh - 150px);
+  height: calc(100vh - 70px);
 }
 
 .login-block > .box {
@@ -58,7 +58,74 @@ main {
   font-size: 16px;
   font-weight: bold;
 }
+/* HEADER */
+.header .main-nav {
+  position: absolute;
+  right: 10px;
+}
+.header .main-nav ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+}
 
+.header .main-nav ul li {
+  padding: 8px 0px 8px 20px;
+}
+.header .main-nav ul .selected {
+  text-decoration: underline;
+}
+
+.header .main-nav ul a,
+.header .main-nav ul button {
+  cursor: pointer;
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  font-weight: bold;
+  padding: 0px;
+  border-radius: 25px;
+  border: none;
+  text-decoration: none;
+  background: none;
+}
+
+@media (min-width: 768px) {
+  .header .main-nav ul a,
+  .header .main-nav ul button {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .header .main-nav ul a,
+  .header .main-nav ul button {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .header .main-nav ul a,
+  .header .main-nav ul button {
+    font-size: 1rem;
+  }
+}
+
+.header .main-nav ul img {
+  margin-left: 8px;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin-top: -4px;
+}
+
+.header .main-nav ul .logout {
+  padding-left: 0px;
+  padding-right: 0px;
+}
 /* FOOTER */
 nav > .pull-right {
   float: right;
@@ -128,7 +195,7 @@ sidebar {
   width: 200px;
   float: left;
   padding: 10px;
-  height: calc(100vh - 70px);
+  height: calc(100vh);
   border-right: 1px solid gray;
 }
 sidebar > nav {
@@ -144,6 +211,56 @@ sidebar .admin-menu {
   margin-left:0.5em;
   li:before { content: '> '}
 }
+
+.dt-buttons {
+  text-align: center;
+  margin-top: 10px;
+}
+#addUserForm label, #addUserForm select, #addUserForm input {
+  display: inline;
+  margin-right: 10px;
+}
+.draggable {
+  display: none;
+}
+#dataForm input[type="text"] {
+  min-width: 500px;
+}
+#dataForm .ratingResponses input[type="text"] {
+  min-width: 300px;
+}
+#dataForm .ratingResponses {
+  max-width: 350px;
+}
+#dataForm .suggestions ._jsonform-array-buttons, #dataForm .ratingResponses ._jsonform-array-buttons {
+  position: relative;
+  left: 10px;
+}
+#dataForm .ratingResponses ul li ._jsonform-array-buttons {
+  float: right;
+  top: -40px;
+  left: auto;
+  position: relative;
+}
+#dataForm .ratingResponses ul li label {
+  display: none;
+}
+#dataForm ._jsonform-array-buttons ._jsonform-array-deletelast {
+  display: none;
+}
+#dataForm .suggestions ul li ._jsonform-array-buttons {
+  float: right;
+  top: -280px;
+  right: 30px;
+  left: auto;
+  position: relative;
+}
+#dataForm .suggestions ul li {
+  max-width: 90%;
+}
+#dataForm ul  {
+  padding-left: 0px;
+}
 .conversations {
   overflow-y: scroll;
   overflow-x: hidden;
@@ -152,35 +269,47 @@ sidebar .admin-menu {
 .conversations.expanded {
   display: inline;
 }
-.conversations h2,
-.conversations h3 {
-  padding: 0px;
-  margin: 10px 0px;
+.conversations-sidebar #instanceSelect {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
 }
-.conversations h2 {
-  font-size: 1em;
-}
-.conversations h3 {
-  font-size: 0.8em;
-  font-weight: normal;
+.conversations-sidebar h2,
+.conversations-sidebar h3 {
+  font-size: 0.7em;
+  color: #aaa;
 }
 .conversations ul {
   margin: 0;
   padding-left: 2px;
-  font-size: 0.8em;
+  font-size: 0.9em;
 }
 .conversations li {
   list-style: none;
   line-height: 32px;
-  text-decoration: underline;
   cursor: pointer;
 }
 .menu-button {
-  background: none;
+  background: radial-gradient(circle, #202b38 0%, transparent 70%);
   border: none;
   cursor: pointer;
-  font-size: 16px;
-  padding: 10px 6px;
+  font-size: 22px;
+  padding: 5px 15px;
+  position: fixed;
+  left: 182px;
+  margin-top: 8px;
+}
+
+/* Style the icon and hide it initially */
+.menu-button .menu-icon {
+  display: none; /* Hide by default */
+  font-size: 22px;
+  color: white;
+}
+
+/* Show the icon when hovering over the button */
+.menu-button:hover .menu-icon {
+  display: inline; /* Show when hovered */
 }
 
 .menu {
@@ -214,7 +343,12 @@ sidebar .admin-menu {
 
 .conversation {
   flex-grow: 1;
-  margin-right: 10px;
+  color: white;
+}
+
+.conversation:hover {
+  text-decoration: none;
+  background-color: #000;
 }
 
 .topper {
@@ -247,10 +381,14 @@ sidebar .admin-menu {
   font-size: 18px;
   letter-spacing: 2px;
 }
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
 
 .bottom {
   width: calc(100vw - 240px);
-  height: 63px;
   background: #595656;
   z-index: 1;
   bottom: 0;
@@ -259,8 +397,9 @@ sidebar .admin-menu {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: absolute;
-  max-height: 100px;
+  position: relative; /* Changed to relative */
+  max-height: 200px; /* Max height */
+  height: auto; /* Dynamic height */
 }
 
 .bottom #input {
@@ -282,6 +421,28 @@ sidebar .admin-menu {
   background: transparent;
   color: #fff;
   font-size: 16px;
+}
+
+.bottom #input textarea {
+  min-height: 50px; /* Adjust min-height as needed */
+  max-height: 150px; /* Max height for textarea */
+  resize: none; /* Disable manual resizing by the user */
+  scrollbar-width: thin; /* Make the scrollbar thinner */
+  scrollbar-color: #ffffff #f2f2f2; /* Set the color of the thumb and track */
+}
+
+.bottom #input textarea::-webkit-scrollbar-track {
+  background: #f2f2f2; /* Color of the track */
+}
+
+.bottom #input textarea::-webkit-scrollbar-thumb {
+  background: #ffffff; /* Color of the thumb */
+  border-radius: 6px; /* Rounded corners of the thumb */
+  border: 3px solid #f2f2f2; /* Space around the thumb */
+}
+
+.bottom #input textarea::-webkit-scrollbar-thumb:hover {
+  background: #e0e0e0; /* Color of the thumb when hovered */
 }
 
 .bottom #input input::placeholder {
@@ -308,6 +469,8 @@ sidebar .admin-menu {
 .aichat {
   float: right;
   width: calc(100vw - 221px);
+  display: flex;
+  height: 100%;
 }
 
 .msgs_cont {
@@ -318,7 +481,7 @@ sidebar .admin-menu {
   color: #f2f2f2;
   transition: height 0.3s ease;
   overflow-x: hidden;
-  height: calc(100vh - 150px);
+  flex: 1; /* Allow to grow and shrink as needed */
 }
 
 .msgs_cont > ul {
@@ -370,6 +533,47 @@ sidebar .admin-menu {
 
 .msgs_cont .AI .rating .stars .star {
   cursor: pointer;
+}
+.suggestion-container {
+  display: flex;
+  flex-direction: column; /* Stack items vertically */
+  align-items: center;    /* Center items horizontally */
+  justify-content: center; /* Center items vertically within this container */
+  padding: 10px;          /* Add some padding around the container */
+  border-radius: 10px;    /* Optional: rounded corners */
+  position: relative;     /* Allow positioning based on parent container */
+  top: 40%;               /* Move container to vertical center */
+  left: 50%;              /* Move container to horizontal center */
+  transform: translate(-50%, -50%); /* Center container based on its own size */
+  max-width: 90%;         /* Optional: constrain width to fit in viewport */
+  box-sizing: border-box; /* Include padding and border in element's total width and height */
+}
+
+.suggestion-icon {
+  width: 60px; /* Adjust size as needed */
+  height: 60px; /* Adjust size as needed */
+  margin-bottom: 30px; /* Space between the icon and suggestion boxes */
+  border-radius: 50%; /* Optional: make the icon circular */
+  object-fit: cover; /* Ensures the image covers the space without distortion */
+}
+
+.boxes-container {
+  display: flex; /* Display boxes in a row */
+  flex-wrap: wrap; /* Allow wrapping if there are too many boxes to fit in one row */
+  gap: 10px; /* Space between suggestion boxes */
+  justify-content: center; /* Center boxes horizontally */
+}
+.suggestion-box {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+  max-width: 150px;
+  text-align: center;
+}
+.suggestion-box:hover {
+  background-color: rgba(100, 100, 100, 0.8); /* Lighten by adjusting opacity */
 }
 .copy-button {
   padding: 5px 10px;

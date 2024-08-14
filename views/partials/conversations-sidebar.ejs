@@ -1,8 +1,19 @@
-<!-- partials/conversations.ejs -->
+<sidebar class="conversations-sidebar">
+    <h2>Chat bot</h2>
+    <select id="instanceSelect" onchange="switchInstance()">
+        <!-- Populate this select with the user's RAG instances -->
+    </select>
+    <h2>Conversations</h2>
+    <button onclick="javascript:loadConversation('')">New Conversation</button>
+    <div class="conversations">
+    </div>
+</sidebar>
+
 
 <script>
     function updateConversations() {
-        fetch('/conversations', {
+        const instanceId = '<%= activeInstance ? activeInstance._id : "" %>';
+        fetch(`/instances/${instanceId}/conversations`, {
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -11,7 +22,7 @@
         .then(conversations => {
             try {
                 const conversationsContainer = document.querySelector('.conversations');
-                conversationsContainer.innerHTML = `<a href="javascript:loadConversation('')">New conversation</a>`;
+                conversationsContainer.innerHTML = "";
 
                 // Group conversations by date categories
                 const categorizedConversations = categorizeConversations(conversations);
@@ -49,7 +60,16 @@
                             // Create menu button (three dots)
                             const menuButton = document.createElement('button');
                             menuButton.classList.add('menu-button');
-                            menuButton.innerHTML = '&#x22EE;'; // Vertical ellipsis (three dots)
+
+                            // Create the icon span and set its content
+                            const menuIcon = document.createElement('span');
+                            menuIcon.classList.add('menu-icon');
+                            menuIcon.innerHTML = '&#x22EE;'; // Vertical ellipsis (three dots)
+
+                            // Append the icon to the button
+                            menuButton.appendChild(menuIcon);
+
+                            // Add click event listener to the button
                             menuButton.onclick = (event) => {
                                 event.stopPropagation();
                                 closeAllMenus();
@@ -144,7 +164,8 @@
     }
 
     function saveConversationTitle(conversationId, newTitle) {
-        fetch(`/conversation/${conversationId}`, {
+        const instanceId = '<%= activeInstance ? activeInstance._id : "" %>';
+        fetch(`/instances/${instanceId}/conversations/${conversationId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -163,7 +184,8 @@
     // Function to delete a conversation by its ID
     function deleteConversation(conversationId) {
         if (confirm("Are you sure you want to delete this conversation?")) {
-            fetch(`/conversation/${conversationId}`, {
+            const instanceId = '<%= activeInstance ? activeInstance._id : "" %>';
+            fetch(`/instances/${instanceId}/conversations/${conversationId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
@@ -173,6 +195,15 @@
                 if (response.ok) {
                     // Reload conversations after deletion
                     updateConversations();
+                    // Extract the conversationId from the URL path
+                    const pathParts = window.location.pathname.split('/');
+                    const currentInstanceId = pathParts[2];
+                    const currentConversationId = pathParts[4];
+
+                    // If the deleted conversationId is the one currently viewed, reload the conversation view
+                    if (currentConversationId === conversationId) {
+                        loadConversation('');
+                    }
                 } else {
                     throw new Error('Failed to delete conversation');
                 }
@@ -195,7 +226,7 @@
 
         // Iterate over conversations and categorize them
         conversations.forEach(conversation => {
-            const lastMessageDate = new Date(conversation.entries[conversation.entries.length - 1].timestamp);3
+            const lastMessageDate = new Date(conversation.entries[conversation.entries.length - 1].timestamp);
             const currentDate = new Date();
             const timeDiff = currentDate.getTime() - lastMessageDate.getTime();
             const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
@@ -246,12 +277,3 @@
     //setInterval(updateConversations, 5000);
 
 </script>
-
-<div class="conversations">
-    <ul class="new">
-        <li class="conversation">
-            <a href="javascript:loadConversation('')">New conversation</a>
-        </li>
-    </ul>
-    <h2>Conversations</h2>
-</div>

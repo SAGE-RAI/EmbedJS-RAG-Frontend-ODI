@@ -1,0 +1,24 @@
+<sidebar>
+    <nav>
+      <h3>Active Instance:</h3>
+      <select id="instanceSelect" onchange="switchInstance()">
+          <!-- Populate this select with the user's RAG instances -->
+      </select>
+      <% if (typeof activeInstance !== 'undefined' && activeInstance) { %>
+        <h3>Conversations</h3>
+        <ul class="admin-menu">
+            <li><a href="/instances/<%= activeInstance._id %>/conversations">My conversations</a></li>
+        </ul>
+        <h3>Sources</h3>
+        <ul class="admin-menu">
+            <li><a href="/instances/<%= activeInstance._id %>/sources">View/Manage sources</a></li>
+            <li><a href="/instances/<%= activeInstance._id %>/sources/add">Add new source</a></li>
+            <li><a href="/instances/<%= activeInstance._id %>/sources/import">Bulk import</a></li>
+        </ul>
+        <h3>Ratings</h3>
+        <ul class="admin-menu">
+            <li><a href="/instances/<%= activeInstance._id %>/ratingsReport">Ratings report</a></li>
+        </ul>
+      <% } %>
+    </nav>
+</sidebar>

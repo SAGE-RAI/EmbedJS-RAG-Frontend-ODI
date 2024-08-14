@@ -1,0 +1,133 @@
+{
+    "schema": {
+        "name": {
+            "type": "string",
+            "title": "Name",
+            "required": true
+        },
+        "description": {
+            "type": "string",
+            "title": "Description"
+        },
+        "public": {
+            "type": "boolean",
+            "title": "Public"
+        },
+        "systemPrompt": {
+            "type": "string",
+            "title": "System Prompt",
+            "required": true,
+            "default": "You are a helpful human like chat bot. Use relevant provided context and chat history to answer the query at the end. Answer in full. If you don't know the answer, just say that you don't know, don't try to make up an answer. Do not use words like context or training data when responding. You can say you do not have all the information but do not indicate that you are not a reliable source."
+        },
+        "suggestions": {
+            "type": "array",
+            "title": "Suggestions",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "shortText": {
+                        "type": "string",
+                        "title": "Short Text"
+                    },
+                    "fullPrompt": {
+                        "type": "string",
+                        "title": "Full Prompt"
+                    }
+                }
+            }
+        },
+        "ratingResponses": {
+            "type": "object",
+            "title": "Rating Responses",
+            "properties": {
+                "1": {
+                    "type": "array",
+                    "title": "1 Star Rating responses",
+                    "items": {
+                        "type": "string",
+                        "title": "Response"
+                    }
+                },
+                "2": {
+                    "type": "array",
+                    "title": "2 Star Rating responses",
+                    "items": {
+                        "type": "string",
+                        "title": "Response"
+                    }
+                },
+                "3": {
+                    "type": "array",
+                    "title": "3 Star Rating responses",
+                    "items": {
+                        "type": "string",
+                        "title": "Response"
+                    }
+                },
+                "4": {
+                    "type": "array",
+                    "title": "4 Star Rating responses",
+                    "items": {
+                        "type": "string",
+                        "title": "Response"
+                    }
+                },
+                "5": {
+                    "type": "array",
+                    "title": "5 Star Rating responses",
+                    "items": {
+                        "type": "string",
+                        "title": "Response"
+                    }
+                }
+            }
+        }
+    },
+    "form": [
+        "name",
+        "description",
+        {
+            "key": "public",
+            "type": "checkbox",
+            "title": "Public"
+        },
+        {
+            "key": "systemPrompt",
+            "type": "textarea",
+            "title": "System Prompt"
+        },
+        {
+            "type": "array",
+            "key": "suggestions",
+            "title": "Suggestions",
+            "htmlClass": "suggestions",
+            "items": [
+                {
+                    "type": "fieldset",
+                    "items": [
+                        {
+                            "key": "suggestions[].shortText",
+                            "title": "Short description"
+                        },
+                        {
+                            "key": "suggestions[].fullPrompt",
+                            "type": "textarea",
+                            "title": "Full conversation starter prompt (user prompt)"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "fieldset",
+            "key": "ratingResponses",
+            "title": "Rating Responses",
+            "htmlClass": "ratingResponses"
+        },
+        {
+            "type": "submit",
+            "title": "Submit",
+            "htmlClass": "submit"
+        }
+    ]
+}

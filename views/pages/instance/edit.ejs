@@ -1,0 +1,131 @@
+<!-- views/edit.ejs -->
+<%- include('../../partials/header-admin') %>
+<style>
+    .longText {
+        min-width: 80%;
+    }
+    .submit {
+        margin-top: 2em;
+    }
+</style>
+<h1>Edit Instance</h1>
+<div id="res" class="alert"></div>
+<form id="dataForm"></form>
+
+<script>
+    const instanceId = "<%= instanceId %>";
+    const defaultRatingResponses = {
+        1: [
+            "Don't like the style",
+            "Not factually correct",
+            "Didn't fully follow instructions",
+            "Refused when it shouldn't have",
+            "Wrong or no sources"
+        ],
+        2: [
+            "Not helpful",
+            "Confusing response",
+            "Didn't provide enough detail",
+            "Incomplete information",
+            "Wrong or no sources"
+        ],
+        3: [
+            "Somewhat helpful",
+            "Partially correct",
+            "Room for improvement",
+            "Average response",
+            "Needs more detail"
+        ],
+        4: [
+            "Quite helpful",
+            "Mostly correct",
+            "Good response",
+            "Well-written",
+            "Informative"
+        ],
+        5: [
+            "Very helpful",
+            "Completely correct",
+            "Excellent response",
+            "Clear and concise",
+            "Highly informative"
+        ]
+    };
+
+    $(document).ready(function () {
+        // Fetch the instance data
+        fetch(`/instances/${instanceId}`, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(instance => {
+            // Ensure ratingResponses is set to default if not present
+            if (!instance.ratingResponses) {
+                instance.ratingResponses = defaultRatingResponses;
+            } else {
+                // Set default responses if any rating level is missing
+                Object.keys(defaultRatingResponses).forEach(level => {
+                    if (!instance.ratingResponses[level]) {
+                        instance.ratingResponses[level] = defaultRatingResponses[level];
+                    }
+                });
+            }
+
+            // Fetch the schema
+            fetch('/schemas/ragInstance.json')
+                .then(response => response.json())
+                .then(schema => {
+                    // Render the form with the fetched instance data
+                    $('#dataForm').jsonForm({
+                        schema: schema.schema,
+                        form: schema.form,
+                        value: instance,
+                        onSubmit: function (errors, values) {
+                            if (errors) {
+                                $('#res').html('<p>Please correct the errors in your form</p>');
+                            } else {
+                                updateInstance(values);
+                            }
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching schema:', error);
+                    $('#res').html('<p>Error fetching schema.</p>');
+                });
+        })
+        .catch(error => {
+            console.error('Error fetching instance details:', error);
+            $('#res').html('<p>Error fetching instance details.</p>');
+        });
+    });
+
+    function updateInstance(values) {
+        console.log(values);
+        $('#res').html('<p>Updating, please wait...</p>');
+        fetch(`/instances/${instanceId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(values)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data._id) {
+                $('#res').html('<p>Instance updated successfully.</p>');
+            } else if (data.error) {
+                $('#res').html('<p>Error: ' + data.error + '</p>');
+            } else {
+                $('#res').html('<p>Unknown error occurred</p>');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating instance:', error);
+            $('#res').html('<p>An error occurred while processing your request</p>');
+        });
+    }
+</script>
+<%- include('../../partials/footer') %>
