@@ -13,6 +13,30 @@
             "type": "boolean",
             "title": "Public"
         },
+        "model": {
+            "type": "object",
+            "title": "Model Configuration",
+            "properties": {
+                "provider": {
+                    "type": "string",
+                    "title": "Provider",
+                    "enum": ["Default", "OpenAI", "Azure", "Mistal", "Hugging Face", "Anthropic", "Ollama"],
+                    "required": true
+                },
+                "name": {
+                    "type": "string",
+                    "title": "Model Name"
+                },
+                "baseUrl": {
+                    "type": "string",
+                    "title": "Base URL"
+                },
+                "apiKey": {
+                    "type": "string",
+                    "title": "API Key"
+                }
+            }
+        },
         "systemPrompt": {
             "type": "string",
             "title": "System Prompt",
@@ -90,6 +114,11 @@
             "key": "public",
             "type": "checkbox",
             "title": "Public"
+        },
+        {
+            "type": "fieldset",
+            "key": "model",
+            "title": "Model Configuration"
         },
         {
             "key": "systemPrompt",

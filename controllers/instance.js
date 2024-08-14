@@ -1,5 +1,6 @@
 import Instance from '../models/instance.js';
 import mongoose from 'mongoose';
+import { removeActiveInstanceFromCache } from '../middleware/auth.js';
 
 async function createInstance(req, res) {
     try {
@@ -62,6 +63,7 @@ async function updateInstance(req, res) {
         if (!instance) {
             return res.status(404).json({ error: 'Instance not found' });
         }
+        removeActiveInstanceFromCache(req.params.instanceId);
         res.json(instance);
     } catch (error) {
         res.status(500).json({ error: error.message });
