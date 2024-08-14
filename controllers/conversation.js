@@ -1,4 +1,5 @@
 import { getConversationModel } from '../models/conversation.js';
+import { getEmbeddingsModel } from '../models/embeddings.js';
 import { getUserIDFromToken } from '../controllers/token.js';
 import User from '../models/user.js';
 import { encode } from 'gpt-tokenizer/model/gpt-4o';
@@ -135,6 +136,7 @@ async function postMessage(req, res) {
         }
 
         const Conversation = getConversationModel(req.session.activeInstance.id);
+        const Embeddings = getEmbeddingsModel(req.session.activeInstance.id);
 
         const conversation = await Conversation.findById(conversationId);
         if (!conversation) {
@@ -151,18 +153,47 @@ async function postMessage(req, res) {
         let contextQuery = message; // Default contextQuery is just the new query
         const messages = conversation.entries;
 
-        if (messages.length > 0) {
-            const humanMessages = messages.filter(msg => msg.content.sender === 'HUMAN');
-            const contextMessages = humanMessages.slice(-2);
+        let chunks = [];
 
-            if (contextMessages.length === 1) {
-                contextQuery = `${contextMessages[0].content.message} ${message}`;
-            } else if (contextMessages.length === 2) {
-                contextQuery = `${contextMessages[0].content.message} ${contextMessages[1].content.message} ${message}`;
+        for (let i = messages.length - 1; i >= 0; i--) {
+            if (messages[i].chunks && messages[i].chunks.length > 0) {
+                const chunkIds = messages[i].chunks;
+
+                try {
+                    // Fetch pageContent for each chunk ID
+                    const embeddings = await Embeddings.find({ u_fld: { $in: chunkIds } }).exec();
+                    // Append pageContent to chunks array
+                    chunks = embeddings.map(embedding => ({
+                        pageContent: embedding.pageContent,
+                        metadata: {
+                            source: embedding.source,
+                            uniqueLoaderId: embedding.l_fld,
+                            id: embedding.u_fld
+                        }
+                    }));
+                } catch (error) {
+                    console.error("Error retrieving chunks from database:", error);
+                    // Handle error appropriately (e.g., return an error response)
+                }
+                break;
             }
         }
+        if (messages.length > 0) {
+            const ragQuery = 'This is the users query: "' + message + '". From the conversation history and supporting metadata, assess if you can answer the query. Your response must be in undeclared JSON format. Do not include any thing else in your response, only the JSON. The JSON has two properties: additionalContextRequired (boolean) and resolvedContextQuery (string). If additional context is required to answer the users query, set additionalContextRequired to true and provide a single query derived from the users new query in resolvedContextQuery that includes resolved entities and context suitable for performing RAG (Retrieval-Augmented Generation) context retrieval. If no additional context is needed, set additionalContextRequired to false and leave resolvedContextQuery empty, DO NOT ANSWER THE USERS QUERY!'
+            let response = await ragApplication.query(ragQuery, conversationId, chunks, true);
+            try {
+                response = JSON.parse(response);
+            } catch(err) {
+                console.error("Could not parse RAG response as JSON");
+            }
+            if (response.additionalContextRequired) {
+                contextQuery = message + ' ' + response.resolvedContextQuery;
+                chunks = await ragApplication.getContext(contextQuery);
+            }
+        } else {
+            chunks = await ragApplication.getContext(contextQuery);
+        }
 
-        const chunks = await ragApplication.getContext(contextQuery);
         /// Calculate the number of tokens required for the message and chunks
         const messageTokens = encode(message).length;
 
