@@ -38,6 +38,25 @@ const ratingResponsesSchema = new mongoose.Schema({
   _id: false // Prevent Mongoose from creating _id for subdocuments
 });
 
+// Define the schema for the model section
+const modelSchema = new mongoose.Schema({
+  provider: {
+    type: String,
+    enum: ['Default', 'OpenAI', 'Azure', 'Mistal', 'Hugging Face', 'Anthropic', 'Ollama'],
+  },
+  name: {
+    type: String,
+  },
+  baseUrl: {
+    type: String,
+  },
+  apiKey: {
+    type: String,
+  }
+}, {
+  _id: false // Prevent Mongoose from creating _id for subdocuments
+});
+
 // Define the main instance schema
 const instanceSchema = new mongoose.Schema({
   name: {
@@ -58,6 +77,7 @@ const instanceSchema = new mongoose.Schema({
   sharedWith: [sharedWithSchema],
   suggestions: [suggestionSchema],
   ratingResponses: ratingResponsesSchema,
+  model: modelSchema,  // Embed the model schema here
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

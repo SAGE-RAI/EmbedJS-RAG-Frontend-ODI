@@ -13,6 +13,22 @@ export const setInstanceLocals = (req, res, next) => {
     next();
 };
 
+// Function to remove the active instance from the cache
+export const removeActiveInstanceFromCache = (instanceId) => {
+    if (instanceCache.has(instanceId)) {
+        instanceCache.delete(instanceId);
+        console.log(`Instance ${instanceId} removed from cache.`);
+    } else {
+        console.log(`Instance ${instanceId} not found in cache.`);
+    }
+};
+
+// Function to clear the entire instance cache
+export const clearInstanceCache = () => {
+    instanceCache.clear();
+    console.log('All instances removed from cache.');
+};
+
 // Middleware to set and initialize the active RAG instance
 export const setActiveInstance = async (req, res, next) => {
     try {
