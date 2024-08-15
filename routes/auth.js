@@ -2,7 +2,7 @@ import express from 'express';
 import passport from '../passport.js'; // Require the passport module
 import { retrieveOrCreateUser } from '../controllers/user.js'; // Import necessary functions from controllers
 import { processToken } from '../controllers/token.js';
-import { ensureAuthenticated } from '../middleware/auth.js';
+import { ensureAuthenticated, clearInstanceCache } from '../middleware/auth.js';
 
 const router = express.Router();
 

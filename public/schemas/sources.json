@@ -17,12 +17,6 @@
       "type": "string",
       "title": "Display URL"
     },
-    "type": {
-      "type": "string",
-      "enum": ["", "Internal", "External"],
-      "title": "Type",
-      "placeholder": "internal/external"
-    },
     "sourceText": {
       "type": "string",
       "title": "Full text"
@@ -49,9 +43,6 @@
     {
       "key": "overrideUrl",
       "fieldHtmlClass": "longText"
-    },
-    {
-      "key": "type"
     },
     {
       "type": "submit",

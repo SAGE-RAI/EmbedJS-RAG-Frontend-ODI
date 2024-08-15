@@ -97,9 +97,12 @@ db.once('open', () => {
   app.use('/admin', adminRoutes);
   app.use('/instances', instancesRoutes);
 
+
   app.use('/instances/:instanceId', canAccessInstance, (req, res, next) => {
-    setActiveInstance(req, res, next);
+    res.locals.activeInstance = { _id: req.params.instanceId };
+    next();
   });
+
 
   app.use('/instances/:instanceId/', instanceRoutes);
   app.use('/instances/:instanceId/sources', sourceRoutes);

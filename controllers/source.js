@@ -6,7 +6,7 @@ import axios from 'axios';
   
 
 async function addSource(req, res) {
-    const { source, title, type, overrideUrl, sourceText } = req.body;
+    const { source, title, overrideUrl, sourceText } = req.body;
     try {
         const ragApplication = req.ragApplication;
         if (!ragApplication) {
@@ -77,7 +77,7 @@ async function addSource(req, res) {
         user.tokens -= totalTokens;
         await user.save();
 
-        const updateObject = { tokens: totalTokens, source, loadedDate: new Date(), title, type, overrideUrl };
+        const updateObject = { tokens: totalTokens, source, loadedDate: new Date(), title, overrideUrl };
 
         const updateResult = await EmbeddingsCache.findOneAndUpdate(
             { loaderId: uniqueId },
@@ -139,11 +139,11 @@ async function getSource(req, res, returnRawData = false) {
 
 async function updateSource(req, res) {
     const loaderId = req.params.loaderId;
-    const { title, type, overrideUrl } = req.body;
+    const { title, overrideUrl } = req.body;
     try {
         const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
 
-        const updateObject = { title, type, overrideUrl };
+        const updateObject = { title, overrideUrl };
         const updateResult = await EmbeddingsCache.findOneAndUpdate(
             { loaderId: loaderId },
             { $set: updateObject },

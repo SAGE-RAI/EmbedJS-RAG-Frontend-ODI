@@ -37,7 +37,7 @@ router.delete("/:conversationId", verifyTokenMiddleware, verifyConversationMiddl
 router.get("/:conversationId/messages", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, getMessages);
 
 // Route to post a message to a specific conversation
-router.post("/:conversationId/messages", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, postMessage);
+router.post("/:conversationId/messages", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, setActiveInstance, postMessage);
 
 // Route to post a rating to a specific message
 router.post("/:conversationId/messages/:messageId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, setRating);
