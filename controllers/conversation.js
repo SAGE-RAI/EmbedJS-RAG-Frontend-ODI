@@ -180,7 +180,7 @@ async function postMessage(req, res) {
         }
         if (messages.length > 0) {
             const ragQuery = 'This is the users query: "' + message + '". From the conversation history and supporting metadata, assess if you can answer the query. Your response must be in undeclared JSON format. Do not include any thing else in your response, only the JSON. The JSON has two properties: additionalContextRequired (boolean) and resolvedContextQuery (string). If additional context is required to answer the users query, set additionalContextRequired to true and provide a single query derived from the users new query in resolvedContextQuery that includes resolved entities and context suitable for performing RAG (Retrieval-Augmented Generation) context retrieval. If no additional context is needed, set additionalContextRequired to false and leave resolvedContextQuery empty, DO NOT ANSWER THE USERS QUERY!'
-            let response = await ragApplication.query(ragQuery, conversationId, chunks, true);
+            let response = await ragApplication.silentConversationQuery(ragQuery, null, conversationId, chunks);
             try {
                 response = JSON.parse(response);
             } catch(err) {
