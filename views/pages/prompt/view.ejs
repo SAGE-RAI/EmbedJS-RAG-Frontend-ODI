@@ -1,0 +1,76 @@
+<%- include('../../partials/header-admin') %>
+<style>
+    /* Add your custom styles here */
+</style>
+<h1>Prompt/Role Details</h1>
+<div id="res" class="alert"></div>
+
+<div>
+    <h2>Prompt/Role Information</h2>
+    <p><strong>Name:</strong> <span id="promptName"></span></p>
+    <p><strong>Type:</strong> <span id="promptType"></span></p>
+    <p><strong>Description:</strong> <span id="promptDescription"></span></p>
+    <p><strong>Prompt:</strong> <span id="promptPrompt"></span></p>
+    <p><strong>Created Date:</strong> <span id="promptCreatedAt"></span></p>
+    <p><strong>Updated Date:</strong> <span id="promptUpdatedAt"></span></p>
+    <p><strong>Public:</strong> <span id="promptPublic"></span></p>
+</div>
+<h3>Manage prompt/role</h3>
+<button id="editPromptBtn">Edit Prompt/Role</button>
+<button id="deletePromptBtn">Delete Prompt/Role</button>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const promptId = "<%= promptId %>";
+        fetch(`/prompts/${promptId}`, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(prompt => {
+            document.getElementById('promptName').textContent = prompt.name;
+            document.getElementById('promptType').textContent = prompt.type;
+            document.getElementById('promptDescription').textContent = prompt.description || 'No description available';
+            document.getElementById('promptPrompt').textContent = prompt.prompt;
+            document.getElementById('promptCreatedAt').textContent = new Date(prompt.createdAt).toLocaleString();
+            document.getElementById('promptUpdatedAt').textContent = new Date(prompt.updatedAt).toLocaleString();
+            document.getElementById('promptPublic').textContent = prompt.public ? 'Yes' : 'No';
+        })
+        .catch(error => {
+            console.error('Error fetching prompt details:', error);
+            document.getElementById('res').textContent = 'Error fetching prompt details.';
+        });
+
+        document.getElementById('editPromptBtn').addEventListener('click', function () {
+            window.location.href = `/prompts/${promptId}/edit`;
+        });
+
+        document.getElementById('deletePromptBtn').addEventListener('click', function () {
+            if (confirm('Are you sure you want to delete this prompt/role?')) {
+                document.getElementById('res').textContent = 'Deleting, please wait.';
+                fetch(`/prompts/${promptId}`, {
+                    method: 'DELETE',
+                })
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('res').textContent = 'Prompt/role deleted successfully.';
+                        setTimeout(function () {
+                            window.location.href = '/prompts';
+                        }, 2000);
+                    } else {
+                        document.getElementById('res').textContent = 'Error deleting prompt.';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting prompt:', error);
+                    document.getElementById('res').textContent = 'Error deleting prompt.';
+                });
+            }
+        });
+
+    
+    });
+</script>
+<%- include('../../partials/footer') %>

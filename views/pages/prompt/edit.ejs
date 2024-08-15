@@ -1,0 +1,82 @@
+<!-- views/edit.ejs -->
+<%- include('../../partials/header-admin') %>
+<style>
+    .longText {
+        min-width: 80%;
+    }
+    .submit {
+        margin-top: 2em;
+    }
+</style>
+<h1>Edit Prompt</h1>
+<div id="res" class="alert"></div>
+<form id="dataForm"></form>
+
+<script>
+    const promptId = "<%= promptId %>";
+
+    $(document).ready(function () {
+        // Fetch the prompt data
+        fetch(`/prompts/${promptId}`, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(prompt => {
+            // Fetch the schema
+            fetch('/schemas/ragPrompt.json')
+                .then(response => response.json())
+                .then(schema => {
+                    // Render the form with the fetched prompt data
+                    $('#dataForm').jsonForm({
+                        schema: schema.schema,
+                        form: schema.form,
+                        value: prompt,
+                        onSubmit: function (errors, values) {
+                            if (errors) {
+                                $('#res').html('<p>Please correct the errors in your form</p>');
+                            } else {
+                                updatePrompt(values);
+                            }
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching schema:', error);
+                    $('#res').html('<p>Error fetching schema.</p>');
+                });
+        })
+        .catch(error => {
+            console.error('Error fetching prompt details:', error);
+            $('#res').html('<p>Error fetching prompt details.</p>');
+        });
+    });
+
+    function updatePrompt(values) {
+        console.log(values);
+        $('#res').html('<p>Updating, please wait...</p>');
+        fetch(`/prompts/${promptId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(values)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data._id) {
+                $('#res').html('<p>Prompt updated successfully.</p>');
+            } else if (data.error) {
+                $('#res').html('<p>Error: ' + data.error + '</p>');
+            } else {
+                $('#res').html('<p>Unknown error occurred</p>');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating prompt:', error);
+            $('#res').html('<p>An error occurred while processing your request</p>');
+        });
+    }
+</script>
+<%- include('../../partials/footer') %>
