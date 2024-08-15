@@ -1,18 +1,14 @@
 import { getConversationModel } from '../models/conversation.js';
 import { getEmbeddingsModel } from '../models/embeddings.js';
-import { getUserIDFromToken } from '../controllers/token.js';
+import { newTransaction } from '../controllers/transaction.js';
 import User from '../models/user.js';
+import Instance from '../models/instance.js';
 import { encode } from 'gpt-tokenizer/model/gpt-4o';
 
 async function createConversation(req, res) {
   try {
       const userId = req.user._id;
       const { contentObject, course, _skillsFramework } = req.body;
-
-      const ragApplication = req.ragApplication;
-      if (!ragApplication) {
-          throw new Error('RAG Application is not initialized');
-      }
 
       const Conversation = getConversationModel(req.session.activeInstance.id);
 
@@ -34,7 +30,6 @@ async function createConversation(req, res) {
 async function getConversations(req, res) {
     try {
         const userId = req.user._id;
-        const instanceId = req.params.instanceId;
 
         const Conversation = getConversationModel(req.session.activeInstance.id);
 
@@ -139,7 +134,7 @@ async function postMessage(req, res) {
         const Conversation = getConversationModel(req.session.activeInstance.id);
         const Embeddings = getEmbeddingsModel(req.session.activeInstance.id);
 
-        const conversation = await Conversation.findById(conversationId);
+        let conversation = await Conversation.findById(conversationId);
         if (!conversation) {
             return res.status(404).json({ error: 'Conversation not found' });
         }
@@ -210,21 +205,60 @@ async function postMessage(req, res) {
             return res.status(400).json({ error: 'Insufficient tokens to post the message' });
         }
 
-        // Deduct the tokens from user's account and save in the database
-        user.tokens -= messageTokens + chunkTokens;
-        await user.save();
-
         const ragResponse = await ragApplication.query(message, conversationId, chunks);
 
-        // Subtract the response tokens (multiplied by three) from the user's account
-        const responseTokens = ragResponse.content.message.length * 3;
-        user.tokens -= responseTokens;
-        await user.save();
+        try {
+            // Define a function to handle the transactions sequentially
+            const handleTransactions = async () => {
+                // Fetch the updated conversation with entries
+                const conversation = await Conversation.findById(conversationId);
+                const previousId = await getPreviousEntryId(conversation.entries, ragResponse._id);
+
+                // Calculate tokens
+                const queryTokens = messageTokens + chunkTokens;
+                const responseTokens = ragResponse.content.message.length * 3;
+
+                // Subtract tokens for the new query
+                await newTransaction(userId, previousId, "conversations", "New Query", queryTokens * -1);
+
+                // Subtract tokens for the query response
+                await newTransaction(userId, ragResponse._id, "conversations", "Query Response", responseTokens * -1);
+            };
+
+            // Call the function to handle transactions
+            handleTransactions()
+                .then(() => {
+                })
+                .catch(error => {
+                    console.error('Error during transaction processing:', error);
+                });
+
+        } catch (error) {
+            console.error('Transactions error: ' + error);
+        }
 
         res.status(200).json(ragResponse);
     } catch (error) {
         console.error("Error in /:instanceId/completion/:conversationId route:", error);
         res.status(error.status || 500).json({ error: error.message });
+    }
+}
+
+async function getPreviousEntryId(entries,entryId) {
+    try {
+
+      const currentIndex = entries.findIndex(entry => entry._id === entryId);
+
+      if (currentIndex === -1) {
+        throw new Error('Entry not found');
+      }
+
+      // Get the previous entry ID
+      const previousEntry = entries[currentIndex - 1];
+      return previousEntry ? previousEntry._id : null;
+    } catch (error) {
+      console.error('Error retrieving previous entry ID:', error);
+      return null;
     }
 }
 
@@ -253,11 +287,44 @@ async function setRating(req, res) {
             return res.status(404).json({ error: 'Message not found' });
         }
 
+        let newRating = false;
+        if (!entry.rating.rating) {
+            newRating = true;
+        }
+
         // Update the rating and comment of the entry
         entry.rating = { rating, comment };
 
         // Save the updated conversation
         await conversation.save();
+
+        if (newRating) {
+            try {
+                // Define a function to handle the transactions sequentially
+                const handleTransactions = async () => {
+                    const instanceId = req.params.instanceId;
+                    const instance = await Instance.findById(req.params.instanceId);
+                    // Fetch the updated conversation with entries
+                    const ratingReward = instance.ratingReward ? parseInt(instance.ratingReward, 10) : 0;
+                    const userId = req.session.user.id;
+                    // Subtract tokens for the new query
+                    if (rating > 0) {
+                        newTransaction(userId, messageId, "ratings", "Rating reward", ratingReward);
+                    }
+                };
+
+                // Call the function to handle transactions
+                handleTransactions()
+                    .then(() => {
+                    })
+                    .catch(error => {
+                        console.error('Error during transaction processing:', error);
+                    });
+
+            } catch (error) {
+                console.error('Transactions error: ' + error);
+            }
+        }
 
         return res.status(200).json({ success: true, message: 'Rating updated successfully' });
     } catch (error) {

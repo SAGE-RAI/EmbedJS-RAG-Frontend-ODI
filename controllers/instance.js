@@ -4,7 +4,7 @@ import { removeActiveInstanceFromCache } from '../middleware/auth.js';
 
 async function createInstance(req, res) {
     try {
-        const { name, description, isPublic, systemPrompt, suggestions, ratingResponses } = req.body;
+        const { name, description, ratingReward, isPublic, systemPrompt, suggestions, ratingResponses } = req.body;
         const userId = req.user.id;
 
         // Validate the required fields
@@ -16,6 +16,7 @@ async function createInstance(req, res) {
         const newInstance = new Instance({
             name,
             description,
+            ratingReward,
             public: isPublic || false,
             systemPrompt,
             suggestions: suggestions || [], // Default to empty array if not provided

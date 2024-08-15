@@ -1,6 +1,7 @@
 import { WebLoader, TextLoader, PdfLoader } from '@llm-tools/embedjs';
 import { getEmbeddingsCacheModel } from '../models/embeddingsCache.js';
 import User from '../models/user.js';
+import { newTransaction } from '../controllers/transaction.js';
 import { encode } from 'gpt-tokenizer/model/text-embedding-ada-002';
 
 async function addSource(req, res) {
@@ -44,9 +45,7 @@ async function addSource(req, res) {
         await ragApplication.addLoader(loader);
         const uniqueId = loader.getUniqueId();
 
-        // Deduct the tokens from user's account and update in the database
-        user.tokens -= totalTokens;
-        await user.save();
+        newTransaction(userId, uniqueId, "sources", "Load source", totalTokens * -1);
 
         const updateObject = { tokens: totalTokens, source, loadedDate: new Date(), title, overrideUrl };
 

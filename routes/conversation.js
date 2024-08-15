@@ -5,7 +5,7 @@ import { getConversation, getConversations, createConversation, getMessages, del
 const router = express.Router({ mergeParams: true });
 
 // Create a new conversation and get an ID
-router.post("/create", verifyTokenMiddleware, canAccessInstance, createConversation);
+router.post("/create", verifyTokenMiddleware, canAccessInstance, setActiveInstance, createConversation);
 
 // Generic route for rendering the chat page or returning conversations as JSON
 router.get("/", verifyTokenMiddleware, canAccessInstance, async (req, res) => {
