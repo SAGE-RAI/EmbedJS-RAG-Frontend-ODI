@@ -37,6 +37,34 @@
                 }
             }
         },
+        "embedModel": {
+            "type": "object",
+            "title": "Embedding Model Configuration",
+            "properties": {
+                "provider": {
+                    "type": "string",
+                    "title": "Provider",
+                    "enum": ["Default", "OpenAI", "Cohere", "Gecko"],
+                    "required": true
+                },
+                "name": {
+                    "type": "string",
+                    "title": "Model Name"
+                },
+                "baseUrl": {
+                    "type": "string",
+                    "title": "Base URL"
+                },
+                "apiKey": {
+                    "type": "string",
+                    "title": "API Key"
+                },
+                "dimensions": {
+                    "type": "integer",
+                    "title": "Vector Dimensions"
+                }
+            }
+        },
         "systemPrompt": {
             "type": "string",
             "title": "System Prompt",
@@ -119,6 +147,11 @@
             "type": "fieldset",
             "key": "model",
             "title": "Model Configuration"
+        },
+        {
+            "type": "fieldset",
+            "key": "embedModel",
+            "title": "Embedding Model Configuration"
         },
         {
             "key": "systemPrompt",
