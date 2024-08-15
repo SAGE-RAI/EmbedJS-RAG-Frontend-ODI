@@ -4,6 +4,7 @@ import { getUserIDFromToken, verifyToken } from '../controllers/token.js';
 import { getConversationModel } from '../models/conversation.js';
 
 const instanceCache = new Map(); // In-memory cache for RAG applications
+const CACHE_EXPIRATION_TIME = 60 * 60 * 1000; // 1 hour in milliseconds
 
 export const setInstanceLocals = (req, res, next) => {
     if (req.session.activeInstance) {
@@ -29,6 +30,17 @@ export const clearInstanceCache = () => {
     console.log('All instances removed from cache.');
 };
 
+// Function to clean up expired instances
+export const cleanUpExpiredInstances = () => {
+    const now = Date.now();
+    for (const [instanceId, { ragApplication, expirationTime }] of instanceCache.entries()) {
+        if (now > expirationTime) {
+            instanceCache.delete(instanceId);
+            console.log(`Instance ${instanceId} expired and removed from cache.`);
+        }
+    }
+};
+
 // Middleware to set and initialize the active RAG instance
 export const setActiveInstance = async (req, res, next) => {
     try {
@@ -40,20 +52,24 @@ export const setActiveInstance = async (req, res, next) => {
         }
 
         // Check if the RAG application is already in the cache
-        let ragApplication = instanceCache.get(instanceId);
+        let cacheEntry = instanceCache.get(instanceId);
 
         // Check if the RAG application is already initialized and the same as the requested RAG ID
-        if (req.session.activeInstance?.id === instanceId && ragApplication) {
+        if (req.session.activeInstance?.id === instanceId && cacheEntry) {
             req.session.activeInstance = instance;
-            req.ragApplication = ragApplication;
+            req.ragApplication = cacheEntry.ragApplication;
             res.locals.activeInstance = instance;
             res.locals.instanceId = instanceId;
             return next();
         }
 
         // Initialize the RAG application
-        ragApplication = await initializeRAGApplication(instance);
-        instanceCache.set(instanceId, ragApplication);
+        const ragApplication = await initializeRAGApplication(instance);
+        const expirationTime = Date.now() + CACHE_EXPIRATION_TIME;
+
+        // Store the initialized RAG application and its expiration time in the cache
+        instanceCache.set(instanceId, { ragApplication, expirationTime });
+
         // Store the initialized RAG application and its ID in the session
         req.session.activeInstance = instance;
         req.ragApplication = ragApplication;
@@ -65,6 +81,10 @@ export const setActiveInstance = async (req, res, next) => {
         next(error);
     }
 };
+
+// Set up a periodic cleanup task
+const CLEANUP_INTERVAL = 60 * 60 * 1000; // Cleanup interval (e.g., every hour)
+setInterval(cleanUpExpiredInstances, CLEANUP_INTERVAL);
 
 // Middleware to check if the user can access the instance
 export const canAccessInstance = async (req, res, next) => {
@@ -100,9 +120,20 @@ export const canAccessInstance = async (req, res, next) => {
 };
 
 // Middleware to check if the user has source editor access
-export const canEditSources = (req, res, next) => {
+export const canEditSources= async (req, res, next) => {
+    const instanceId = req.params.instanceId;
+    const userId = req.user._id;
+    const userEmail = req.user.email;
+
+    if (!userId || !userEmail) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const instance = await Instance.findById(instanceId);
+
+    const isOwner = instance.createdBy.equals(userId);
     const userAccess = req.userAccess;
-    if (req.session.activeInstance.createdBy.equals(req.user._id) || (userAccess && userAccess.role === 'contentEditor')) {
+    if (isOwner || (userAccess && userAccess.role === 'contentEditor')) {
         next();
     } else {
         res.status(403).send('Permission denied');
@@ -110,9 +141,21 @@ export const canEditSources = (req, res, next) => {
 };
 
 // Middleware to check if the user has instance admin access
-export const canAdminInstance = (req, res, next) => {
+export const canAdminInstance = async (req, res, next) => {
+    const instanceId = req.params.instanceId;
+    const userId = req.user._id;
+    const userEmail = req.user.email;
+
+    if (!userId || !userEmail) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const instance = await Instance.findById(instanceId);
+
+    const isOwner = instance.createdBy.equals(userId);
+
     const userAccess = req.userAccess;
-    if (req.session.activeInstance.createdBy.equals(req.user._id) || (userAccess && userAccess.role === 'instanceAdmin')) {
+    if (isOwner || (userAccess && userAccess.role === 'instanceAdmin')) {
         next();
     } else {
         res.status(403).send('Permission denied');

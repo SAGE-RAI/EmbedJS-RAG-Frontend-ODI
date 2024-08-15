@@ -34,6 +34,7 @@ async function createConversation(req, res) {
 async function getConversations(req, res) {
     try {
         const userId = req.user._id;
+        const instanceId = req.params.instanceId;
 
         const Conversation = getConversationModel(req.session.activeInstance.id);
 
