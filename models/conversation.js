@@ -16,35 +16,6 @@ const conversationSchema = new mongoose.Schema({
   title: {
     type: String
   },
-  constructor: {
-    course: {
-      id: {
-        type: String
-      },
-      title: {
-        type: String
-      }
-    },
-    contentObject: {
-      id: {
-        type: String
-      },
-      title: {
-        type: String
-      }
-    },
-    _skillsFramework: {
-      programmeUri: {
-        type: String
-      },
-      programmeTitle: {
-        type: String
-      }
-    },
-    plugin: {
-      type: String
-    }
-  },
   entries: [{
     _id: {
       type: String,
@@ -72,16 +43,7 @@ const conversationSchema = new mongoose.Schema({
       default: Date.now
     },
     sources: [],
-    constructor: {
-      block: {
-        id: {
-          type: String
-        },
-        title: {
-          type: String
-        }
-      }
-    }
+    chunks: []
   }]
 }, {
   collection: 'Conversations' // Specify the collection name
