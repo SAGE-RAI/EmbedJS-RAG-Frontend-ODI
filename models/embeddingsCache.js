@@ -25,10 +25,6 @@ const embeddingsCacheSchema = new mongoose.Schema({
   loadedDate: {
     type: Date,
     default: Date.now
-  },
-  type: {
-    type: String,
-    enum: ['internal', 'external']
   }
 }, {
   collection: 'EmbeddingsCache' // Specify the collection name
