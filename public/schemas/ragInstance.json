@@ -9,6 +9,10 @@
             "type": "string",
             "title": "Description"
         },
+        "ratingReward": {
+            "type": "number",
+            "title": "Rating reward"
+        },
         "public": {
             "type": "boolean",
             "title": "Public"
@@ -111,9 +115,20 @@
         "name",
         "description",
         {
+            "key": "systemPrompt",
+            "type": "textarea",
+            "title": "System Prompt",
+            "default": "You are a helpful human like chat bot. Use relevant provided context and chat history to answer the query at the end. Answer in full. If you don't know the answer, just say that you don't know, don't try to make up an answer. Do not use words like context or training data when responding. You can say you do not have all the information but do not indicate that you are not a reliable source."
+        },
+        {
             "key": "public",
             "type": "checkbox",
-            "title": "Public"
+            "title": "Available to all regisitered users?"
+        },
+        {
+            "key": "ratingReward",
+            "title": "Tokens awarded for rating responses from AI",
+            "default": 0
         },
         {
             "type": "fieldset",
@@ -121,28 +136,28 @@
             "title": "Model Configuration"
         },
         {
-            "key": "systemPrompt",
-            "type": "textarea",
-            "title": "System Prompt",
-            "default": "You are a helpful human like chat bot. Use relevant provided context and chat history to answer the query at the end. Answer in full. If you don't know the answer, just say that you don't know, don't try to make up an answer. Do not use words like context or training data when responding. You can say you do not have all the information but do not indicate that you are not a reliable source."
-        },
-        {
-            "type": "array",
-            "key": "suggestions",
-            "title": "Suggestions",
-            "htmlClass": "suggestions",
+            "type": "fieldset",
+            "title": "Starter prompts",
             "items": [
                 {
-                    "type": "fieldset",
+                    "type": "array",
+                    "key": "suggestions",
+                    "title": "Starter prompts are what appears on the screen when a user starts a new conversation. 4 will be randomly selected to be shown.",
+                    "htmlClass": "suggestions",
                     "items": [
                         {
-                            "key": "suggestions[].shortText",
-                            "title": "Short description"
-                        },
-                        {
-                            "key": "suggestions[].fullPrompt",
-                            "type": "textarea",
-                            "title": "Full conversation starter prompt (user prompt)"
+                            "type": "fieldset",
+                            "items": [
+                                {
+                                    "key": "suggestions[].shortText",
+                                    "title": "Short description"
+                                },
+                                {
+                                    "key": "suggestions[].fullPrompt",
+                                    "type": "textarea",
+                                    "title": "Full conversation starter prompt (user prompt)"
+                                }
+                            ]
                         }
                     ]
                 }

@@ -3,6 +3,7 @@ import passport from '../passport.js'; // Require the passport module
 import { retrieveOrCreateUser } from '../controllers/user.js'; // Import necessary functions from controllers
 import { processToken } from '../controllers/token.js';
 import { ensureAuthenticated, clearInstanceCache } from '../middleware/auth.js';
+import { getTransactions } from '../controllers/transaction.js';
 
 const router = express.Router();
 
@@ -56,6 +57,8 @@ router.get('/profile', ensureAuthenticated, (req, res) => {
     res.locals.pageTitle = "Profile";
     res.render('pages/profile');
 });
+
+router.get('/transactions', ensureAuthenticated, getTransactions);
 
 router.post('/logout', (req, res) => {
     req.logout(err => {

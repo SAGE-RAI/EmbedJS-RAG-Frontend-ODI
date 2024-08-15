@@ -74,6 +74,10 @@ const instanceSchema = new mongoose.Schema({
   systemPrompt: {
     type: String
   },
+  ratingReward: {
+    type: Number,
+    default: 0
+  },
   sharedWith: [sharedWithSchema],
   suggestions: [suggestionSchema],
   ratingResponses: ratingResponsesSchema,
