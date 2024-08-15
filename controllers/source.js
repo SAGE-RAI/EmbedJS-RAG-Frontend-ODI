@@ -1,7 +1,9 @@
-import { WebLoader, TextLoader, PdfLoader } from '@llm-tools/embedjs';
+import { WebLoader, TextLoader, PdfLoader, UrlLoader, JsonLoader } from '@llm-tools/embedjs';
 import { getEmbeddingsCacheModel } from '../models/embeddingsCache.js';
 import User from '../models/user.js';
 import { encode } from 'gpt-tokenizer/model/text-embedding-ada-002';
+import axios from 'axios';
+  
 
 async function addSource(req, res) {
     const { source, title, type, overrideUrl, sourceText } = req.body;
@@ -13,13 +15,40 @@ async function addSource(req, res) {
 
         const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
 
-        let loader;
+        let loader; 
+
         if (sourceText) {
+            // Direct text provided
             loader = new TextLoader({ text: sourceText });
-        } else if (source.endsWith('.pdf')) {
-            loader = new PdfLoader({ filePathOrUrl: source });
-        } else {
-            loader = new WebLoader({ urlOrContent: source });
+        } else if (source) {
+            // Perform a HEAD request to get headers without fetching the body
+            const headResponse = await axios.head(source, {
+                headers: {
+                    'Accept': "application/json, text/html;q=0.9, application/pdf;q=0.8, text/plain;q=0.7"
+                }
+            });
+            const contentType = headResponse.headers['content-type'];
+
+            // Perform content negotiation based on Content-Type header
+            if (contentType.includes('application/pdf')) {
+                loader = new PdfLoader({ filePathOrUrl: source });
+                console.log("PDF loader used..");
+            } 
+            if (contentType.includes('application/json')) {
+                const response = await axios.get(source);
+                const jsonObject = response.data;
+                loader = new JsonLoader({ object: jsonObject });
+                
+            } else if (contentType.includes('text/html')) {
+                loader = new WebLoader({ urlOrContent: source });
+            } else if (contentType.includes('text/plain')) {
+                // Fetch the plain text content since content is plain text
+                const response = await axios.get(source);
+                // loader = new TextLoader({ text: response.data });
+                loader = new UrlLoader({ urlOrContent: response });
+            } else {
+                throw new Error('Unsupported content type');
+            }
         }
 
         // Retrieve the user's token information from the database

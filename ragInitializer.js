@@ -48,15 +48,15 @@ await new RAGApplicationBuilder()
         let embeddingModel; 
 
         // Use OpenAI model with GENERIC_BASE_URL
-        if (process.env.GENERIC_MODEL_NAME) {
+        if (process.env.GENERIC_BASE_URL) {
             model = new OpenAi({
                 modelName: process.env.GENERIC_MODEL_NAME,
-                baseUrl: process.env.GENERIC_BASE_URL,
+                baseURL: process.env.GENERIC_BASE_URL,
                 apiKey: process.env.GENERIC_API_KEY
             });
         
         // Use Azure model
-        } else if (process.env.AZURE_AI_MODEL_NAME) {
+        } else if (process.env.AZURE_AI_ENDPOINT_URL) {
             model = new AzureAIInferenceModel({
                 endpointUrl: process.env.AZURE_AI_ENDPOINT_URL,
                 apiKey: process.env.AZURE_AI_API_KEY
@@ -77,7 +77,7 @@ await new RAGApplicationBuilder()
             embeddingModel = new OpenAiGenericEmbeddings({
                 modelName: process.env.EMBED_MODEL_NAME, 
                 apiKey: process.env.EMBED_API_KEY,
-                baseUrl: process.env.EMBED_BASE_URL,
+                baseURL: process.env.EMBED_BASE_URL,
                 dimensions: 768,
             });
         }
