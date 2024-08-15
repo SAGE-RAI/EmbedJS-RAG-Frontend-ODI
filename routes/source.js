@@ -1,6 +1,6 @@
 import express from 'express';
 import { addSource, getSources, getSource, updateSource, deleteSource } from '../controllers/source.js';
-import { ensureAuthenticated, checkOwnership, canAccessInstance, canEditSources } from '../middleware/auth.js';
+import { ensureAuthenticated, checkOwnership, setActiveInstance, canAccessInstance, canEditSources } from '../middleware/auth.js';
 
 const router = express.Router({ mergeParams: true });
 
@@ -16,7 +16,7 @@ router.get('/import', ensureAuthenticated, canAccessInstance, canEditSources, (r
     res.render('pages/sources/import', { instanceId: req.params.instanceId });
 });
 
-router.post('/', ensureAuthenticated, canAccessInstance, canEditSources, addSource);
+router.post('/', ensureAuthenticated, canAccessInstance, canEditSources, setActiveInstance, addSource);
 
 // Route to list sources with content negotiation
 router.get('/', ensureAuthenticated, canAccessInstance, async (req, res) => {
@@ -53,6 +53,6 @@ router.get('/:loaderId', ensureAuthenticated, canAccessInstance, async (req, res
 });
 
 router.put('/:loaderId', ensureAuthenticated, canAccessInstance, canEditSources, updateSource);
-router.delete('/:loaderId', ensureAuthenticated, canAccessInstance, canEditSources, deleteSource);
+router.delete('/:loaderId', ensureAuthenticated, canAccessInstance, setActiveInstance, canEditSources, deleteSource);
 
 export default router;
