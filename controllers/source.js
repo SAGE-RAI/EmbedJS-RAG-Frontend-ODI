@@ -32,13 +32,12 @@ async function addSource(req, res) {
             // Perform content negotiation based on Content-Type header
             if (contentType.includes('application/pdf')) {
                 loader = new PdfLoader({ filePathOrUrl: source });
-                console.log("PDF loader used..");
             } 
             if (contentType.includes('application/json')) {
                 const response = await axios.get(source);
                 const jsonObject = response.data;
-                loader = new JsonLoader({ object: jsonObject });
-                
+                loader = new JsonLoader({ object: jsonObject, recurse: true });
+
             } else if (contentType.includes('text/html')) {
                 loader = new WebLoader({ urlOrContent: source });
             } else if (contentType.includes('text/plain')) {
