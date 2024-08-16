@@ -8,7 +8,7 @@ const router = express.Router({ mergeParams: true });
 router.post("/create", verifyTokenMiddleware, canAccessInstance, setActiveInstance, createConversation);
 
 // Generic route for rendering the chat page or returning conversations as JSON
-router.get("/", verifyTokenMiddleware, canAccessInstance, setActiveInstance, async (req, res) => {
+router.get("/", verifyTokenMiddleware, canAccessInstance, async (req, res) => {
     try {
         if (req.accepts(['json', 'html']) === 'json') {
             return getConversations(req, res);
@@ -24,22 +24,22 @@ router.get("/", verifyTokenMiddleware, canAccessInstance, setActiveInstance, asy
 });
 
 // Route handler for getting a specific conversation
-router.get("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, setActiveInstance, getConversation);
+router.get("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, getConversation);
 // Route handler for getting a specific conversation
 
 // Route to update a specific conversation
-router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, setActiveInstance, updateConversation);
+router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, updateConversation);
 
 // Route to delete a specific conversation
-router.delete("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, setActiveInstance, deleteConversation);
+router.delete("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, deleteConversation);
 
 // Route to get messages for a specific conversation
-router.get("/:conversationId/messages", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, setActiveInstance, getMessages);
+router.get("/:conversationId/messages", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, getMessages);
 
 // Route to post a message to a specific conversation
 router.post("/:conversationId/messages", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, setActiveInstance, postMessage);
 
 // Route to post a rating to a specific message
-router.post("/:conversationId/messages/:messageId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, setActiveInstance, setRating);
+router.post("/:conversationId/messages/:messageId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, setRating);
 
 export default router;
