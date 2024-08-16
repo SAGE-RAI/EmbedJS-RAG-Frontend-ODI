@@ -101,7 +101,8 @@ async function initializeRAGApplication(instance) {
             EMBED_MODEL_PROVIDER: process.env.EMBED_MODEL_PROVIDER,
             EMBED_MODEL_NAME: process.env.EMBED_MODEL_NAME,
             EMBED_API_KEY: process.env.EMBED_API_KEY,
-            EMBED_BASE_URL: process.env.EMBED_BASE_URL
+            EMBED_BASE_URL: process.env.EMBED_BASE_URL,
+            EMBED_DIMENSIONS: process.env.EMBED_DIMENSIONS
         };
 
         const config = getConfigFromInstanceOrEnv(instanceModel, instanceEmbedModel, envConfig);
@@ -150,17 +151,17 @@ async function initializeRAGApplication(instance) {
             case 'OpenAI':
                 switch (config.embed.name) {
                     case 'text-embedding-ada-002':
-                        embeddingModel = new AdaEmbeddings();
+                        embeddingModel = new AdaEmbeddings({ apiKey: config.embed.apiKey });
                         break;
                     case 'text-embedding-3-large':
-                        var openAiEmbedOptions = {};
+                        var openAiEmbedOptions = { apiKey: config.embed.apiKey };
                         if (config.embed.dimensions) {
                             openAiEmbedOptions.dynamicDimension = config.embed.dimensions;
                         }
                         embeddingModel = new OpenAi3LargeEmbeddings(openAiEmbedOptions);
                         break;
                     case 'text-embedding-3-small':
-                        embeddingModel = new OpenAi3SmallEmbeddings();
+                        embeddingModel = new OpenAi3SmallEmbeddings({ apiKey: config.embed.apiKey });
                         break;
                     default:
                         var openAiEmbedOptions = {
