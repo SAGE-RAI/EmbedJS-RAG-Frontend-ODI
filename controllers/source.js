@@ -3,7 +3,7 @@ import { getEmbeddingsCacheModel } from '../models/embeddingsCache.js';
 import User from '../models/user.js';
 import { encode } from 'gpt-tokenizer/model/text-embedding-ada-002';
 import axios from 'axios';
-  
+
 
 async function addSource(req, res) {
     const { source, title, overrideUrl, sourceText } = req.body;
@@ -28,23 +28,24 @@ async function addSource(req, res) {
                 }
             });
             const contentType = headResponse.headers['content-type'];
-
+        
             // Perform content negotiation based on Content-Type header
             if (contentType.includes('application/pdf')) {
                 loader = new PdfLoader({ filePathOrUrl: source });
-            } 
-            if (contentType.includes('application/json')) {
+
+            } else if (contentType.includes('application/json')) {
                 const response = await axios.get(source);
                 const jsonObject = response.data;
                 loader = new JsonLoader({ object: jsonObject, recurse: true });
 
             } else if (contentType.includes('text/html')) {
                 loader = new WebLoader({ urlOrContent: source });
+
             } else if (contentType.includes('text/plain')) {
                 // Fetch the plain text content since content is plain text
                 const response = await axios.get(source);
-                // loader = new TextLoader({ text: response.data });
-                loader = new UrlLoader({ urlOrContent: response });
+                loader = new TextLoader({ text: response.data });
+
             } else {
                 throw new Error('Unsupported content type');
             }
