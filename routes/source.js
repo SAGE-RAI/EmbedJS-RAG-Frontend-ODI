@@ -1,8 +1,65 @@
 import express from 'express';
 import { addSource, getSources, getSource, updateSource, deleteSource } from '../controllers/source.js';
 import { ensureAuthenticated, checkOwnership, setActiveInstance, canAccessInstance, canEditSources } from '../middleware/auth.js';
+import fetch from 'node-fetch'; // Import node-fetch
+import { load } from 'cheerio'
 
 const router = express.Router({ mergeParams: true });
+
+// Route to fetch headers and title
+router.get('/headers', ensureAuthenticated, async (req, res) => {
+    try {
+        const { url } = req.query; // Get the URL from query parameters
+
+        if (!url) {
+            return res.status(400).json({ error: 'URL is required' });
+        }
+
+        // Fetch headers from the URL
+        const headResponse = await fetch(url, { method: 'HEAD' });
+
+        // Extract headers
+        const contentType = headResponse.headers.get('Content-Type') || 'unknown';
+        const contentDisposition = headResponse.headers.get('Content-Disposition') || '';
+        let title = '';
+
+        // Determine the source type
+        let sourceType;
+        if (contentType.includes('application/json')) {
+            sourceType = 'JSON';
+        } else if (contentType.includes('application/pdf')) {
+            sourceType = 'PDF';
+        } else if (contentType.includes('text/plain')) {
+            sourceType = 'Text';
+        } else if (contentType.includes('text/html')) {
+            sourceType = 'HTML';
+
+            // Fetch the actual HTML content
+            const htmlResponse = await fetch(url);
+            const html = await htmlResponse.text();
+
+            // Parse HTML to extract the <title> tag
+            const $ = load(html);
+            title = $('title').text();
+        } else {
+            sourceType = 'Unknown';
+        }
+
+        // Extract filename from Content-Disposition header if present
+        if (contentDisposition.includes('filename=')) {
+            const matches = contentDisposition.match(/filename="(.+?)"/);
+            if (matches && matches[1]) {
+                title = matches[1];
+            }
+        }
+
+        // Send back the headers as JSON
+        res.json({ contentType, sourceType, title });
+    } catch (error) {
+        console.error('Error fetching headers:', error);
+        res.status(500).json({ error: 'Failed to fetch headers' });
+    }
+});
 
 // Route to view and add sources
 router.get('/add', ensureAuthenticated, canAccessInstance, canEditSources, (req, res) => {

@@ -16,6 +16,9 @@ const embeddingsCacheSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  type:  {
+    type: String
+  },
   title: {
     type: String
   },
