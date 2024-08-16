@@ -65,6 +65,23 @@ async function addSource(req, res) {
     }
 }
 
+async function getSourcesCount(req, res) {
+    try {
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
+
+        // Use countDocuments to get the count of documents that match the criteria
+        const count = await EmbeddingsCache.countDocuments({ loaderId: { $ne: "LOADERS_LIST_CACHE_KEY" } });
+
+        res.json({ count });
+    } catch (error) {
+        if (!returnRawData) {
+            res.status(500).json({ error: 'Failed to retrieve sources count' });
+        } else {
+            throw error;
+        }
+    }
+}
+
 async function getSources(req, res, returnRawData = false) {
     try {
         const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
@@ -149,4 +166,4 @@ async function deleteSource(req, res) {
     }
 }
 
-export { addSource, getSources, getSource, updateSource, deleteSource };
+export { addSource, getSources, getSourcesCount, getSource, updateSource, deleteSource };

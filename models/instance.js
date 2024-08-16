@@ -57,6 +57,27 @@ const modelSchema = new mongoose.Schema({
   _id: false // Prevent Mongoose from creating _id for subdocuments
 });
 
+const embedModelSchema = new mongoose.Schema({
+  provider: {
+    type: String,
+    enum: ['Default', 'OpenAI', 'Cohere', 'Gecko'],
+  },
+  name: {
+    type: String,
+  },
+  baseUrl: {
+    type: String,
+  },
+  apiKey: {
+    type: String,
+  },
+  dimensions: {
+    type: Number,
+  }
+}, {
+  _id: false // Prevent Mongoose from creating _id for subdocuments
+});
+
 // Define the main instance schema
 const instanceSchema = new mongoose.Schema({
   name: {
@@ -82,6 +103,7 @@ const instanceSchema = new mongoose.Schema({
   suggestions: [suggestionSchema],
   ratingResponses: ratingResponsesSchema,
   model: modelSchema,  // Embed the model schema here
+  embedModel: embedModelSchema,
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

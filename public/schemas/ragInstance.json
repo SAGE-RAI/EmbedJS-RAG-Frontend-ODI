@@ -41,6 +41,34 @@
                 }
             }
         },
+        "embedModel": {
+            "type": "object",
+            "title": "Embedding Model Configuration",
+            "properties": {
+                "provider": {
+                    "type": "string",
+                    "title": "Provider",
+                    "enum": ["Default", "OpenAI", "Cohere", "Gecko"],
+                    "required": true
+                },
+                "name": {
+                    "type": "string",
+                    "title": "Model Name"
+                },
+                "baseUrl": {
+                    "type": "string",
+                    "title": "Base URL"
+                },
+                "apiKey": {
+                    "type": "string",
+                    "title": "API Key"
+                },
+                "dimensions": {
+                    "type": "integer",
+                    "title": "Vector Dimensions"
+                }
+            }
+        },
         "systemPrompt": {
             "type": "string",
             "title": "System Prompt",
@@ -134,6 +162,12 @@
             "type": "fieldset",
             "key": "model",
             "title": "Model Configuration"
+        },
+        {
+            "type": "fieldset",
+            "key": "embedModel",
+            "title": "Embedding Model Configuration",
+            "prepend": "Note: If you have imported sources, you will only be able to change the apiKey and even this should be done with care."
         },
         {
             "type": "fieldset",
