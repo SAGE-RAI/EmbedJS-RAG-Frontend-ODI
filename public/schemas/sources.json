@@ -9,6 +9,11 @@
       "title": "Source url",
       "required": true
     },
+    "type": {
+      "type": "string",
+      "title": "Source Type",
+      "enum": ["text/html", "text/plain", "PDF", "JSON"]
+    },
     "title": {
       "type": "string",
       "title": "Title"
@@ -30,6 +35,9 @@
     {
       "key": "source",
       "fieldHtmlClass": "longText"
+    },
+    {
+      "key": "type"
     },
     {
       "key": "sourceText",
