@@ -192,9 +192,8 @@ nav > .pull-right {
 
 /* Sidebar */
 sidebar {
-  width: 200px;
+  width: 220px;
   float: left;
-  padding: 10px;
   height: calc(100vh);
   border-right: 1px solid gray;
 }
