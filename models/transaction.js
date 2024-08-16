@@ -6,7 +6,7 @@ const transactionSchema = new mongoose.Schema({
         id: { type: String, required: true },
         type: {
             type: String,
-            enum: ['conversations', 'sources', 'ratings'],
+            enum: ['conversations', 'sources', 'ratings', 'user'],
             required: true
         },
         description: {
