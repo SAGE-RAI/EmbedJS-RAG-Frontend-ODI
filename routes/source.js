@@ -2,7 +2,8 @@ import express from 'express';
 import { addSource, getSources, getSource, updateSource, deleteSource } from '../controllers/source.js';
 import { ensureAuthenticated, checkOwnership, setActiveInstance, canAccessInstance, canEditSources } from '../middleware/auth.js';
 import fetch from 'node-fetch'; // Import node-fetch
-import { load } from 'cheerio'
+import { load } from 'cheerio';
+import pdfParse from 'pdf-parse'
 
 const router = express.Router({ mergeParams: true });
 
@@ -27,10 +28,32 @@ router.get('/headers', ensureAuthenticated, async (req, res) => {
         let sourceType;
         if (contentType.includes('application/json')) {
             sourceType = 'JSON';
+
+            // Fetch the actual JSON content
+            const jsonResponse = await fetch(url);
+            const jsonData = await jsonResponse.json();
+
+            // Attempt to extract title from JSON metadata (adjust based on JSON structure)
+            if (jsonData.title) {
+                title = jsonData.title;
+            } else if (jsonData.metadata && jsonData.metadata.title) {
+                title = jsonData.metadata.title;
+            } else {
+                title = 'Untitled JSON';
+            }
+
         } else if (contentType.includes('application/pdf')) {
             sourceType = 'PDF';
+
+            // Fetch the actual PDF content and extract title from metadata
+            const pdfResponse = await fetch(url);
+            const pdfBuffer = await pdfResponse.arrayBuffer();
+            const pdfData = await pdfParse(pdfBuffer);
+            title = pdfData.info.Title || 'Untitled PDF';
+
         } else if (contentType.includes('text/plain')) {
             sourceType = 'Text';
+
         } else if (contentType.includes('text/html')) {
             sourceType = 'HTML';
 
@@ -41,6 +64,7 @@ router.get('/headers', ensureAuthenticated, async (req, res) => {
             // Parse HTML to extract the <title> tag
             const $ = load(html);
             title = $('title').text();
+
         } else {
             sourceType = 'Unknown';
         }
@@ -60,6 +84,7 @@ router.get('/headers', ensureAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch headers' });
     }
 });
+
 
 // Route to view and add sources
 router.get('/add', ensureAuthenticated, canAccessInstance, canEditSources, (req, res) => {
