@@ -3,6 +3,7 @@ import { getEmbeddingsCacheModel } from '../models/embeddingsCache.js';
 import User from '../models/user.js';
 import { newTransaction } from '../controllers/transaction.js';
 import { encode } from 'gpt-tokenizer/model/text-embedding-ada-002';
+import axios from 'axios';
 
 async function addSource(req, res) {
     const { source, title, type, overrideUrl, sourceText } = req.body;
@@ -22,7 +23,9 @@ async function addSource(req, res) {
                 loader = new PdfLoader({ filePathOrUrl: source });
                 break;
             case 'JSON':
-                loader = new JsonLoader({ filePathOrUrl: source });
+                const response = await axios.get(source);
+                const jsonObject = response.data;
+                loader = new JsonLoader({ object: jsonObject, recurse: true });
                 break;
             case 'text/plain':
                 loader = new TextLoader({ text: sourceText || '' });
