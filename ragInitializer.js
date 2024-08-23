@@ -122,7 +122,7 @@ async function initializeRAGApplication(instance) {
             embeddingModel = new OpenAiGenericEmbeddings({
                 modelName: envConfig.EMBED_MODEL_NAME,
                 apiKey: envConfig.EMBED_API_KEY,
-                baseUrl: envConfig.EMBED_BASE_URL || 'https://api.openai.com/v1/embeddings',
+                baseURL: envConfig.EMBED_BASE_URL || 'https://api.openai.com/v1/embeddings',
                 dimensions: 768,
             });
         }
