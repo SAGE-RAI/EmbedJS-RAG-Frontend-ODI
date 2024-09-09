@@ -5,7 +5,7 @@ import { removeActiveInstanceFromCache } from '../middleware/auth.js';
 
 async function createInstance(req, res) {
     try {
-        const { name, description, ratingReward, isPublic, systemPrompt, suggestions, ratingResponses } = req.body;
+        const { name, description, ratingReward, isPublic, systemPrompt, suggestions, ratingResponses, model, embedModel } = req.body;
         const userId = req.user.id;
 
         // Validate the required fields
@@ -20,6 +20,8 @@ async function createInstance(req, res) {
             ratingReward,
             public: isPublic || false,
             systemPrompt,
+            embedModel,
+            model,
             suggestions: suggestions || [], // Default to empty array if not provided
             ratingResponses: ratingResponses || { '1': [], '2': [], '3': [], '4': [], '5': [] }, // Default to empty arrays if not provided
             createdBy: userId
@@ -82,9 +84,23 @@ async function updateInstance(req, res) {
             if (newData.embedModel) {
                 const currentEmbedModel = currentInstance.embedModel || {};
                 const newEmbedModel = newData.embedModel;
-
+        
                 // Check if any field other than apiKey is different
-                if (JSON.stringify(currentEmbedModel) !== JSON.stringify({ ...currentEmbedModel, apiKey: newEmbedModel.apiKey })) {
+                let illegalChange = false;
+                for (let newField of ['provider', 'name', 'baseUrl']) {
+                    if (newEmbedModel[newField] && newEmbedModel[newField] !== currentEmbedModel[newField]) {
+                        illegalChange = true;
+                        break; // If any field is different, flag illegal change
+                    }
+                }
+        
+                if (!illegalChange) {
+                    // Add back the provider, name, and baseUrl from currentEmbedModel to newData.embedModel
+                    newData.embedModel.provider = currentEmbedModel.provider;
+                    newData.embedModel.name = currentEmbedModel.name;
+                    newData.embedModel.baseUrl = currentEmbedModel.baseUrl;
+
+                } else {
                     return res.status(400).json({ error: 'When sources exist, only the embedModel.apiKey field can be updated.' });
                 }
             }
