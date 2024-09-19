@@ -55,12 +55,62 @@ document.addEventListener("DOMContentLoaded", function () {
                         addSource(errors, values, instanceId);
                     }
                 });
+
+
+                const sourceField = $('input[name="source"]').closest('.form-group');
+                if (sourceField.length) {
+                    sourceField.append(`
+                        <button type="button" id="lookupButton" class="lookup-button">Lookup type and title</button>
+                    `);
+                }
+
+                // Set up event listener for the lookup button click
+                $('#lookupButton').on('click', function () {
+                    const url = $('input[name="source"]').val();
+                    if (url) {
+                        $(this).prop('disabled', true).text('Please wait...');
+                        fetchSourceType(url, instanceId).finally(() => {
+                            // Re-enable the button and reset its text
+                            $('#lookupButton').prop('disabled', false).text('Lookup type and title');
+                        });
+                    } else {
+                        $('#res').html('<p>Please enter a URL to look up</p>');
+                    }
+                });
             }
         })
         .catch(error => {
             console.error("Error fetching schema:", error);
         });
 });
+
+function fetchSourceType(url,instanceId) {
+    fetch(`/instances/${instanceId}/sources/headers?url=${encodeURIComponent(url)}`)
+        .then(response => response.json())
+        .then(data => {
+            const { contentType, title } = data;
+
+            let sourceType;
+            if (contentType.includes('application/json')) {
+                sourceType = 'JSON';
+            } else if (contentType.includes('application/pdf')) {
+                sourceType = 'PDF';
+            } else if (contentType.includes('text/plain')) {
+                sourceType = 'text/plain';
+            } else {
+                sourceType = 'text/html';
+            }
+
+            // Update the sourceType and title fields in the form
+            $('select[name="type"]').val(sourceType);
+            $('input[name="title"]').val(title);
+            $('#lookupButton').prop('disabled', false).text('Lookup type and title');
+        })
+        .catch(error => {
+            console.error('Error fetching source type:', error);
+        });
+}
+
 
 function updateSource(errors, values, instanceId) {
     if (errors) {

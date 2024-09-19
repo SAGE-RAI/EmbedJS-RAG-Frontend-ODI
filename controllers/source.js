@@ -1,11 +1,12 @@
-import { WebLoader, TextLoader, PdfLoader } from '@llm-tools/embedjs';
+import { WebLoader, TextLoader, PdfLoader, JsonLoader } from '@llm-tools/embedjs';
 import { getEmbeddingsCacheModel } from '../models/embeddingsCache.js';
 import User from '../models/user.js';
 import { newTransaction } from '../controllers/transaction.js';
 import { encode } from 'gpt-tokenizer/model/text-embedding-ada-002';
+import axios from 'axios';
 
 async function addSource(req, res) {
-    const { source, title, overrideUrl, sourceText } = req.body;
+    const { source, title, type, overrideUrl, sourceText } = req.body;
     try {
         const ragApplication = req.ragApplication;
         if (!ragApplication) {
@@ -15,12 +16,25 @@ async function addSource(req, res) {
         const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
 
         let loader;
-        if (sourceText) {
-            loader = new TextLoader({ text: sourceText });
-        } else if (source.endsWith('.pdf')) {
-            loader = new PdfLoader({ filePathOrUrl: source });
-        } else {
-            loader = new WebLoader({ urlOrContent: source });
+
+        // Determine the loader based on the type
+        switch (type) {
+            case 'PDF':
+                loader = new PdfLoader({ filePathOrUrl: source });
+                break;
+            case 'JSON':
+                const response = await axios.get(source);
+                const jsonObject = response.data;
+                loader = new JsonLoader({ object: jsonObject, recurse: true });
+                break;
+            case 'text/plain':
+                loader = new TextLoader({ text: sourceText || '' });
+                break;
+            case 'text/html':
+            default:
+                // Fallback to WebLoader if no type or HTML type is specified
+                loader = new WebLoader({ urlOrContent: source });
+                break;
         }
 
         // Retrieve the user's token information from the database
@@ -47,7 +61,7 @@ async function addSource(req, res) {
 
         newTransaction(userId, uniqueId, "sources", "Load source", totalTokens * -1);
 
-        const updateObject = { tokens: totalTokens, source, loadedDate: new Date(), title, overrideUrl };
+        const updateObject = { tokens: totalTokens, source, loadedDate: new Date(), type, title, overrideUrl };
 
         const updateResult = await EmbeddingsCache.findOneAndUpdate(
             { loaderId: uniqueId },
@@ -159,7 +173,11 @@ async function deleteSource(req, res) {
         if (result) {
             res.sendStatus(204);
         } else {
-            res.status(500).json({ error: 'Failed to delete loader' });
+            // Proceed with cache deletion regardless of the result
+            const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
+            await EmbeddingsCache.deleteOne({ loaderId: uniqueId });
+            console.warn(`Loader with ID ${uniqueId} was not found or could not be deleted. No Chunks?`);
+            res.sendStatus(204);
         }
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete loader' });

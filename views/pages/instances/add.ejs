@@ -12,6 +12,45 @@
 <form id="dataForm"></form>
 
 <script>
+// default ratings response if none is submitted 
+const defaultRatingResponses = {
+        1: [
+            "Don't like the style",
+            "Not factually correct",
+            "Didn't fully follow instructions",
+            "Refused when it shouldn't have",
+            "Wrong or no sources"
+        ],
+        2: [
+            "Not helpful",
+            "Confusing response",
+            "Didn't provide enough detail",
+            "Incomplete information",
+            "Wrong or no sources"
+        ],
+        3: [
+            "Somewhat helpful",
+            "Partially correct",
+            "Room for improvement",
+            "Average response",
+            "Needs more detail"
+        ],
+        4: [
+            "Quite helpful",
+            "Mostly correct",
+            "Good response",
+            "Well-written",
+            "Informative"
+        ],
+        5: [
+            "Very helpful",
+            "Completely correct",
+            "Excellent response",
+            "Clear and concise",
+            "Highly informative"
+        ]
+    };
+    
 const data = {};
 $('#dataForm').html("");
 $('#result').html("");
@@ -106,6 +145,12 @@ function addRagInstance(errors, values) {
     if (errors) {
         $('#res').html('<p>Please correct the errors in your form</p>');
     } else {
+         // Check if user provided ratingResponses
+         if (!values.ratingResponses || Object.keys(values.ratingResponses).length === 0) {
+            // If not provided, set to defaultRatingResponses
+            values.ratingResponses = defaultRatingResponses;
+        }
+
         // Disable the submit button
         $('.submit').prop('disabled', true);
         // Display a message while submitting

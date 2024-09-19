@@ -1,4 +1,5 @@
 import User from '../models/user.js'; // Import the User model
+import { newTransaction } from '../controllers/transaction.js';
 
 // Function to retrieve or create a user based on the profile data
 async function retrieveOrCreateUser(profile) {
@@ -10,10 +11,11 @@ async function retrieveOrCreateUser(profile) {
         user = new User({
             name: profile.name,
             email: profile.email,
-            tokens: tokens,
             lastLogin: new Date()
         });
         await user.save();
+        const userId = user._id;
+        newTransaction(userId, userId, "user", "New user creation", tokens);
     }
 
     return user;
