@@ -1,5 +1,5 @@
 // ragInitializer.js
-import { RAGApplicationBuilder, OpenAi, AzureAIInferenceModel } from '@llm-tools/embedjs';
+import { RAGApplicationBuilder, OpenAi, AzureAIInferenceModel, AdaEmbeddings, OpenAi3LargeEmbeddings, OpenAi3SmallEmbeddings } from '@llm-tools/embedjs';
 import { MongoDb } from '@llm-tools/embedjs/vectorDb/mongodb';
 import { MongoCache } from '@llm-tools/embedjs/cache/mongo';
 import { MongoConversations } from '@llm-tools/embedjs/conversations/mongo';
@@ -40,65 +40,94 @@ async function initializeRAGApplication(instance) {
     await conversationsdb.init();
 
     // Function to merge instance and environment config
-    function getConfigFromInstanceOrEnv(instanceModel, envConfig) {
+    function getConfigFromInstanceOrEnv(instanceModel, instanceEmbedModel, envConfig) {
         const provider = instanceModel.provider;
+        let result = {};
+        result.model = {};
+        result.embed = {};
 
         // Handle provider set to "default"
         if (provider === 'Default' || !provider) {
-            return {
+            result.model = {
                 provider: envConfig.MODEL_PROVIDER,
                 name: envConfig.MODEL_NAME,
                 baseUrl: envConfig.MODEL_BASE_URL,
                 apiKey: envConfig.MODEL_API_KEY
+            };
+        } else {
+            result.model = {
+                provider: provider,
+                name: instanceModel.name || envConfig.MODEL_NAME,
+                baseUrl: instanceModel.baseUrl || envConfig.MODEL_BASE_URL,
+                apiKey: instanceModel.apiKey || process.env[apiKeyEnvVar] || envConfig.MODEL_API_KEY
             };
         }
 
         // Construct the environment variable key for the API key
         const apiKeyEnvVar = provider.toUpperCase().replace(/ /g, '_') + '_API_KEY';
 
-        return {
-            provider: provider,
-            name: instanceModel.name || envConfig.MODEL_NAME,
-            baseUrl: instanceModel.baseUrl || envConfig.MODEL_BASE_URL,
-            apiKey: instanceModel.apiKey || process.env[apiKeyEnvVar] || envConfig.MODEL_API_KEY
-        };
+        const embedProvider = instanceEmbedModel.provider;
+
+        // Handle embedProvider set to "default"
+        if (embedProvider === 'Default' || !embedProvider) {
+            result.embed = {
+                provider: envConfig.EMBED_PROVIDER,
+                name: envConfig.EMBED_MODEL_NAME,
+                baseUrl: envConfig.EMBED_BASE_URL,
+                apiKey: envConfig.EMBED_API_KEY,
+                dimensions: envConfig.EMBED_DIMENSIONS
+            }
+        } else {
+            result.embed = {
+                provider: embedProvider,
+                name: instanceEmbedModel.name || envConfig.EMBED_MODEL_NAME,
+                baseUrl: instanceEmbedModel.baseUrl || envConfig.EMBED_BASE_URL,
+                apiKey: instanceEmbedModel.apiKey || process.env[apiKeyEnvVar] || envConfig.EMBED_API_KEY,
+                dimensions: instanceEmbedModel.dimensions || envConfig.EMBED_DIMENSIONS,
+            }
+        }
+
+        return result;
     }
 
     try {
         const instanceModel = instance.model || {};
+        const instanceEmbedModel = instance.embedModel || {};
         const envConfig = {
             MODEL_PROVIDER: process.env.MODEL_PROVIDER,
             MODEL_NAME: process.env.MODEL_NAME,
             MODEL_BASE_URL: process.env.MODEL_BASE_URL,
             MODEL_API_KEY: process.env.MODEL_API_KEY,
+            EMBED_MODEL_PROVIDER: process.env.EMBED_MODEL_PROVIDER,
             EMBED_MODEL_NAME: process.env.EMBED_MODEL_NAME,
             EMBED_API_KEY: process.env.EMBED_API_KEY,
-            EMBED_BASE_URL: process.env.EMBED_BASE_URL
+            EMBED_BASE_URL: process.env.EMBED_BASE_URL,
+            EMBED_DIMENSIONS: process.env.EMBED_DIMENSIONS
         };
 
-        const config = getConfigFromInstanceOrEnv(instanceModel, envConfig);
+        const config = getConfigFromInstanceOrEnv(instanceModel, instanceEmbedModel, envConfig);
 
         let model;
         let embeddingModel;
 
         // Select the model based on the provider
-        switch (config.provider) {
+        switch (config.model.provider) {
             case 'OpenAI':
                 const openAiOptions = {
-                    modelName: config.name,
-                    apiKey: config.apiKey
+                    modelName: config.model.name,
+                    apiKey: config.model.apiKey
                 };
 
-                if (config.baseUrl) {
-                    openAiOptions.baseUrl = config.baseUrl;
+                if (config.model.baseUrl) {
+                    openAiOptions.baseUrl = config.model.baseUrl;
                 }
 
                 model = new OpenAi(openAiOptions);
                 break;
             case 'Azure':
                 model = new AzureAIInferenceModel({
-                    endpointUrl: config.baseUrl,
-                    apiKey: config.apiKey
+                    endpointUrl: config.model.baseUrl,
+                    apiKey: config.model.apiKey
                 });
                 break;
             case 'Mistal':
@@ -117,14 +146,47 @@ async function initializeRAGApplication(instance) {
                 throw new Error('No valid provider found in configuration.');
         }
 
-        // Use OpenAI Generic Embeddings if available in the environment config
-        if (envConfig.EMBED_MODEL_NAME) {
-            embeddingModel = new OpenAiGenericEmbeddings({
-                modelName: envConfig.EMBED_MODEL_NAME,
-                apiKey: envConfig.EMBED_API_KEY,
-                baseURL: envConfig.EMBED_BASE_URL || 'https://api.openai.com/v1/embeddings',
-                dimensions: 768,
-            });
+        // Select the model based on the provider
+        switch (config.embed.provider) {
+            case 'OpenAI':
+                switch (config.embed.name) {
+                    case 'text-embedding-ada-002':
+                        embeddingModel = new AdaEmbeddings({ apiKey: config.embed.apiKey });
+                        break;
+                    case 'text-embedding-3-large':
+                        var openAiEmbedOptions = { apiKey: config.embed.apiKey };
+                        if (config.embed.dimensions) {
+                            openAiEmbedOptions.dynamicDimension = config.embed.dimensions;
+                        }
+                        embeddingModel = new OpenAi3LargeEmbeddings(openAiEmbedOptions);
+                        break;
+                    case 'text-embedding-3-small':
+                        embeddingModel = new OpenAi3SmallEmbeddings({ apiKey: config.embed.apiKey });
+                        break;
+                    default:
+                        var openAiEmbedOptions = {
+                            modelName: config.embed.name,
+                            apiKey: config.embed.apiKey
+                        };
+
+                        if (config.embed.baseUrl) {
+                            openAiEmbedOptions.baseURL = config.embed.baseUrl || 'https://api.openai.com/v1/embeddings';
+                        }
+
+                        if (config.embed.dimensions) {
+                            openAiEmbedOptions.dimensions = config.embed.dimensions;
+                        }
+                        embeddingModel = new OpenAiGenericEmbeddings(openAiEmbedOptions);
+                }
+                break;
+            case 'Cohere':
+                // Add your implementation for Cohere here
+                throw new Error('Cohere embedding provider not yet implemented.');
+            case 'Gecko':
+                // Add your implementation for Gecko here
+                throw new Error('Gecko embedding provider not yet implemented.');
+            default:
+                throw new Error('No valid embedding provider found in configuration.');
         }
 
         const ragApplicationBuilder = new RAGApplicationBuilder()
@@ -135,6 +197,7 @@ async function initializeRAGApplication(instance) {
             .setConversations(conversationsdb)
             .setQueryTemplate(instance.systemPrompt);
 
+
         // Conditionally set the embedding model
         if (embeddingModel) {
             ragApplicationBuilder.setEmbeddingModel(embeddingModel);
@@ -142,9 +205,7 @@ async function initializeRAGApplication(instance) {
 
         const ragApplication = await ragApplicationBuilder.build();
 
-        console.log('RAG Application is ready with provider ' + config.provider + ' and MongoDB!');
-        if (config.provider != "A")
-        console.log('RAG Application is ready with provider ' + config.provider + ' and MongoDB!');
+        console.log('RAG Application is ready with provider ' + config.model.provider + ' and MongoDB!');
         return ragApplication;
     } catch (error) {
         console.error('Failed to setup RAG Application:', error);

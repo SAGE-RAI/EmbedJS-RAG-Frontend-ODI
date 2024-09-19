@@ -1,10 +1,11 @@
 import Instance from '../models/instance.js';
+import { getEmbeddingsCacheModel } from '../models/embeddingsCache.js';
 import mongoose from 'mongoose';
 import { removeActiveInstanceFromCache } from '../middleware/auth.js';
 
 async function createInstance(req, res) {
     try {
-        const { name, description, ratingReward, isPublic, systemPrompt, suggestions, ratingResponses, model } = req.body;
+        const { name, description, ratingReward, isPublic, systemPrompt, suggestions, ratingResponses, model, embedModel } = req.body;
         const userId = req.user.id;
 
         // Validate the required fields
@@ -19,6 +20,7 @@ async function createInstance(req, res) {
             ratingReward,
             public: isPublic || false,
             systemPrompt,
+            embedModel,
             model,
             suggestions: suggestions || [], // Default to empty array if not provided
             ratingResponses: ratingResponses || { '1': [], '2': [], '3': [], '4': [], '5': [] }, // Default to empty arrays if not provided
@@ -63,16 +65,65 @@ async function getInstance(req, res) {
 // Function to update an instance
 async function updateInstance(req, res) {
     try {
-        const instance = await Instance.findByIdAndUpdate(req.params.instanceId, req.body, { new: true });
-        if (!instance) {
+        const instanceId = req.params.instanceId;
+        const newData = req.body;
+
+        // Fetch the current instance data
+        const currentInstance = await Instance.findById(instanceId);
+        if (!currentInstance) {
             return res.status(404).json({ error: 'Instance not found' });
         }
-        removeActiveInstanceFromCache(req.params.instanceId);
-        res.json(instance);
+
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
+
+        // Use countDocuments to get the count of documents that match the criteria
+        const sourceCount = await EmbeddingsCache.countDocuments({ loaderId: { $ne: "LOADERS_LIST_CACHE_KEY" } });
+
+        if (sourceCount > 0) {
+            // If sources exist, ensure only embedModel.apiKey is updated
+            if (newData.embedModel) {
+                const currentEmbedModel = currentInstance.embedModel || {};
+                const newEmbedModel = newData.embedModel;
+        
+                // Check if any field other than apiKey is different
+                let illegalChange = false;
+                for (let newField of ['provider', 'name', 'baseUrl']) {
+                    if (newEmbedModel[newField] && newEmbedModel[newField] !== currentEmbedModel[newField]) {
+                        illegalChange = true;
+                        break; // If any field is different, flag illegal change
+                    }
+                }
+        
+                if (!illegalChange) {
+                    // Add back the provider, name, and baseUrl from currentEmbedModel to newData.embedModel
+                    newData.embedModel.provider = currentEmbedModel.provider;
+                    newData.embedModel.name = currentEmbedModel.name;
+                    newData.embedModel.baseUrl = currentEmbedModel.baseUrl;
+
+                } else {
+                    return res.status(400).json({ error: 'When sources exist, only the embedModel.apiKey field can be updated.' });
+                }
+            }
+        }
+
+        // Update the instance
+        const updatedInstance = await Instance.findByIdAndUpdate(instanceId, newData, { new: true });
+
+        if (!updatedInstance) {
+            return res.status(404).json({ error: 'Instance not found' });
+        }
+
+        // Remove from cache
+        removeActiveInstanceFromCache(instanceId);
+
+        // Send the updated instance as a response
+        res.json(updatedInstance);
     } catch (error) {
+        console.error('Error updating instance:', error);
         res.status(500).json({ error: error.message });
     }
-};
+}
+
 
 async function deleteInstance(req, res) {
     try {

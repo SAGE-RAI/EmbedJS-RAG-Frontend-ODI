@@ -1,5 +1,5 @@
 import express from 'express';
-import { addSource, getSources, getSource, updateSource, deleteSource } from '../controllers/source.js';
+import { addSource, getSources, getSource, updateSource, deleteSource, getSourcesCount } from '../controllers/source.js';
 import { ensureAuthenticated, checkOwnership, setActiveInstance, canAccessInstance, canEditSources } from '../middleware/auth.js';
 import fetch from 'node-fetch'; // Import node-fetch
 import { load } from 'cheerio'
@@ -91,6 +91,9 @@ router.get('/', ensureAuthenticated, canAccessInstance, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// Route to list sources with content negotiation
+router.get('/count', ensureAuthenticated, canAccessInstance, getSourcesCount);
 
 // Route to get a specific source with content negotiation
 router.get('/:loaderId', ensureAuthenticated, canAccessInstance, async (req, res) => {

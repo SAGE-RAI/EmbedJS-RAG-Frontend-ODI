@@ -91,6 +91,50 @@ document.addEventListener("DOMContentLoaded", function () {
                     nameField.prop('disabled', false);
                 }
             });
+
+            const embedProviderField = $('select[name="embedModel.provider"]');
+            const embedBaseUrlField = $('input[name="embedModel.baseUrl"]');
+            const embedNameField = $('input[name="embedModel.name"]');
+            const embedDimensionsField = $('input[name="embedModel.dimensions"]');
+
+            // Initially disable the Base URL field
+            embedBaseUrlField.prop('disabled', true);
+
+            selectedEmbedProvider = embedProviderField.val();
+            selectedEmbedName = embedNameField.val();
+            if (selectedEmbedProvider !== 'OpenAI') {
+                embedBaseUrlField.prop('disabled', true);
+                embedNameField.prop('disabled', true).val('');
+                embedDimensionsField.prop('disabled', true);
+            }
+
+            // Add change event listener to provider field
+            embedProviderField.change(function () {
+                const selectedEmbedProvider = $(this).val();
+                if (selectedEmbedProvider !== 'OpenAI') {
+                    embedBaseUrlField.prop('disabled', true).val('');
+                    embedNameField.prop('disabled', true).val('');
+                    embedDimensionsField.prop('disabled', true);
+                } else {
+                    embedBaseUrlField.prop('disabled', false).val('');
+                    embedNameField.prop('disabled', false);
+                    embedDimensionsField.prop('disabled', false)
+                }
+            });
+
+            embedNameField.change(function () {
+                embedDimensionsField.prop('disabled', false);
+                if (selectedEmbedProvider === 'OpenAI') {
+                    const selectedEmbedName = $(this).val();
+                    if (selectedEmbedName === 'text-embedding-3-small' || selectedEmbedName === 'text-embedding-ada-002') {
+                        embedDimensionsField.prop('disabled', true);
+                    } else {
+                        embedDimensionsField.prop('disabled', false);
+                    }
+                } else {
+                    embedDimensionsField.prop('disabled', true);
+                }
+            });
         })
         .catch(error => {
             console.error("Error fetching schema:", error);
