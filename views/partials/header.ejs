@@ -8,6 +8,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <title><%= pageTitle %></title>
 
 <script type="text/javascript" src="/lib/jquery-3.7.1.min.js"></script>
@@ -21,49 +22,6 @@
 <link href="/css/style.css" rel="stylesheet">
 <link rel="shortcut icon" href="/images/odifavicon32.ico">
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const instanceSelect = document.getElementById('instanceSelect');
-        const currentPath = window.location.pathname;
-        const activeinstanceId = '<%= typeof activeInstance !== 'undefined' && activeInstance ? activeInstance._id : "" %>';
-
-        // Add default option
-        const defaultOption = document.createElement('option');
-        defaultOption.value = "";
-        defaultOption.text = "Select instance";
-        instanceSelect.appendChild(defaultOption);
-
-        // Fetch the user's RAG instances and populate the select dropdown
-        fetch('/instances', {
-            headers: {
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            data.forEach(instance => {
-                const option = document.createElement('option');
-                option.value = instance._id;
-                option.text = instance.name;
-                if (instance._id === activeinstanceId) {
-                    option.selected = true;
-                }
-                instanceSelect.appendChild(option);
-            });
-        })
-        .catch(error => console.error('Error fetching RAG instances:', error));
-    });
-
-    function switchInstance() {
-        const instanceSelect = document.getElementById('instanceSelect');
-        const selectedinstanceId = instanceSelect.value;
-        if (selectedinstanceId) {
-            const currentPath = window.location.pathname.split('/').slice(3).join('/'); // Get the current path without the instanceId
-            window.location.href = `/instances/${selectedinstanceId}/${currentPath}`;
-        }
-    }
-</script>
-
 </head>
 <body>
     <div class="topper header">
@@ -72,7 +30,7 @@
         <nav class="main-nav" aria-label="Main Menu">
             <ul>
             <% if(user) { %>
-                <li><a href="/instances">Instances</a></li>
+                <li><a href="/instances">View assistants</a></li>
                 <% if (user.authMethod === 'google') { %>
                     <li><a href="/auth/local/reset-password">View/Change local password</a></li>
                 <% } %>
@@ -90,4 +48,3 @@
             </ul>
         </nav>
     </div>
-    <main>

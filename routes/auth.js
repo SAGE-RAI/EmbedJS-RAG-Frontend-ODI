@@ -34,8 +34,14 @@ async function processLogin(req, res) {
 // Authentication route for Google
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-// Authentication route for Django
-router.get('/django', passport.authenticate('django'));
+// Authentication route for Django with optional path redirection
+router.get('/django', (req, res, next) => {
+    // Capture the requested path and store it in session
+    if (req.query.path) {
+        req.session.redirectTo = req.query.path;
+    }
+    passport.authenticate('django')(req, res, next);
+});
 
 // Callback endpoint for Google authentication
 router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/error' }), async (req, res) => {
@@ -46,11 +52,32 @@ router.get('/google/callback', passport.authenticate('google', { failureRedirect
 });
 
 // Callback endpoint for Django authentication
-router.get('/django/callback', passport.authenticate('django', { failureRedirect: '/error' }), async (req, res) => {
-    req.session.authMethod = 'django';
-    // Successful authentication, redirect to profile page or wherever needed
-    await processLogin(req, res);
-    res.redirect('/instances/');
+router.get('/django/callback', (req, res, next) => {
+    // Temporarily store the redirectTo value
+    const redirectTo = req.session.redirectTo;
+
+    // Call passport authentication
+    passport.authenticate('django', async (err, user, info) => {
+        if (err || !user) {
+            return res.redirect('/error');
+        }
+
+        // Log the user in manually
+        req.logIn(user, async (loginErr) => {
+            if (loginErr) {
+                return next(loginErr);
+            }
+
+            // Process login (save user to session, update last login, etc.)
+            await processLogin(req, res);
+
+            // Restore the redirectTo value after passport has processed the session
+            req.session.redirectTo = redirectTo;
+
+            // Redirect to the originally requested path or a default location
+            res.redirect(redirectTo || '/instances/');
+        });
+    })(req, res, next);
 });
 
 router.get('/profile', ensureAuthenticated, (req, res) => {

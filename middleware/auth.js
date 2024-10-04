@@ -72,6 +72,7 @@ export const setActiveInstance = async (req, res, next) => {
 
         // Store the initialized RAG application and its ID in the session
         req.session.activeInstance = instance;
+        req.session.activeInstance.id = instance._id;
         req.ragApplication = ragApplication;
         res.locals.activeInstance = instance;
         res.locals.instanceId = instanceId;
@@ -90,17 +91,28 @@ setInterval(cleanUpExpiredInstances, CLEANUP_INTERVAL);
 export const canAccessInstance = async (req, res, next) => {
     try {
         const instanceId = req.params.instanceId;
+
+        if (!req.user) {
+            const error = new Error("Unathorised");
+            error.status = 401;
+            throw error;
+        }
+
         const userId = req.user._id;
         const userEmail = req.user.email;
 
         if (!userId || !userEmail) {
-            return res.status(401).json({ error: 'Unauthorized' });
+            const error = new Error("Unathorised");
+            error.status = 401;
+            throw error;
         }
 
         const instance = await Instance.findById(instanceId);
 
         if (!instance) {
-            return res.status(404).json({ error: 'Instance not found' });
+            const error = new Error("Instance not found");
+            error.status = 404;
+            throw error;
         }
 
         // Check if the user has access to this instance
@@ -108,10 +120,13 @@ export const canAccessInstance = async (req, res, next) => {
         const hasAccess = instance.createdBy.equals(userId) || userAccess || instance.public;
 
         if (!hasAccess) {
-            return res.status(403).json({ error: 'Forbidden' });
+            const error = new Error("Permission denied");
+            error.status = 403;
+            throw error;
         }
 
         req.session.activeInstance = instance;
+        req.session.activeInstance.id = instance._id;
         req.userAccess = userAccess;
         next();
     } catch (error) {
@@ -126,7 +141,9 @@ export const canEditSources= async (req, res, next) => {
     const userEmail = req.user.email;
 
     if (!userId || !userEmail) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        const error = new Error("Unathorised");
+        error.status = 401;
+        throw error;
     }
 
     const instance = await Instance.findById(instanceId);
@@ -136,7 +153,9 @@ export const canEditSources= async (req, res, next) => {
     if (isOwner || (userAccess && userAccess.role === 'contentEditor')) {
         next();
     } else {
-        res.status(403).send('Permission denied');
+        const error = new Error("Permission denied");
+        error.status = 403;
+        throw error;
     }
 };
 
@@ -147,7 +166,9 @@ export const canAdminInstance = async (req, res, next) => {
     const userEmail = req.user.email;
 
     if (!userId || !userEmail) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        const error = new Error("Unathorised");
+        error.status = 401;
+        throw error;
     }
 
     const instance = await Instance.findById(instanceId);
@@ -158,7 +179,9 @@ export const canAdminInstance = async (req, res, next) => {
     if (isOwner || (userAccess && userAccess.role === 'instanceAdmin')) {
         next();
     } else {
-        res.status(403).send('Permission denied');
+        const error = new Error("Permission denied");
+        error.status = 403;
+        throw error;
     }
 };
 
@@ -167,10 +190,9 @@ export const verifyConversationMiddleware = async (req, res, next) => {
     try {
         let userId = "";
         if (!req.isAuthenticated()) {
-            // Extract the token from the request header
-            const token = req.headers['authorization'].split(' ')[1];
-            // Get the user ID associated with the token
-            userId = await getUserIDFromToken(token);
+            const error = new Error("Unathorised");
+            error.status = 401;
+            throw error;
         } else {
             userId = req.user._id;
         }
@@ -178,21 +200,23 @@ export const verifyConversationMiddleware = async (req, res, next) => {
         // Extract the conversation ID from the request params
         const conversationId = req.params.conversationId;
 
-        const Conversation = getConversationModel(req.session.activeInstance.id);
+        const Conversation = getConversationModel(req.session.activeInstance._id);
 
         // Check if the conversation ID belongs to the user
         const conversation = await Conversation.findOne({ _id: conversationId, userId: userId });
 
         // If conversation not found or doesn't belong to the user, return 401 Unauthorized
         if (!conversation) {
-            return res.status(401).json({ error: 'Unauthorized: Conversation not found or does not belong to the user' });
+            const error = new Error("Unauthorized: Conversation not found or does not belong to the user");
+            error.status = 401;
+            throw error;
         }
 
         // If both token and conversation are verified, proceed to the next middleware or route handler
         next();
     } catch (error) {
-        console.error('Error in verifyConversationMiddleware:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.log(error);
+        next(error);
     }
 };
 
@@ -200,7 +224,11 @@ export const ensureAuthenticated = (req, res, next) => {
     if (req.isAuthenticated()) {
         return next();
     } else {
-        res.status(401).json({ error: 'Unauthorized' });
+        // Get the full requested path
+        const requestedPath = encodeURIComponent(req.originalUrl);
+
+        // Redirect to the authentication page with the requested path as a query parameter
+        return res.redirect(`/auth/django?path=${requestedPath}`);
     }
 };
 
@@ -212,7 +240,9 @@ export const isAdmin = (req, res, next) => {
         req.isAdmin = true;
         next();
     } else {
-        res.status(403).send('Permission denied');
+        const error = new Error("Permission denied");
+        error.status = 403;
+        throw error;
     }
 }
 

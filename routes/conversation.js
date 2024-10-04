@@ -1,14 +1,14 @@
 import express from 'express';
-import { verifyTokenMiddleware, verifyConversationMiddleware, setActiveInstance, canAccessInstance, canAdminInstance, ensureAuthenticated } from '../middleware/auth.js'; // Import your middleware functions
+import { ensureAuthenticated, verifyConversationMiddleware, setActiveInstance, canAccessInstance, canAdminInstance } from '../middleware/auth.js'; // Import your middleware functions
 import { getConversation, getConversations, createConversation, getMessages, deleteConversation, updateConversation, postMessage, setRating } from '../controllers/conversation.js'; // Import necessary functions from controllers
 
 const router = express.Router({ mergeParams: true });
 
 // Create a new conversation and get an ID
-router.post("/create", verifyTokenMiddleware, canAccessInstance, setActiveInstance, createConversation);
+router.post("/create", ensureAuthenticated, canAccessInstance, setActiveInstance, createConversation);
 
 // Generic route for rendering the chat page or returning conversations as JSON
-router.get("/", verifyTokenMiddleware, canAccessInstance, async (req, res) => {
+router.get("/", ensureAuthenticated, canAccessInstance, setActiveInstance, async (req, res) => {
     try {
         if (req.accepts(['json', 'html']) === 'json') {
             return getConversations(req, res);
@@ -24,22 +24,22 @@ router.get("/", verifyTokenMiddleware, canAccessInstance, async (req, res) => {
 });
 
 // Route handler for getting a specific conversation
-router.get("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, getConversation);
+router.get("/:conversationId", ensureAuthenticated, verifyConversationMiddleware, canAccessInstance, getConversation);
 // Route handler for getting a specific conversation
 
 // Route to update a specific conversation
-router.post("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, updateConversation);
+router.post("/:conversationId", ensureAuthenticated, verifyConversationMiddleware, canAccessInstance, updateConversation);
 
 // Route to delete a specific conversation
-router.delete("/:conversationId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, deleteConversation);
+router.delete("/:conversationId", ensureAuthenticated, verifyConversationMiddleware, canAccessInstance, deleteConversation);
 
 // Route to get messages for a specific conversation
-router.get("/:conversationId/messages", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, getMessages);
+router.get("/:conversationId/messages", ensureAuthenticated, verifyConversationMiddleware, canAccessInstance, getMessages);
 
 // Route to post a message to a specific conversation
-router.post("/:conversationId/messages", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, setActiveInstance, postMessage);
+router.post("/:conversationId/messages", ensureAuthenticated, verifyConversationMiddleware, canAccessInstance, setActiveInstance, postMessage);
 
 // Route to post a rating to a specific message
-router.post("/:conversationId/messages/:messageId", verifyTokenMiddleware, verifyConversationMiddleware, canAccessInstance, setRating);
+router.post("/:conversationId/messages/:messageId", ensureAuthenticated, verifyConversationMiddleware, canAccessInstance, setRating);
 
 export default router;

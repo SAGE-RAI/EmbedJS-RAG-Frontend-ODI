@@ -59,7 +59,7 @@ async function initializeRAGApplication(instance) {
                 apiKey: instanceModel.apiKey || process.env[apiKeyEnvVar] || envConfig.MODEL_API_KEY
             },
             embed: {
-                provider: embedProvider || envConfig.EMBED_PROVIDER,
+                provider: embedProvider || envConfig.EMBED_MODEL_PROVIDER,
                 name: instanceEmbedModel.name || envConfig.EMBED_MODEL_NAME,
                 baseUrl: instanceEmbedModel.baseUrl || envConfig.EMBED_BASE_URL,
                 apiKey: instanceEmbedModel.apiKey || process.env[apiKeyEnvVar] || envConfig.EMBED_API_KEY,
@@ -146,15 +146,15 @@ async function initializeRAGApplication(instance) {
                         break;
                 }
                 break;
-            
+
             case 'Cohere':
                 // Add your implementation for Cohere here
                 throw new Error('Cohere embedding provider not yet implemented.');
-            
+
             case 'Gecko':
                 // Add your implementation for Gecko here
                 throw new Error('Gecko embedding provider not yet implemented.');
-            
+
             default:
                 throw new Error('No valid embedding provider found in configuration.');
         }

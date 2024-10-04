@@ -1,25 +1,29 @@
-<%- include('../../partials/header-admin') %>
+<%- include('../../partials/header') %>
 <style>
     /* Add your custom styles here */
 </style>
-<h1>Instance Details</h1>
+<div class="padded">
+<h1>Assistant details</h1>
 <div id="res" class="alert"></div>
 
 <div>
-    <h2>Instance Information</h2>
+    <h2>Assistant information</h2>
     <p><strong>Name:</strong> <span id="instanceName"></span></p>
     <p><strong>Description:</strong> <span id="instanceDescription"></span></p>
     <p><strong>Created Date:</strong> <span id="instanceCreatedAt"></span></p>
     <p><strong>Updated Date:</strong> <span id="instanceUpdatedAt"></span></p>
     <p><strong>Public:</strong> <span id="instancePublic"></span></p>
 </div>
-<h3>Open chat</h3>
-<button id="chatBtn">Open chat</button>
+<button id="chatBtn">Chat with assistant</button>
 
-<h3>Manage instance</h3>
-<button id="editInstanceBtn">Edit Instance</button>
-<button id="deleteInstanceBtn">Delete Instance</button>
+<h3>Manage assistant</h3>
+<button id="editInstanceBtn">Edit assistant</button>
+<button id="deleteInstanceBtn">Delete assistant</button>
 <button id="manageSourcesBtn">Manage Sources</button>
+
+<h3>Ratings report</h3>
+<button id="ratingsReportBtn">Ratings report</button>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script>
@@ -76,6 +80,10 @@
 
         document.getElementById('chatBtn').addEventListener('click', function () {
             window.location.href = `/instances/${instanceId}/conversations`;
+        });
+
+        document.getElementById('ratingsReportBtn').addEventListener('click', function () {
+            window.location.href = `/instances/${instanceId}/ratingsReport`;
         });
     });
 </script>

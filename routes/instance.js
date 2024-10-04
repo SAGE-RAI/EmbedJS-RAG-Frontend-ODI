@@ -5,7 +5,7 @@ import { getRatingsReport } from '../controllers/conversation.js';
 
 const router = express.Router({ mergeParams: true });
 
-router.get('/', ensureAuthenticated, canAccessInstance, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         if (req.accepts(['json', 'html']) === 'json') {
             return getInstance(req, res);

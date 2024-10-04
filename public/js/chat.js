@@ -604,7 +604,7 @@ async function handleSubmit(event) {
     event.preventDefault(); // Prevent the default form submission behavior
     const suggestionContainer = document.querySelector('.suggestion-container');
     if (suggestionContainer) {
-        suggestionContainer.remove(); 
+        suggestionContainer.remove();
     }
 
     const form = document.querySelector('.aichat'); // Get the form element

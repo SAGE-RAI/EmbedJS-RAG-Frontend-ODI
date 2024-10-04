@@ -84,7 +84,7 @@ async function updateInstance(req, res) {
             if (newData.embedModel) {
                 const currentEmbedModel = currentInstance.embedModel || {};
                 const newEmbedModel = newData.embedModel;
-        
+
                 // Check if any field other than apiKey is different
                 let illegalChange = false;
                 for (let newField of ['provider', 'name', 'baseUrl']) {
@@ -93,7 +93,7 @@ async function updateInstance(req, res) {
                         break; // If any field is different, flag illegal change
                     }
                 }
-        
+
                 if (!illegalChange) {
                     // Add back the provider, name, and baseUrl from currentEmbedModel to newData.embedModel
                     newData.embedModel.provider = currentEmbedModel.provider;
