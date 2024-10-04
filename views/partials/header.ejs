@@ -72,11 +72,11 @@
         <nav class="main-nav" aria-label="Main Menu">
             <ul>
             <% if(user) { %>
-                <li><a href="/instances">Instances</a><img src="/images/dashboard.svg" alt="Dashboard Icon" width="24" height="26" /></li>
+                <li><a href="/instances">Instances</a></li>
                 <% if (user.authMethod === 'google') { %>
                     <li><a href="/auth/local/reset-password">View/Change local password</a></li>
                 <% } %>
-                <li><a href="/about" id="privacy-link">Privacy/Terms</a><img src="/images/privacy.svg" alt="Privacy Icon" width="24" height="26" /></li>
+                <li><a href="/about" id="privacy-link">Privacy/Terms</a></li>
                 <li>
                     <a style="padding: 0;" href="/auth/profile"><%= user ? (user.displayName || (user.first_name && user.last_name ? user.first_name + ' ' + user.last_name : user.email)) : 'Guest' %></a><br/>Tokens: <span id="userTokens"><%= user.tokens %></span>
                     <form style="display: inline-flex;" id="logout_form" action="/auth/logout" method="post">
@@ -84,7 +84,7 @@
                     </form>
                 </li>
             <% } else { %>
-                <li><a href="/about" id="privacy-link">Privacy/Terms</a><img src="/images/privacy.svg" alt="Privacy Icon" width="24" height="26" /></li>
+                <li><a href="/about" id="privacy-link">Privacy/Terms</a></li>
                 <li><a href="/auth/django" class="toggle-link">Login</a></li>
             <% } %>
             </ul>

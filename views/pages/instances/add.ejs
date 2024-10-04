@@ -12,7 +12,7 @@
 <form id="dataForm"></form>
 
 <script>
-// default ratings response if none is submitted 
+// default ratings response if none is submitted
 const defaultRatingResponses = {
         1: [
             "Don't like the style",
@@ -50,11 +50,13 @@ const defaultRatingResponses = {
             "Highly informative"
         ]
     };
-    
+
 const data = {};
 $('#dataForm').html("");
 $('#result').html("");
 $('form').show();
+
+data.ratingResponses = defaultRatingResponses;
 
 document.addEventListener("DOMContentLoaded", function () {
     // Fetch the schema

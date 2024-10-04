@@ -1,3 +1,58 @@
+:root {
+  /* Screens */
+  --screen-xxs: 350px;
+  --screen-xs: 580px;
+  --screen-sm: 640px;
+  --screen-md: 768px;
+  --screen-lg: 1024px;
+  --screen-xl: 1280px;
+
+  /* Colors */
+  --color-white: #FFFFFF;
+  --color-transparent: transparent;
+  --color-black: #000000;
+  --color-dark-grey: #333333;
+  --color-light-grey: #E2E6E9;
+  --color-dark-blue: #072589;
+  --color-light-blue: #6DF8FF;
+  --color-pink: #F467C0;
+  --color-orange: #F37533;
+  --color-light-green: #6BF58B;
+  --color-dark-green: #1DD3A7;
+  --color-progress-pie-progress: #a5e6b3;
+
+  /* Font Family */
+  --font-sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  /* Font Sizes */
+  --font-size-14: 0.875rem;
+  --line-height-14: 1.5rem;
+  --font-size-16: 1rem;
+  --line-height-16: 1.625rem;
+  --font-size-18: 1.125rem;
+  --line-height-18: 1.5rem;
+  --font-size-20: 1.25rem;
+  --line-height-20: 1.625rem;
+  --font-size-22: 1.375rem;
+  --line-height-22: 2rem;
+  --font-size-24: 1.5rem;
+  --line-height-24: 2.125rem;
+  --font-size-25: 1.563rem;
+  --line-height-25: 1.875rem;
+  --font-size-32: 2rem;
+  --line-height-32: 2.625rem;
+  --font-size-35: 2.188rem;
+  --line-height-35: 2.813rem;
+  --font-size-45: 2.813rem;
+  --line-height-45: 3.125rem;
+  --font-size-52: 3.25rem;
+  --line-height-52: 3.875rem;
+  --font-size-56: 3.5rem;
+  --line-height-56: 4.125rem;
+  --font-size-85: 5.313rem;
+  --line-height-85: 5.938rem;
+}
+
 body {
   margin: 0px;
   padding: 0px;
@@ -84,12 +139,16 @@ main {
   line-height: 1;
   display: inline-flex;
   align-items: center;
-  font-weight: bold;
   padding: 0px;
   border-radius: 25px;
   border: none;
   text-decoration: none;
   background: none;
+}
+.header .main-nav ul a:hover,
+.header .main-nav ul button:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 @media (min-width: 768px) {
@@ -353,7 +412,8 @@ sidebar .admin-menu {
 .topper {
   width: auto;
   height: auto;
-  background: linear-gradient(15deg, #722ea5 0%, #80d0c7 100%);
+  /* background: linear-gradient(15deg, #722ea5 0%, #80d0c7 100%);*/
+  background: var(--color-dark-blue);
   padding: 10px;
   position: sticky;
   z-index: 1;
@@ -365,20 +425,19 @@ sidebar .admin-menu {
 }
 
 .topper .icon {
-  width: 50px;
+  width: 100px;
   height: 50px;
-  border-radius: 50%;
-  background: #11ba91 url('https://avatars.githubusercontent.com/u/2492770?s=200&v=4');
+  background: transparent url('https://raw.githubusercontent.com/theodi/labs-logo/refs/heads/master/public/assets/odilabs-8-dark.svg');
   background-size: cover;
   margin-left: 15px;
 }
 
 .topper .name {
   color: #fff;
-  font-weight: bolder;
   margin-left: 15px;
-  font-size: 18px;
+  font-size: 40px;
   letter-spacing: 2px;
+  display: none;
 }
 .chat-container {
   display: flex;

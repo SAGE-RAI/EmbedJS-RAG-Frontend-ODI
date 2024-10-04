@@ -223,7 +223,6 @@
             Yesterday: [],
             'Previous 7 days': [],
             'Previous 30 days': [],
-            Months: {}
         };
 
         // Iterate over conversations and categorize them
@@ -243,10 +242,10 @@
                 categorized['Previous 30 days'].push(conversation);
             } else {
                 const monthYear = lastMessageDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-                if (!categorized.Months[monthYear]) {
-                    categorized.Months[monthYear] = [];
+                if (!categorized[monthYear]) {
+                    categorized[monthYear] = [];
                 }
-                categorized.Months[monthYear].push(conversation);
+                categorized[monthYear].push(conversation);
             }
         });
 
