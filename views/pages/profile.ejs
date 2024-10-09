@@ -1,14 +1,12 @@
 <!-- views/profile.ejs -->
 <%- include('../partials/header') %>
-<sidebar>
-</sidebar>
 <style>
   .dt-buttons {
     width: fit-content;
     display: inline-block;
   }
 </style>
-<div class="container">
+<div class="padded">
     <h1>Profile Information</h1>
     <p>
         <strong>Id</strong>: <%= user.id %><br>
@@ -18,8 +16,9 @@
         <strong>Remaining tokens</strong>: <%= user.tokens %>
     </p>
     <h2>How to earn more tokens?</h2>
+    <p>You can earn more tokens by rating the responses of many of the assistants. You can view how many tokens you receive on the assistant's detail page.</p>
     <h2>Recent transactions</h2>
-    <section id="transactionsContainer" style="width: 80%; margin-left: auto; margin-right: auto;">
+    <section id="transactionsContainer" style="width: 100%; margin-left: auto; margin-right: auto;">
       <table id="transactionsTable" class="display" style="width:100%"></table>
     </section>
 

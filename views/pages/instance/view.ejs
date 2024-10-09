@@ -10,6 +10,9 @@
         <h2>Assistant information</h2>
         <p><strong>Name:</strong> <span id="instanceName"></span></p>
         <p><strong>Description:</strong> <span id="instanceDescription"></span></p>
+        <p><strong>Token reward for providing rating:</strong> <span id="tokenReward"></span></p>
+        <p><strong>Model Provider:</strong> <span id="modelProvider"></span></p>
+        <p><strong>Model Name:</strong> <span id="modelName"></span></p>
         <p><strong>Created Date:</strong> <span id="instanceCreatedAt"></span></p>
         <p><strong>Updated Date:</strong> <span id="instanceUpdatedAt"></span></p>
         <p><strong>Public:</strong> <span id="instancePublic"></span></p>
@@ -48,12 +51,15 @@
         })
         .then(instance => {
             if (!instance) return;
-
+            console.log(instance);
             // Show the assistant details section
             document.getElementById('assistantDetails').style.display = 'block';
 
             document.getElementById('instanceName').textContent = instance.name;
             document.getElementById('instanceDescription').textContent = instance.description || 'No description available';
+            document.getElementById('tokenReward').textContent = '+' + instance.ratingReward || '0';
+            document.getElementById('modelProvider').textContent = instance.model.provider || 'Model provider unknown';
+            document.getElementById('modelName').textContent = instance.model.name || 'Model name unknown';
             document.getElementById('instanceCreatedAt').textContent = new Date(instance.createdAt).toLocaleString();
             document.getElementById('instanceUpdatedAt').textContent = new Date(instance.updatedAt).toLocaleString();
             document.getElementById('instancePublic').textContent = instance.public ? 'Yes' : 'No';

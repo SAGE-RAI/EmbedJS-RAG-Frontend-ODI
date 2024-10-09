@@ -79,11 +79,20 @@ router.post('/', ensureAuthenticated, canAccessInstance, canEditSources, setActi
 router.get('/', ensureAuthenticated, canAccessInstance, async (req, res) => {
     try {
         const sources = await getSources(req, res, true); // Use a flag to return raw data
+        let userCanEditSources = false;
+        try {
+            await canEditSources(req, res, () => {
+                userCanEditSources = true;
+            });
+        } catch (error) {
+            userCanEditSources = false;
+        } // Check if user can edit sources
+
         if (req.accepts(['json', 'html']) === 'json') {
             res.json(sources);
         } else if (req.accepts(['html', 'json']) === 'html') {
             res.locals.pageTitle = "Sources";
-            res.render('pages/sources/view', { instanceId: req.params.instanceId });
+            res.render('pages/sources/view', { instanceId: req.params.instanceId, userCanEditSources: userCanEditSources });
         } else {
             res.status(406).send('Not Acceptable');
         }
