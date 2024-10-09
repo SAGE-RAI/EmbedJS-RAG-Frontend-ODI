@@ -72,7 +72,7 @@ h3 {
 h1, h2, h3, h4 {
   color: var(--color-dark-blue);
 }
-button, .submitButton {
+button, .submitButton, input.btn {
   transition: none !important;
   background-color: var(--color-dark-blue);
   color: var(--color-white);
@@ -90,7 +90,7 @@ tbody tr:nth-child(2n) button {
   background-color: var(--color-dark-grey);
   color: var(--color-white)
 }
-button:hover, .submitButton:hover,
+button:hover, .submitButton:hover, #dataFrom .btn:hover,
 tbody tr:nth-child(2n) button:hover {
   background-color: var(--color-light-grey);
   color: var(--color-dark-blue);

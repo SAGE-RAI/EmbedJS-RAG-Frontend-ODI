@@ -95,8 +95,8 @@ table.cards tbody tr td.description {
     margin: 0.5em;
 }
 table.cards tbody tr td.description {
-    position: absolute;
-    bottom: 80px;
+    position: relative;
+    top: 170px;
     width: 410px;
     height: 60px;
 }
