@@ -53,13 +53,13 @@ async function initializeRAGApplication(instance) {
 
         return {
             model: {
-                provider: provider || envConfig.MODEL_PROVIDER,
+                provider: (provider === 'Default' || !provider) ? envConfig.MODEL_PROVIDER : provider,
                 name: instanceModel.name || envConfig.MODEL_NAME,
                 baseUrl: instanceModel.baseUrl || envConfig.MODEL_BASE_URL,
                 apiKey: instanceModel.apiKey || process.env[apiKeyEnvVar] || envConfig.MODEL_API_KEY
             },
             embed: {
-                provider: embedProvider || envConfig.EMBED_PROVIDER,
+                provider: (embedProvider === 'Default' || !embedProvider) ? envConfig.EMBED_PROVIDER : embedProvider,
                 name: instanceEmbedModel.name || envConfig.EMBED_MODEL_NAME,
                 baseUrl: instanceEmbedModel.baseUrl || envConfig.EMBED_BASE_URL,
                 apiKey: instanceEmbedModel.apiKey || process.env[apiKeyEnvVar] || envConfig.EMBED_API_KEY,
