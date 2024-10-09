@@ -185,7 +185,6 @@ export const canAdminInstance = async (req, res, next) => {
     }
 };
 
-
 export const verifyConversationMiddleware = async (req, res, next) => {
     try {
         let userId = "";
@@ -236,7 +235,13 @@ export const isAdmin = (req, res, next) => {
     if (!req.isAuthenticated()) {
         return res.redirect('/auth/google');
     }
-    if (req.session.authMethod === 'google') {
+
+    // Get list of admin emails from environment variable
+    const adminEmails = process.env.ADMIN ? process.env.ADMIN.split(',') : [];
+    console.log("admin");
+    console.log(process.env.ADMIN);
+
+    if (req.session.authMethod === 'google' || adminEmails.includes(req.user.email)) {
         req.isAdmin = true;
         next();
     } else {
@@ -244,7 +249,7 @@ export const isAdmin = (req, res, next) => {
         error.status = 403;
         throw error;
     }
-}
+};
 
 export const checkOwnership = async (req, res, next) => {
     const instance = await Instance.findById(req.params.instanceId);

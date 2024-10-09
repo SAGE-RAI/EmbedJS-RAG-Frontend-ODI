@@ -124,7 +124,6 @@ async function updateInstance(req, res) {
     }
 }
 
-
 async function deleteInstance(req, res) {
     try {
         const instanceId = req.params.instanceId;
@@ -135,33 +134,37 @@ async function deleteInstance(req, res) {
             return res.status(404).json({ error: 'Instance not found' });
         }
 
-        const mongoUri = process.env.MONGO_URI;
         const dbName = instanceId; // Using instanceId as the database name
 
         try {
-            // Connect to the associated database
-            const connection = await mongoose.createConnection(`${mongoUri}/${dbName}`, {
-                useNewUrlParser: true,
-                useUnifiedTopology: true,
+            const connection = mongoose.connection.useDb(dbName, { useCache: true });
+
+            // Drop the entire database using mongoose's connection
+            connection.db.dropDatabase((err, result) => {
+                if (err) {
+                    console.error('Error dropping database:', err);
+                    return res.status(500).json({ error: 'Failed to delete associated database' });
+                }
+                console.log('Database deleted successfully');
+                connection.close();
             });
 
-            // Drop the associated database
-            await connection.dropDatabase();
-            await connection.close();
         } catch (err) {
-            console.log('Failed to delete database');
-            console.log(err);
+            console.error('Failed to delete database');
+            console.error(err);
             return res.status(500).json({ error: 'Failed to delete associated database' });
         }
 
         // Delete the instance from the master database
-        //await Instance.findByIdAndDelete(instanceId);
+        await Instance.findByIdAndDelete(instanceId);
 
         res.sendStatus(204);
     } catch (error) {
+        console.error('Error in deleteInstance:', error);
         res.status(500).json({ error: error.message });
     }
 }
+
 
 async function addUserToInstance(req, res) {
     try {

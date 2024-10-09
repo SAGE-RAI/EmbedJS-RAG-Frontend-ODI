@@ -45,11 +45,19 @@ async function initializeRAGApplication(instance) {
 
     // Function to merge instance and environment config
     function getConfigFromInstanceOrEnv(instanceModel, instanceEmbedModel, envConfig) {
-        const provider = instanceModel.provider;
-        const embedProvider = instanceEmbedModel.provider;
-
-        // Construct the environment variable key for the API key
-        const apiKeyEnvVar = provider.toUpperCase().replace(/ /g, '_') + '_API_KEY';
+        let provider = instanceModel.provider;
+        if (provider == "Default") {
+            provider = null;
+        }
+        let embedProvider = instanceEmbedModel.provider;
+        if (embedProvider == "Default") {
+            embedProvider = null;
+        }
+        let apiKeyEnvVar = null;
+        if (provider) {
+            // Construct the environment variable key for the API key
+            apiKeyEnvVar = provider.toUpperCase().replace(/ /g, '_') + '_API_KEY';
+        }
 
         return {
             model: {
@@ -84,6 +92,7 @@ async function initializeRAGApplication(instance) {
         };
 
         const config = getConfigFromInstanceOrEnv(instanceModel, instanceEmbedModel, envConfig);
+        console.log(config);
 
         let model;
         let embeddingModel;

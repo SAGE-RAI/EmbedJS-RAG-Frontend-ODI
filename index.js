@@ -96,6 +96,7 @@ db.once('open', () => {
   app.use('/auth', authRoutes);
   app.use('/admin', adminRoutes);
 
+  app.use('/instances', instancesRoutes);
   app.use('/instances/:instanceId', (req, res, next) => {
     res.locals.activeInstance = { id: req.params.instanceId };
     res.locals.instanceId = req.params.instanceId;
@@ -105,7 +106,7 @@ db.once('open', () => {
   app.use('/instances/:instanceId/sources', sourceRoutes);
   app.use('/instances/:instanceId/conversations', conversationRoutes);
   app.use('/instances/:instanceId/', instanceRoutes);
-  app.use('/instances', instancesRoutes);
+
 
   app.get('*', function(req, res, next){
     const page = {
