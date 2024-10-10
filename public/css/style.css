@@ -649,7 +649,6 @@ sidebar .admin-menu {
 .suggestion-icon {
   width: 60px; /* Adjust size as needed */
   height: 60px; /* Adjust size as needed */
-  margin-bottom: 30px; /* Space between the icon and suggestion boxes */
   border-radius: 50%; /* Optional: make the icon circular */
   object-fit: cover; /* Ensures the image covers the space without distortion */
 }

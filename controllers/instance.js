@@ -13,6 +13,18 @@ async function createInstance(req, res) {
             return res.status(400).json({ error: 'Name and systemPrompt are required' });
         }
 
+        // Check if provider is 'Default' and get values from config
+        if (model.provider === "Default") {
+            model.provider = process.env.MODEL_PROVIDER;
+            model.name = process.env.MODEL_NAME;
+        }
+
+        if (embedModel.provider === "Default") {
+            embedModel.provider =  process.env.EMBED_PROVIDER;
+            embedModel.name = process.env.EMBED_MODEL_NAME;
+            embedModel.dimensions = process.env.EMBED_DIMENSIONS;
+        }
+
         // Create the new instance
         const newInstance = new Instance({
             name,
@@ -48,6 +60,10 @@ async function getInstance(req, res) {
         if (!userAccess || userAccess.role !== 'instanceAdmin') {
             // If the user is not an admin and doesn't have instanceAdmin role, remove sharedWith
             delete instance.sharedWith;
+            delete instance.model.baseUrl;
+            delete instance.model.apiKey;
+            delete instance.embedModel.baseUrl;
+            delete instance.embedModel.apiKey;
         }
         /*
         if (!instance.systemPrompt) {
