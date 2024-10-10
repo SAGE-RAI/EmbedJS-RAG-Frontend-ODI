@@ -68,7 +68,7 @@ async function handleSiteMapImport(source, req) {
 
     global.siteMapThreads[source] = { running: true, urls: [], remaining: 0, errors: [] };
 
-    const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
+    const EmbeddingsCache = getEmbeddingsCacheModel(req.params.instanceId);
     const response = await axios.get(source);
     const xmlData = response.data;
     const $ = load(xmlData, { xmlMode: true });
@@ -161,7 +161,7 @@ async function addSource(req, res) {
             return res.status(201).json(data);
         }
 
-        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.params.instanceId);
 
         let loader;
         // Normal addSource process for non-sitemap types
@@ -224,7 +224,7 @@ async function addSource(req, res) {
 
 async function getSourcesCount(req, res) {
     try {
-        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.params.instanceId);
 
         // Use countDocuments to get the count of documents that match the criteria
         const count = await EmbeddingsCache.countDocuments({ loaderId: { $ne: "LOADERS_LIST_CACHE_KEY" } });
@@ -241,7 +241,7 @@ async function getSourcesCount(req, res) {
 
 async function getSources(req, res, returnRawData = false) {
     try {
-        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.params.instanceId);
 
         const loaders = await EmbeddingsCache.find({ loaderId: { $ne: "LOADERS_LIST_CACHE_KEY" } });
         if (returnRawData) {
@@ -261,7 +261,7 @@ async function getSources(req, res, returnRawData = false) {
 async function getSource(req, res, returnRawData = false) {
     const uniqueId = req.params.loaderId;
     try {
-        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.params.instanceId);
 
         const loader = await EmbeddingsCache.findOne({ loaderId: uniqueId });
         if (!loader) {
@@ -289,7 +289,7 @@ async function updateSource(req, res) {
     const loaderId = req.params.loaderId;
     const { title, overrideUrl } = req.body;
     try {
-        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.params.instanceId);
 
         const updateObject = { title, overrideUrl };
         const updateResult = await EmbeddingsCache.findOneAndUpdate(
@@ -321,7 +321,7 @@ async function deleteSource(req, res) {
             res.sendStatus(204);
         } else {
             // Proceed with cache deletion regardless of the result
-            const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
+            const EmbeddingsCache = getEmbeddingsCacheModel(req.params.instanceId);
             await EmbeddingsCache.deleteOne({ loaderId: uniqueId });
             console.warn(`Loader with ID ${uniqueId} was not found or could not be deleted. No Chunks?`);
             res.sendStatus(204);
@@ -333,7 +333,7 @@ async function deleteSource(req, res) {
 
 async function getSiteMapStatus(req, res) {
     try {
-        const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
+        const EmbeddingsCache = getEmbeddingsCacheModel(req.params.instanceId);
         const globalSiteMapUrls = Object.keys(global.siteMapThreads || {});
 
         // Iterate over global site map threads first

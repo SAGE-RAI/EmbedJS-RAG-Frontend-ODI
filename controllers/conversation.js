@@ -10,7 +10,7 @@ async function createConversation(req, res) {
       const userId = req.user._id;
       const { contentObject, course, _skillsFramework } = req.body;
 
-      const Conversation = getConversationModel(req.session.activeInstance.id);
+      const Conversation = getConversationModel(req.params.instanceId);
 
       const newConversation = new Conversation({
           userId,
@@ -31,7 +31,7 @@ async function getConversations(req, res) {
     try {
         const userId = req.user._id;
 
-        const Conversation = getConversationModel(req.session.activeInstance.id);
+        const Conversation = getConversationModel(req.params.instanceId);
 
         const conversations = await Conversation.find({
             userId,
@@ -46,7 +46,7 @@ async function getConversations(req, res) {
 async function getConversation(req, res) {
     const conversationId = req.params.conversationId;
     try {
-        const Conversation = getConversationModel(req.session.activeInstance.id);
+        const Conversation = getConversationModel(req.params.instanceId);
 
         const conversation = await Conversation.findById(conversationId);
         if (!conversation) {
@@ -68,7 +68,7 @@ async function updateConversation(req, res) {
     const conversationId = req.params.conversationId;
     const updateData = req.body;
     try {
-        const Conversation = getConversationModel(req.session.activeInstance.id);
+        const Conversation = getConversationModel(req.params.instanceId);
 
         const updatedConversation = await Conversation.findByIdAndUpdate(
             conversationId,
@@ -89,7 +89,7 @@ async function updateConversation(req, res) {
 async function deleteConversation(req, res) {
     const conversationId = req.params.conversationId;
     try {
-        const Conversation = getConversationModel(req.session.activeInstance.id);
+        const Conversation = getConversationModel(req.params.instanceId);
 
         const deletedConversation = await Conversation.findByIdAndDelete(conversationId);
         if (!deletedConversation) {
@@ -105,7 +105,7 @@ async function deleteConversation(req, res) {
 async function getMessages(req, res) {
     const conversationId = req.params.conversationId;
     try {
-        const Conversation = getConversationModel(req.session.activeInstance.id);
+        const Conversation = getConversationModel(req.params.instanceId);
 
         const conversation = await Conversation.findById(conversationId);
         if (!conversation) {
@@ -131,8 +131,8 @@ async function postMessage(req, res) {
             return res.status(400).json({ error: 'Invalid message format. Must include sender "HUMAN" and message.' });
         }
 
-        const Conversation = getConversationModel(req.session.activeInstance.id);
-        const Embeddings = getEmbeddingsModel(req.session.activeInstance.id);
+        const Conversation = getConversationModel(req.params.instanceId);
+        const Embeddings = getEmbeddingsModel(req.params.instanceId);
 
         let conversation = await Conversation.findById(conversationId);
         if (!conversation) {
@@ -273,7 +273,7 @@ async function setRating(req, res) {
         }
 
         // Find the conversation by conversationId
-        const Conversation = getConversationModel(req.session.activeInstance.id);
+        const Conversation = getConversationModel(req.params.instanceId);
         const conversation = await Conversation.findById(conversationId);
 
         if (!conversation) {
