@@ -52,15 +52,56 @@
   --font-size-85: 5.313rem;
   --line-height-85: 5.938rem;
 }
-
 body {
   margin: 0px;
   padding: 0px;
   max-width: 100%;
 }
+h1 {
+  font-family: Inter,system-ui,Avenir,Helvetica,Arial,sans-serif;
+  text-align: left;
+  font-weight: 700;
+  font-size: 3rem;
+}
+h2 {
+  font-size: 1.5em;
+}
+h3 {
+  font-size: 1.2em;
+}
+h1, h2, h3, h4 {
+  color: var(--color-dark-blue);
+}
+button, .submitButton, input.btn {
+  transition: none !important;
+  background-color: var(--color-dark-blue);
+  color: var(--color-white);
+  border-radius: 0px;
+  font-weight: 500;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  padding-top: .5rem;
+  padding-bottom: .5rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  border: none !important;
+}
+tbody tr:nth-child(2n) button {
+  background-color: var(--color-dark-grey);
+  color: var(--color-white)
+}
+button:hover, .submitButton:hover, #dataFrom .btn:hover,
+tbody tr:nth-child(2n) button:hover {
+  background-color: var(--color-light-grey);
+  color: var(--color-dark-blue);
+}
 main {
   height: calc(100vh - 70px);
   overflow: hidden;
+}
+.padded {
+  margin: 3em;
+  line-height: 1.6em;
 }
 .container {
   margin-left: 10px;
@@ -126,6 +167,7 @@ main {
 
 .header .main-nav ul li {
   padding: 8px 0px 8px 20px;
+  color: #fff;
 }
 .header .main-nav ul .selected {
   text-decoration: underline;
@@ -254,7 +296,7 @@ sidebar {
   width: 220px;
   float: left;
   height: calc(100vh);
-  border-right: 1px solid gray;
+  border-right: 1px solid var(--color-light-grey);
 }
 sidebar > nav {
   padding: 10px;
@@ -335,7 +377,7 @@ sidebar .admin-menu {
 .conversations-sidebar h2,
 .conversations-sidebar h3 {
   font-size: 0.7em;
-  color: #aaa;
+  color: var(--color-dark-blue);
 }
 .conversations ul {
   margin: 0;
@@ -348,7 +390,7 @@ sidebar .admin-menu {
   cursor: pointer;
 }
 .menu-button {
-  background: radial-gradient(circle, #202b38 0%, transparent 70%);
+  background: radial-gradient(circle, #fff 0%, transparent 100%);
   border: none;
   cursor: pointer;
   font-size: 22px;
@@ -362,7 +404,7 @@ sidebar .admin-menu {
 .menu-button .menu-icon {
   display: none; /* Hide by default */
   font-size: 22px;
-  color: white;
+  color: var(--color-dark-blue);
 }
 
 /* Show the icon when hovering over the button */
@@ -373,7 +415,7 @@ sidebar .admin-menu {
 .menu {
   display: none;
   position: absolute;
-  background-color: white;
+  color: var(--color-dark-blue);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   z-index: 1;
   color: black;
@@ -390,7 +432,7 @@ sidebar .admin-menu {
 }
 
 .menu-option:hover {
-  background-color: #f0f0f0;
+  background-color: var(--color-dark-blue);
 }
 
 .conversation-container {
@@ -401,12 +443,12 @@ sidebar .admin-menu {
 
 .conversation {
   flex-grow: 1;
-  color: white;
+  color: var(--color-dark-blue);
 }
 
 .conversation:hover {
   text-decoration: none;
-  background-color: #000;
+  background-color: var(--color-light-grey);
 }
 
 .topper {
@@ -427,7 +469,7 @@ sidebar .admin-menu {
 .topper .icon {
   width: 100px;
   height: 50px;
-  background: transparent url('https://raw.githubusercontent.com/theodi/labs-logo/refs/heads/master/public/assets/odilabs-8-dark.svg');
+  background: transparent url('/images/odilabs-8-dark.svg');
   background-size: cover;
   margin-left: 15px;
 }
@@ -447,7 +489,7 @@ sidebar .admin-menu {
 
 .bottom {
   width: calc(100vw - 240px);
-  background: #595656;
+  background: var(--color-dark-blue);
   z-index: 1;
   bottom: 0;
   right: 0;
@@ -463,7 +505,7 @@ sidebar .admin-menu {
 .bottom #input {
   width: 95%;
   height: auto;
-  background: grey;
+  background: var(--color-light-grey);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -486,25 +528,25 @@ sidebar .admin-menu {
   max-height: 150px; /* Max height for textarea */
   resize: none; /* Disable manual resizing by the user */
   scrollbar-width: thin; /* Make the scrollbar thinner */
-  scrollbar-color: #ffffff #f2f2f2; /* Set the color of the thumb and track */
+  scrollbar-color: var(--color-dark-blue) var(--color-dark-blue); /* Set the color of the thumb and track */
 }
 
 .bottom #input textarea::-webkit-scrollbar-track {
-  background: #f2f2f2; /* Color of the track */
+  background: var(--color-dark-blue); /* Color of the track */
 }
 
 .bottom #input textarea::-webkit-scrollbar-thumb {
-  background: #ffffff; /* Color of the thumb */
+  background: var(--color-dark-blue); /* Color of the thumb */
   border-radius: 6px; /* Rounded corners of the thumb */
-  border: 3px solid #f2f2f2; /* Space around the thumb */
+  border: 3px solid var(--color-dark-blue); /* Space around the thumb */
 }
 
 .bottom #input textarea::-webkit-scrollbar-thumb:hover {
-  background: #e0e0e0; /* Color of the thumb when hovered */
+  background: var(--color-dark-blue); /* Color of the thumb when hovered */
 }
 
-.bottom #input input::placeholder {
-  color: #e6e6e6;
+.bottom #input textarea::placeholder {
+  color: var(--color-dark-blue);
 }
 
 .bottom #input button {
@@ -512,7 +554,7 @@ sidebar .admin-menu {
   margin: 0 5px;
   font-size: 20px;
   border-radius: 10px;
-  color: #fff;
+  color: var(--color-dark-blue);
   transition: 0.2s;
   outline: none;
   border: none;
@@ -526,7 +568,7 @@ sidebar .admin-menu {
 }
 .aichat {
   float: right;
-  width: calc(100vw - 221px);
+  width: calc(100vw - 222px);
   display: flex;
   height: 100%;
 }
@@ -536,7 +578,7 @@ sidebar .admin-menu {
   padding-left: 10px;
   padding-right: 20px;
   scroll-behavior: smooth;
-  color: #f2f2f2;
+  color: var(--color-dark-blue);
   transition: height 0.3s ease;
   overflow-x: hidden;
   flex: 1; /* Allow to grow and shrink as needed */
@@ -551,9 +593,8 @@ sidebar .admin-menu {
   padding: 10px;
   max-width: 90%;
   margin: 10px 0;
-  background: linear-gradient(15deg, #2a569d 0%, #80d0c7 100%);
+  background: var(--color-light-grey);
   list-style-type: none;
-  border-radius: 10px;
   word-wrap: break-word;
   overflow: hidden;
   position: relative;
@@ -563,21 +604,19 @@ sidebar .admin-menu {
   float: right;
   clear: both;
   margin-bottom: 5px;
-  border-bottom-right-radius: 20px;
 }
 
 .msgs_cont .AI {
   float: left;
   clear: both;
   margin-bottom: 5px;
-  background: linear-gradient(to top right, #2a569d, #0a6e55);
+  background: var(--color-light-grey);
   padding-left: 12px;
-  border-bottom-left-radius: 20px;
   min-width: 240px;
 }
 
 .msgs_cont .AI .sources-list a {
-  color: white;
+  color: var(--color-dark-blue);
   text-decoration: underline;
 }
 
@@ -637,8 +676,12 @@ sidebar .admin-menu {
   padding: 5px 10px;
   background: none;
   float: right;
+  color: var(--color-dark-blue);
 }
-
+.copy_button:hover {
+  background-color: var(--color-dark-grey);
+  color: var(--color-white);
+}
 .closeButton {
   top: -5px;
   right: 0px;
@@ -647,16 +690,16 @@ sidebar .admin-menu {
   z-index: 9999;
   position: relative;
   float: right;
-  color: white;
+  color: var(--color-dark-blue);
 }
 .msgs_cont .AI .response-choices {
-  border: 1px solid #eee;
+  border: 1px solid var(--color-dark-blue);
   padding: 10px;
   margin: 10px;
 }
 .msgs_cont .AI .other-input-container {
   padding: 10px;
-  border: 1px solid #eee;
+  border: 1px solid var(--color-dark-blue);
   margin: 10px;
 }
 .msgs_cont .AI .response-choices h3 {
@@ -678,6 +721,7 @@ sidebar .admin-menu {
   margin-bottom: 10px;
   min-width: 320px;
   min-height: 120px;
+  border-radius: 0;
 }
 
 

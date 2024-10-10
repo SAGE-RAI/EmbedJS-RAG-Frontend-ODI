@@ -1,9 +1,5 @@
 <sidebar class="conversations-sidebar">
     <nav>
-        <h2>Chat bot</h2>
-        <select id="instanceSelect" onchange="switchInstance()">
-            <!-- Populate this select with the user's RAG instances -->
-        </select>
         <h2>Conversations</h2>
         <button onclick="javascript:loadConversation('')">New Conversation</button>
         <div class="conversations">
@@ -11,10 +7,9 @@
     </nav>
 </sidebar>
 
-
 <script>
     function updateConversations() {
-        const instanceId = '<%= activeInstance ? activeInstance._id : "" %>';
+        const instanceId = '<%= activeInstance ? activeInstance.id : "" %>';
         fetch(`/instances/${instanceId}/conversations`, {
             headers: {
                 'Content-Type': 'application/json'
@@ -166,7 +161,7 @@
     }
 
     function saveConversationTitle(conversationId, newTitle) {
-        const instanceId = '<%= activeInstance ? activeInstance._id : "" %>';
+        const instanceId = '<%= activeInstance ? activeInstance.id : "" %>';
         fetch(`/instances/${instanceId}/conversations/${conversationId}`, {
             method: 'POST',
             headers: {
@@ -186,7 +181,7 @@
     // Function to delete a conversation by its ID
     function deleteConversation(conversationId) {
         if (confirm("Are you sure you want to delete this conversation?")) {
-            const instanceId = '<%= activeInstance ? activeInstance._id : "" %>';
+            const instanceId = '<%= activeInstance ? activeInstance.id : "" %>';
             fetch(`/instances/${instanceId}/conversations/${conversationId}`, {
                 method: 'DELETE',
                 headers: {
@@ -222,7 +217,7 @@
             Today: [],
             Yesterday: [],
             'Previous 7 days': [],
-            'Previous 30 days': [],
+            'Previous 30 days': []
         };
 
         // Iterate over conversations and categorize them

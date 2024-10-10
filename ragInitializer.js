@@ -45,21 +45,24 @@ async function initializeRAGApplication(instance) {
 
     // Function to merge instance and environment config
     function getConfigFromInstanceOrEnv(instanceModel, instanceEmbedModel, envConfig) {
-        const provider = instanceModel.provider;
-        const embedProvider = instanceEmbedModel.provider;
+        let provider = instanceModel.provider;
+        let embedProvider = instanceEmbedModel.provider;
+        // Set default provider values if not specified
+        provider = (provider === 'Default' || !provider) ? envConfig.MODEL_PROVIDER : provider;
+        embedProvider = (embedProvider === 'Default' || !embedProvider) ? envConfig.EMBED_PROVIDER : embedProvider;
 
         // Construct the environment variable key for the API key
         const apiKeyEnvVar = provider.toUpperCase().replace(/ /g, '_') + '_API_KEY';
 
         return {
             model: {
-                provider: (provider === 'Default' || !provider) ? envConfig.MODEL_PROVIDER : provider,
+                provider: provider,
                 name: instanceModel.name || envConfig.MODEL_NAME,
                 baseUrl: instanceModel.baseUrl || envConfig.MODEL_BASE_URL,
                 apiKey: instanceModel.apiKey || process.env[apiKeyEnvVar] || envConfig.MODEL_API_KEY
             },
             embed: {
-                provider: (embedProvider === 'Default' || !embedProvider) ? envConfig.EMBED_PROVIDER : embedProvider,
+                provider: embedProvider,
                 name: instanceEmbedModel.name || envConfig.EMBED_MODEL_NAME,
                 baseUrl: instanceEmbedModel.baseUrl || envConfig.EMBED_BASE_URL,
                 apiKey: instanceEmbedModel.apiKey || process.env[apiKeyEnvVar] || envConfig.EMBED_API_KEY,
@@ -76,7 +79,7 @@ async function initializeRAGApplication(instance) {
             MODEL_NAME: process.env.MODEL_NAME,
             MODEL_BASE_URL: process.env.MODEL_BASE_URL,
             MODEL_API_KEY: process.env.MODEL_API_KEY,
-            EMBED_MODEL_PROVIDER: process.env.EMBED_MODEL_PROVIDER,
+            EMBED_PROVIDER: process.env.EMBED_PROVIDER,
             EMBED_MODEL_NAME: process.env.EMBED_MODEL_NAME,
             EMBED_API_KEY: process.env.EMBED_API_KEY,
             EMBED_BASE_URL: process.env.EMBED_BASE_URL,
@@ -150,15 +153,15 @@ async function initializeRAGApplication(instance) {
                         break;
                 }
                 break;
-            
+
             case 'Cohere':
                 // Add your implementation for Cohere here
                 throw new Error('Cohere embedding provider not yet implemented.');
-            
+
             case 'Gecko':
                 // Add your implementation for Gecko here
                 throw new Error('Gecko embedding provider not yet implemented.');
-            
+
             default:
                 throw new Error('No valid embedding provider found in configuration.');
         }

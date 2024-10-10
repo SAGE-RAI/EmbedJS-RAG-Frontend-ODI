@@ -83,8 +83,8 @@ db.once('open', () => {
     if (req.session.passport) {
       res.redirect("/instances");
     } else {
-      res.locals.pageTitle = "ODI AI Assistant";
-      res.render('pages/auth');
+      res.locals.pageTitle = "ODI Labs AI Assistant";
+      res.render('pages/home');
     }
   });
 
@@ -95,22 +95,55 @@ db.once('open', () => {
 
   app.use('/auth', authRoutes);
   app.use('/admin', adminRoutes);
+
   app.use('/instances', instancesRoutes);
-
-
-  app.use('/instances/:instanceId', canAccessInstance, (req, res, next) => {
-    res.locals.activeInstance = { _id: req.params.instanceId };
+  app.use('/instances/:instanceId', (req, res, next) => {
+    res.locals.activeInstance = { id: req.params.instanceId };
+    res.locals.instanceId = req.params.instanceId;
     next();
   });
 
-
-  app.use('/instances/:instanceId/', instanceRoutes);
   app.use('/instances/:instanceId/sources', sourceRoutes);
   app.use('/instances/:instanceId/conversations', conversationRoutes);
+  app.use('/instances/:instanceId/', instanceRoutes);
 
-  app.get('*', (req, res) => {
-    res.locals.pageTitle = "404 Not Found";
-    res.status(404).render("errors/404");
+
+  app.get('*', function(req, res, next){
+    const page = {
+      title: "404 Not Found"
+    };
+    res.locals.page = page;
+    const error = new Error("Not Found");
+    error.status = 404;
+    next(error);
+  });
+
+
+  // Error handling middleware
+  app.use((err, req, res, next) => {
+    // Default status code for unhandled errors
+    let statusCode = 500;
+    let errorMessage = "Internal Server Error";
+    // Check if the error has a specific status code and message
+    if (err.status) {
+        statusCode = err.status;
+        errorMessage = err.message;
+    }
+    res.locals.pageTitle = "Error";
+
+    // Log the error stack trace
+    //console.error(err.stack);
+
+    // Content negotiation based on request Accept header
+    const acceptHeader = req.get('Accept');
+
+    if (acceptHeader === 'application/json') {
+        // Respond with JSON
+        res.status(statusCode).json({ message: errorMessage });
+    } else {
+        // Respond with HTML (rendering an error page)
+        res.status(statusCode).render('errors/error', { statusCode, errorMessage });
+    }
   });
 
   app.listen(port, () => console.log(`App listening on port ${port}`));

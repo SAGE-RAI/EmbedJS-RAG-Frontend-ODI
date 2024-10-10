@@ -1,4 +1,4 @@
-<%- include('../../partials/header-admin') %>
+<%- include('../../partials/header') %>
 <style>
     .longText {
         min-width: 80%;
@@ -7,6 +7,7 @@
         margin-top: 2em;
     }
 </style>
+<div class="padded">
 <h1>Manage shares</h1>
 <div id="res" class="alert"></div>
 <h2>Share with new user:</h2>
@@ -23,7 +24,7 @@
 </form>
 <h2>Current shares</h2>
 <table id="sharedWithTable" class="display" style="width:100%"></table>
-
+</div>
 <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/1.7.0/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/1.7.0/js/buttons.html5.min.js"></script>

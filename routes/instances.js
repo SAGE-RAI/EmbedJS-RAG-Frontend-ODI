@@ -46,7 +46,7 @@ router.get('/', ensureAuthenticated, async (req, res) => {
 
 router.post('/', ensureAuthenticated, createInstance);
 router.get('/add', ensureAuthenticated, isAdmin, (req, res) => {
-    res.locals.pageTitle = "Add Instance";
+    res.locals.pageTitle = "New Assistant";
     res.render('pages/instances/add');
 });
 

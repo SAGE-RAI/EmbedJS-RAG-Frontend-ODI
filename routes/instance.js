@@ -5,13 +5,21 @@ import { getRatingsReport } from '../controllers/conversation.js';
 
 const router = express.Router({ mergeParams: true });
 
-router.get('/', ensureAuthenticated, canAccessInstance, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         if (req.accepts(['json', 'html']) === 'json') {
             return getInstance(req, res);
         } else if (req.accepts(['html', 'json']) === 'html') {
             res.locals.pageTitle = "View Instance";
-            res.render('pages/instance/view', { instanceId: req.params.instanceId });
+            let userCanAdminInstance = false;
+            try {
+                await canAdminInstance(req, res, () => {
+                    userCanAdminInstance = true;
+                });
+            } catch (error) {
+                userCanAdminInstance = false;
+            } // Check if user can edit sources
+            res.render('pages/instance/view', { instanceId: req.params.instanceId, userCanAdminInstance: userCanAdminInstance });
         } else {
             res.status(406).send('Not Acceptable');
         }

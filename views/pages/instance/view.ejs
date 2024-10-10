@@ -1,25 +1,37 @@
-<%- include('../../partials/header-admin') %>
+<%- include('../../partials/header') %>
 <style>
     /* Add your custom styles here */
 </style>
-<h1>Instance Details</h1>
-<div id="res" class="alert"></div>
+<div class="padded">
+    <h1>Assistant details</h1>
+    <div id="res" class="alert"></div>
 
-<div>
-    <h2>Instance Information</h2>
-    <p><strong>Name:</strong> <span id="instanceName"></span></p>
-    <p><strong>Description:</strong> <span id="instanceDescription"></span></p>
-    <p><strong>Created Date:</strong> <span id="instanceCreatedAt"></span></p>
-    <p><strong>Updated Date:</strong> <span id="instanceUpdatedAt"></span></p>
-    <p><strong>Public:</strong> <span id="instancePublic"></span></p>
+    <div id="assistantDetails" style="display: none;">
+        <h2>Assistant information</h2>
+        <p><strong>Name:</strong> <span id="instanceName"></span></p>
+        <p><strong>Description:</strong> <span id="instanceDescription"></span></p>
+        <p><strong>Token reward for providing rating:</strong> <span id="tokenReward"></span></p>
+        <p><strong>Model Provider:</strong> <span id="modelProvider"></span></p>
+        <p><strong>Model Name:</strong> <span id="modelName"></span></p>
+        <p><strong>Created Date:</strong> <span id="instanceCreatedAt"></span></p>
+        <p><strong>Updated Date:</strong> <span id="instanceUpdatedAt"></span></p>
+        <p><strong>Public:</strong> <span id="instancePublic"></span></p>
+
+        <button id="chatBtn">Chat with assistant</button>
+
+        <% if (userCanAdminInstance) { %>
+            <h3>Manage assistant</h3>
+            <button id="editInstanceBtn">Edit assistant</button>
+            <button id="deleteInstanceBtn">Delete assistant</button>
+            <button id="manageSourcesBtn">Manage Sources</button>
+
+            <h3>Ratings report</h3>
+            <button id="ratingsReportBtn">Ratings report</button>
+        <% } else { %>
+            <button id="manageSourcesBtn">View assistant data sources</button>
+        <% } %>
+    </div>
 </div>
-<h3>Open chat</h3>
-<button id="chatBtn">Open chat</button>
-
-<h3>Manage instance</h3>
-<button id="editInstanceBtn">Edit Instance</button>
-<button id="deleteInstanceBtn">Delete Instance</button>
-<button id="manageSourcesBtn">Manage Sources</button>
 
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script>
@@ -30,10 +42,26 @@
                 'Accept': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (response.status === 404) {
+                document.getElementById('res').textContent = 'Assistant not found';
+                return;
+            } else if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(instance => {
+            if (!instance) return;
+            console.log(instance);
+            // Show the assistant details section
+            document.getElementById('assistantDetails').style.display = 'block';
+
             document.getElementById('instanceName').textContent = instance.name;
             document.getElementById('instanceDescription').textContent = instance.description || 'No description available';
+            document.getElementById('tokenReward').textContent = '+' + instance.ratingReward || '0';
+            document.getElementById('modelProvider').textContent = instance.model.provider || 'Model provider unknown';
+            document.getElementById('modelName').textContent = instance.model.name || 'Model name unknown';
             document.getElementById('instanceCreatedAt').textContent = new Date(instance.createdAt).toLocaleString();
             document.getElementById('instanceUpdatedAt').textContent = new Date(instance.updatedAt).toLocaleString();
             document.getElementById('instancePublic').textContent = instance.public ? 'Yes' : 'No';
@@ -43,11 +71,11 @@
             document.getElementById('res').textContent = 'Error fetching instance details.';
         });
 
-        document.getElementById('editInstanceBtn').addEventListener('click', function () {
+        document.getElementById('editInstanceBtn')?.addEventListener('click', function () {
             window.location.href = `/instances/${instanceId}/edit`;
         });
 
-        document.getElementById('deleteInstanceBtn').addEventListener('click', function () {
+        document.getElementById('deleteInstanceBtn')?.addEventListener('click', function () {
             if (confirm('Are you sure you want to delete this instance?')) {
                 document.getElementById('res').textContent = 'Deleting, please wait.';
                 fetch(`/instances/${instanceId}`, {
@@ -70,12 +98,16 @@
             }
         });
 
-        document.getElementById('manageSourcesBtn').addEventListener('click', function () {
+        document.getElementById('manageSourcesBtn')?.addEventListener('click', function () {
             window.location.href = `/instances/${instanceId}/sources`;
         });
 
-        document.getElementById('chatBtn').addEventListener('click', function () {
+        document.getElementById('chatBtn')?.addEventListener('click', function () {
             window.location.href = `/instances/${instanceId}/conversations`;
+        });
+
+        document.getElementById('ratingsReportBtn')?.addEventListener('click', function () {
+            window.location.href = `/instances/${instanceId}/ratingsReport`;
         });
     });
 </script>

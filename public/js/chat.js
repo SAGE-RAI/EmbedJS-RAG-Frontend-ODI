@@ -366,6 +366,8 @@ function renderRating(rating, element) {
             const star = document.createElement('span');
             star.classList.add('star');
             star.innerHTML = '☆ '; // Unicode for empty star symbol
+            star.onmouseenter = () => handleRatingHover(messageId, i + 1);
+            star.onmouseleave = () => handleRatingHover(messageId, 0);
             star.onclick = () => {
                 const rating = i + 1;
                 handleRating(element, messageId, rating, "");
@@ -604,7 +606,7 @@ async function handleSubmit(event) {
     event.preventDefault(); // Prevent the default form submission behavior
     const suggestionContainer = document.querySelector('.suggestion-container');
     if (suggestionContainer) {
-        suggestionContainer.remove(); 
+        suggestionContainer.remove();
     }
 
     const form = document.querySelector('.aichat'); // Get the form element

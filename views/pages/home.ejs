@@ -1,0 +1,27 @@
+<!-- views/pages/auth.ejs -->
+<%- include('../partials/header') %>
+<div class="padded">
+    <h1>ODI Labs AI Assistant/s</h1>
+    <p>Welcome to the ODI Labs AI Assistant/s, developed as part of the <a href="https://sage-rai.kmi.open.ac.uk/" target="_blank">SAGE-RAI</a> project in collaboration with the Open University.</p>
+    <h2>Fast deployment of task focussed AI assistants</h2>
+    <p>
+        The ODI Labs AI Assistant is not a single assistant, it is in fact an advanced service that allows permitted users to create their own AI Assistants for specific tasks including (but not limited) to:
+        <ul>
+            <li><b>Educational assistants</b> with specific knowledge of learning materials and learning objectives.</li>
+            <li><b>Employee assistants</b> with specific knowledge of company policies and processes.</li>
+            <li><b>Knowledge management assistants</b> who can help a company with knowledge recall and transfer.</li>
+            <li><b>Data and knowledge discovery assistants</b> that can take inputs from a wide variety of soruces and help extract data, information and knowledge.</li>
+            <li><b>Customer assistants</b> who can help solve customer challenges.</li>
+            <li><b>Data and technical assistants</b> that know the standards, schemas and requirements to help developer create new tools/services.</li>
+            <li><b>Bid writing assistants</b> who can help ensure that bid responses answer all the questions required.</li>
+        </ul>
+        Be it assistants that are managed by a company centrally, or an assistant that is helping an individual do a literature study or extract insights from multiple lengthy PDFs, our approach makes it easy to build AI assistants that are task focussed!
+    <h2>
+        Why task focussed assistants?
+    </h2>
+    <p>The majority of Generative AI models you may have heard of are general purpose Large Language Models (LLMs). These are trained upon vast swathes of data to help them understand the patterns in language. When you ask them to do a task, they use a statistical model on your input to match this to the patterns in language and then use this to generate a response that should match those pattern. As a result it might make up the answer, a problem known as <b>hullicination</b>.</p>
+    <p>Task focussed assistants still make use of general purpose LLMs, but rather than relying on the genreal langage model exclusively, they first try and <b>retrieve</b> relevant knowledge from a specific knowledge base that matches the users prompt. This is a process known as <b><a href="https://en.wikipedia.org/wiki/Retrieval-augmented_generation" target="_blank">Retrieval-augmented Generation (RAG)</a></b>.</p>
+    <h2>Our approach</h2>
+    <p>AI Assistants that use Retrieval-augmented Generation are not new, however they often remain shrowded in as much mystery as the general purpose LLMs and can only be created by those with advanced technical knowledge. Our objective is to lower the barrier to entry for people to create their own assistants, and lift the lid on the mystery of how you can build advanced task specific AI assistants.</p><p>We make use of a modular architecture. This means you can build an assistant that is enirely running locally (including the LLM), to an assistant that uses a shared cloud architecture and LLM from providers such as OpenAI, Anthropic and others. You can find more about how to deploy our architecure yourself on the documetation page.</p>
+</div>
+<%- include('../partials/footer') %>

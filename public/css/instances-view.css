@@ -1,0 +1,102 @@
+/* Card view styles */
+.cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+.card {
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 5px;
+    width: 250px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+.card h3 {
+    margin: 0;
+}
+table.cards thead {
+    display: none;
+}
+/* Base styling for the table rows */
+table.cards tbody tr {
+    display: inline-block;
+    flex-wrap: wrap;
+    width: 450px;
+    height: 300px;
+    border: 1px solid white;
+    cursor: pointer;
+    margin: 1em;
+    background-size: 100% auto; /* Scale to fit horizontally */
+    background-repeat: no-repeat; /* Prevent repeating */
+    background-position: center;  /* Center the background image */
+}
+
+/* Specific background images for the first 11 rows, repeating every 11 rows */
+table.cards tbody tr:nth-child(11n + 1) {
+    background-image: url("/images/assistants/1.webp");
+}
+
+table.cards tbody tr:nth-child(11n + 2) {
+    background-image: url("/images/assistants/2.webp");
+}
+
+table.cards tbody tr:nth-child(11n + 3) {
+    background-image: url("/images/assistants/3.webp");
+}
+
+table.cards tbody tr:nth-child(11n + 4) {
+    background-image: url("/images/assistants/4.webp");
+}
+
+table.cards tbody tr:nth-child(11n + 5) {
+    background-image: url("/images/assistants/5.webp");
+}
+
+table.cards tbody tr:nth-child(11n + 6) {
+    background-image: url("/images/assistants/6.webp");
+}
+
+table.cards tbody tr:nth-child(11n + 7) {
+    background-image: url("/images/assistants/7.webp");
+}
+
+table.cards tbody tr:nth-child(11n + 8) {
+    background-image: url("/images/assistants/8.webp");
+}
+
+table.cards tbody tr:nth-child(11n + 9) {
+    background-image: url("/images/assistants/9.webp");
+}
+
+table.cards tbody tr:nth-child(11n + 10) {
+    background-image: url("/images/assistants/10.webp");
+}
+
+table.cards tbody tr:nth-child(11n + 11) {
+    background-image: url("/images/assistants/11.webp");
+}
+
+table.cards tbody tr td {
+    display: none;
+    border-top: none !important;
+}
+
+table.cards tbody tr td.name,
+table.cards tbody tr td.description {
+    display: block; /* Display the long name and edit columns */
+    position: relative; /* Position these elements relative to the card */
+    background-color: var(--color-dark-blue);
+    color: white;
+    padding: 5px 10px;
+    width: max-content;
+    z-index: 10;
+    height: max-content;
+    margin: 0.5em;
+}
+table.cards tbody tr td.description {
+    position: relative;
+    top: 170px;
+    width: 410px;
+    height: 60px;
+}

@@ -1,17 +1,19 @@
-<%- include('../../partials/header-admin') %>
+<%- include('../../partials/header') %>
 <style>
     .longText {
         min-width: 80%;
     }
-    .submit {
+    #dataForm {
         margin-top: 2em;
     }
 </style>
+<div class="padded">
 <h1><%= pageTitle %></h1>
 <div id="res" class="alert"></div>
 <form id="dataForm">
 
 </form>
+</div>
 <script>
 const data = {};
 $('#dataForm').html("");
