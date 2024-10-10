@@ -335,8 +335,9 @@ async function setRating(req, res) {
 
 async function getRatingsReport(req, res) {
     try {
+        const instanceId = req.params.instanceId;
         // Query all conversations
-        const Conversation = getConversationModel(req.session.activeInstance.id);
+        const Conversation = getConversationModel(instanceId);
         const conversations = await Conversation.find({});
 
         const ratingsReport = conversations.reduce((report, conversation) => {
