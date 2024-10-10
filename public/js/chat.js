@@ -715,3 +715,22 @@ function getInstanceIdFromPath() {
     const pathSegments = window.location.pathname.split('/');
     return pathSegments[2]; // Assumes /instances/:instanceId/... structure
 }
+
+function toggleSidebar() {
+    const sidebar = document.querySelector('.conversations-sidebar');
+    const toggleButton = document.querySelector('.sidebar-toggle');
+
+    if (sidebar.classList.contains('shrunk')) {
+        sidebar.classList.add('expanded');
+        sidebar.classList.remove('shrunk');
+        toggleButton.innerHTML = '&#8592;'; // Right arrow
+    } else if (sidebar.classList.contains('expanded')) {
+        sidebar.classList.remove('expanded');
+        sidebar.classList.add('shrunk');
+        toggleButton.innerHTML = '&#8594;'; // Left arrow
+    } else {
+        sidebar.classList.add('expanded');
+        sidebar.classList.remove('shrunk');
+        toggleButton.innerHTML = '&#8592;'; // Right arrow
+    }
+}
