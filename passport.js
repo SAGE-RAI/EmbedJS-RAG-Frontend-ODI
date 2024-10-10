@@ -28,6 +28,7 @@ passport.use('django', new OAuth2Strategy({
   grant_type: 'authorization_code', // Specify grant type
   pkce: true, // Enable PKCE
   state: true,
+  scope: "read",
   passReqToCallback: true
 }, (req, accessToken, refreshToken, profile, done) => {
   fetch('https://theodi.org/api/user', {

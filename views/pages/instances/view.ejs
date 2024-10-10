@@ -60,7 +60,7 @@
             dom: 'frtipB',
             buttons: [
                 'copy', 'csv', {
-                    'text': '<i class="fa viewSwitch fa-table fa-fw" aria-hidden="true">Table</i>',
+                    'text': '<i class="fa viewSwitch fa-table fa-fw" aria-hidden="true">Table view</i>',
                     'action': function (e, dt, node) {
                         firstLoad = false;
                         const tableNode = $(dt.table().node());
@@ -71,12 +71,12 @@
                         if (isCardsView) {
                             tableNode.removeClass('cards');
                             $('.viewSwitch', node).removeClass('fa-table').addClass('fa-id-badge');
-                            $('.viewSwitch', node).html('Cards');
+                            $('.viewSwitch', node).html('Cards view');
                             dt.draw('page');
                         } else {
                             tableNode.addClass('cards');
                             $('.viewSwitch', node).removeClass('fa-id-badge').addClass('fa-table');
-                            $('.viewSwitch', node).html('Table');
+                            $('.viewSwitch', node).html('Table view');
                             dt.draw('page');
                         }
 

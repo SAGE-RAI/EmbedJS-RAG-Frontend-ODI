@@ -19,7 +19,7 @@
 
         <button id="chatBtn">Chat with assistant</button>
 
-        <% if (user) { %>
+        <% if (userCanAdminInstance) { %>
             <h3>Manage assistant</h3>
             <button id="editInstanceBtn">Edit assistant</button>
             <button id="deleteInstanceBtn">Delete assistant</button>
@@ -27,6 +27,8 @@
 
             <h3>Ratings report</h3>
             <button id="ratingsReportBtn">Ratings report</button>
+        <% } else { %>
+            <button id="manageSourcesBtn">View assistant data sources</button>
         <% } %>
     </div>
 </div>
