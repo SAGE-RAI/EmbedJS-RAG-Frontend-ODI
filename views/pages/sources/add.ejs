@@ -180,6 +180,9 @@ function addSource(errors, values, instanceId) {
                 // Re-enable the submit button
                 $('.submit').prop('disabled', false);
                 $('#res').html(`<p>Successfully created with Unique ID: ${data.uniqueId}</p>`);
+                setTimeout(function() {
+                    window.location.href = postUrl;
+                }, 1000);
             } else if (data.error) {
                 $('#res').html(`<p>Error: ${data.error}</p>`);
             } else {

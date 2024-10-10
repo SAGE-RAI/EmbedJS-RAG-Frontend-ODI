@@ -229,6 +229,7 @@ async function loadConversation(conversationId) {
         // Handle conversation if conversationId is provided
         if (conversationId === "") {
             // Render suggestions in the center of the screen if available
+            renderInstanceDetails(instanceData.name,instanceData.description);
             if (suggestions.length > 0) {
                 renderSuggestions(suggestions);
             }
@@ -562,19 +563,39 @@ async function newConversation() {
     }
 }
 
-function renderSuggestions(suggestions) {
-    // Create the suggestion container
+function renderInstanceDetails(name, description) {
     const suggestionContainer = document.createElement('div');
     suggestionContainer.classList.add('suggestion-container');
 
-    // Create the icon element
     const icon = document.createElement('img');
     icon.src = 'https://avatars.githubusercontent.com/u/2492770?s=200&v=4';
     icon.alt = 'Suggestions Icon'; // Provide alternative text for accessibility
     icon.classList.add('suggestion-icon'); // Add a class for styling
-
-    // Append the icon to the suggestion container
     suggestionContainer.appendChild(icon);
+
+    // Add the instance name
+    const nameElement = document.createElement('h2');
+    nameElement.textContent = name;
+    suggestionContainer.appendChild(nameElement);
+
+    // Add the instance description
+    const descriptionElement = document.createElement('p');
+    descriptionElement.textContent = description;
+    suggestionContainer.appendChild(descriptionElement);
+
+    // Append the suggestion container to the messages container
+    const msgs_cont = document.querySelector('.msgs_cont');
+    msgs_cont.appendChild(suggestionContainer);
+}
+
+function renderSuggestions(suggestions) {
+    // Find the existing suggestion container
+    const suggestionContainer = document.querySelector('.suggestion-container');
+
+    if (!suggestionContainer) {
+        console.error('Suggestion container not found');
+        return;
+    }
 
     // Create the suggestion boxes container
     const boxesContainer = document.createElement('div');
@@ -594,12 +615,8 @@ function renderSuggestions(suggestions) {
         boxesContainer.appendChild(suggestionBox);
     });
 
-    // Append the boxes container to the suggestion container
+    // Append the boxes container to the existing suggestion container
     suggestionContainer.appendChild(boxesContainer);
-
-    // Append the suggestion container to the messages container
-    const msgs_cont = document.querySelector('.msgs_cont');
-    msgs_cont.appendChild(suggestionContainer);
 }
 
 async function handleSubmit(event) {

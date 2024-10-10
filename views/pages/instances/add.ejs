@@ -155,6 +155,7 @@ document.addEventListener("DOMContentLoaded", function () {
 function addRagInstance(errors, values) {
     if (errors) {
         $('#res').html('<p>Please correct the errors in your form</p>');
+        $('html, body').animate({ scrollTop: $('#res').offset().top }, 'slow');
     } else {
          // Check if user provided ratingResponses
          if (!values.ratingResponses || Object.keys(values.ratingResponses).length === 0) {
@@ -166,6 +167,7 @@ function addRagInstance(errors, values) {
         $('.submit').prop('disabled', true);
         // Display a message while submitting
         $('#res').html('<p>Submitting, please wait...</p>');
+        $('html, body').animate({ scrollTop: $('#res').offset().top }, 'slow');
         var inputObject = values;
         var postUrl = '/instances/';
 
@@ -181,18 +183,19 @@ function addRagInstance(errors, values) {
         .then(data => {
             // Handle response
             if (data._id) {
-                // Re-enable the submit button
-                $('.submit').prop('disabled', false);
-                $('#res').html(`<p>Successfully created with ID: ${data._id}</p>`);
+                // Redirect to the instance detail page
+                window.location.href = `/instances/${data._id}`;
             } else if (data.error) {
                 $('#res').html(`<p>Error: ${data.error}</p>`);
             } else {
                 $('#res').html('<p>Unknown error occurred</p>');
             }
+            $('html, body').animate({ scrollTop: $('#res').offset().top }, 'slow');
         })
         .catch(error => {
             console.error('Error:', error);
             $('#res').html('<p>An error occurred while processing your request</p>');
+            $('html, body').animate({ scrollTop: $('#res').offset().top }, 'slow');
         });
     }
 }

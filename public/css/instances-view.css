@@ -94,9 +94,30 @@ table.cards tbody tr td.description {
     height: max-content;
     margin: 0.5em;
 }
+table.cards tbody tr td.actions {
+    display: block;
+}
+table.cards tbody tr td.actions button.chatBtn {
+    display: none;
+}
+table.cards tbody tr td.actions button.manageBtn {
+    position: relative;
+    top: -135px;
+    left: 310px;
+    background-color: var(--color-dark-blue) !important;
+}
+table.cards tbody tr td.actions button.manageBtn:hover {
+    background-color: var(--color-dark-grey) !important;
+    color: white;
+}
+
+table.cards tbody tr td.name {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
 table.cards tbody tr td.description {
     position: relative;
-    top: 170px;
+    top: 160px;
     width: 410px;
     height: 60px;
 }

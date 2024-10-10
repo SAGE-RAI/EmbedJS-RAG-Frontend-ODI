@@ -18,7 +18,6 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.13.5/css/buttons.dataTables.min.css">
 <link rel="stylesheet" type="text/css" href="/css/instances-view.css">
 
-
 <script>
     let firstLoad = true;
     $(document).ready(function () {
@@ -45,13 +44,10 @@
                 { data: 'public', title: 'Public', defaultContent: '', width: '10%' },
                 {
                     title: 'Actions',
+                    className: 'actions',
                     render: function (data, type, row) {
-                        return '<button class="editBtn" data-instanceid="' + row._id + '">Edit</button>' +
-                               '<button class="deleteBtn" data-instanceid="' + row._id + '">Delete</button>' +
-                               '<button class="manageSourcesBtn" data-instanceid="' + row._id + '">Manage Sources</button>' +
-                               '<button class="manageSharesBtn" data-instanceid="' + row._id + '">Share</button>' +
-                               '<button class="chatBtn" data-instanceid="' + row._id + '">Chat</button>' +
-                               '<button class="ratingsBtn" data-instanceid="' + row._id + '">Ratings report</button>';
+                        return '<button class="manageBtn" data-instanceid="' + row._id + '">More...</button>' +
+                               '<button class="chatBtn" data-instanceid="' + row._id + '">Chat</button>';
                     },
                     width: '50%'
                 }
@@ -106,39 +102,21 @@
             if ($('#instanceTable').hasClass('cards')) {
                 const rowData = instanceTable.row(this).data();
                 if (rowData && rowData._id) {
-                    window.location.href = '/instances/' + rowData._id;
+                    window.location.href = '/instances/' + rowData._id + '/conversations/';
                 }
             }
         });
 
-        // Existing functionality for buttons (edit, delete, manage)
-        $('#instanceTable').on('click', '.editBtn', function () {
+        // Manage button functionality
+        $('#instanceTable').on('click', '.manageBtn', function () {
             var instanceId = $(this).data('instanceid');
-            window.location.href = '/instances/' + instanceId + '/edit';
+            window.location.href = '/instances/' + instanceId;
         });
 
-        $('#instanceTable').on('click', '.deleteBtn', function () {
+        // Chat button functionality
+        $('#instanceTable').on('click', '.chatBtn', function () {
             var instanceId = $(this).data('instanceid');
-            if (confirm('Are you sure you want to delete this instance?')) {
-                $('#res').html('<p>Deleting, please wait.</p>');
-                $.ajax({
-                    url: '/instances/' + instanceId,
-                    type: 'DELETE',
-                    success: function (result) {
-                        $('#res').html('<p>Instance deleted successfully.</p>');
-                        instanceTable.ajax.reload();
-                        setTimeout(function () {
-                            $('#res').html('');
-                        }, 5000);
-                    },
-                    error: function (xhr, status, error) {
-                        $('#res').html('<p>Error deleting instance: ' + error + '</p>');
-                        setTimeout(function () {
-                            $('#res').html('');
-                        }, 5000);
-                    }
-                });
-            }
+            window.location.href = '/instances/' + instanceId + '/conversations/';
         });
     });
 </script>
