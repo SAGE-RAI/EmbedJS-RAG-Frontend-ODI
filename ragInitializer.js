@@ -47,8 +47,6 @@ async function initializeRAGApplication(instance) {
     function getConfigFromInstanceOrEnv(instanceModel, instanceEmbedModel, envConfig) {
         let provider = instanceModel.provider;
         let embedProvider = instanceEmbedModel.provider;
-        console.log("Embed provider in config: " + embedProvider);
-        console.log("provider in config: " + provider);
         // Set default provider values if not specified
         provider = (provider === 'Default' || !provider) ? envConfig.MODEL_PROVIDER : provider;
         embedProvider = (embedProvider === 'Default' || !embedProvider) ? envConfig.EMBED_PROVIDER : embedProvider;

@@ -17,7 +17,42 @@
     <h1 id="terms">Terms of Use</h1>
     <p>Content for terms of use...</p>
 
-    <h1 id="about">About</h1>
+<h1 id="about-our-ai-system-how-it-works">About the AI Assistants: How they work</h1>
+<p>Our AI assistants use a Retrieval-Augmented Generation (RAG) approach to provide accurate and relevant answers to your queries. Here’s a breakdown of how the system operates, whether it’s your first query or a follow-up.</p>
+<hr>
+<h2 id="-the-first-query-in-a-conversation-"><strong>The First Query in a Conversation</strong></h2>
+<ol>
+<li><p><strong>Retrieving Relevant Content</strong><br>When you make your initial query, the system searches our database for content that most closely matches your question and is likely to provide the best answer.</p>
+</li>
+<li><p><strong>Generating a Response</strong><br>We then send your query and the retrieved content to our language model (LLM). The LLM uses this information to generate a response that addresses your query.</p>
+</li>
+<li><p><strong>Displaying the Response and Sources</strong><br>You receive the response along with a list of all sources used. These sources show where the content in step (1) came from, ensuring transparency.</p>
+<ul>
+<li><strong>Guardrails:</strong> We instruct the LLM to only respond based on the supplied content, avoiding the generation of answers that aren&#39;t supported by the data.</li>
+<li><strong>Limitations:</strong> While the LLM uses the content provided to formulate an answer, we don’t have visibility into the exact phrases or sources it relied upon. Therefore, we list all relevant sources to cover the range of materials referenced.</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="-handling-follow-up-queries-"><strong>Handling Follow-Up Queries</strong></h2>
+<ol>
+<li><p><strong>Processing the Follow-Up Query</strong><br>When you ask a follow-up question, the system combines this new query with the conversation history and previously retrieved context. It then sends all this information to the LLM to determine if it can respond using the existing data.</p>
+</li>
+<li><p><strong>Direct Response (If Possible)</strong><br>If the LLM finds an answer based on the conversation history and context, we display it to you directly.</p>
+</li>
+<li><p><strong>Query Resolution (If Needed)</strong><br>If the LLM can’t answer the query from existing information, it resolves the entities and context in your query to form a precise question. For example, if your initial query was <em>&quot;What was the main theme of the ODI Summit in 2019?&quot;</em> and the follow-up is <em>&quot;Who were the keynote speakers at the event?&quot;</em>, the system resolves <em>“the event”</em> to <em>“the ODI Summit in 2019”</em> to understand what you’re referring to.</p>
+<p>This process also works if you introduce a completely new topic; the system then treats it like a new conversation.</p>
+</li>
+<li><p><strong>Retrieving and Using New Content</strong><br>Using the resolved query, the system retrieves new content from our database. This content, along with the conversation history, is sent to the LLM to generate a response.</p>
+</li>
+<li><p><strong>Displaying the Updated Response</strong><br>Finally, we show you the response, complete with the relevant sources used.</p>
+</li>
+</ol>
+<hr>
+<h2 id="-our-approach-to-query-resolution-"><strong>Our Approach to Query Resolution</strong></h2>
+<p>The query resolution process is a custom feature we&#39;ve developed to enhance the LLM’s capabilities. It ensures that when references are vague or when topics shift, the system can still deliver accurate results by resolving entities and retrieving appropriate content.</p>
+<hr>
+<p>This is how our RAG system operates, providing you with relevant, data-driven responses while ensuring transparency and reliability. If you have any questions about how the system works, feel free to reach out!</p>
     <h1><a href='http://www.theodi.org'>Open Data Institute</a></h1>
     <p><a href='http://www.openstreetmap.org/?lat=51.534780900551354&amp;lon=-0.12180447578430176&amp;zoom=16&amp;layers=T&amp;mlat=51.53478&amp;mlon=-0.12180'>Open Data Institute</a><span>, 4th Floor, Kings Place, 90 York Way, London N1 9AG</span></p>
     <p><a href='mailto:info@theodi.org'>info@theodi.org</a> · Company <a href='http://opencorporates.com/companies/gb/08030289'>08030289</a>	· <span>VAT</span> <span>143 7796 80</span></p>
