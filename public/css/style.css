@@ -62,6 +62,7 @@ h1 {
   text-align: left;
   font-weight: 700;
   font-size: 3rem;
+  line-height: 3rem;
 }
 h2 {
   font-size: 1.5em;
@@ -93,6 +94,13 @@ tbody tr:nth-child(2n) button {
 button:hover, .submitButton:hover, #dataFrom .btn:hover,
 tbody tr:nth-child(2n) button:hover {
   background-color: var(--color-light-grey);
+  color: var(--color-dark-blue);
+}
+button a {
+  color: var(--color-white);
+}
+button:hover a {
+  text-decoration: none;
   color: var(--color-dark-blue);
 }
 main {
@@ -469,8 +477,6 @@ sidebar .admin-menu {
 .topper .icon {
   width: 100px;
   height: 50px;
-  background: transparent url('/images/odilabs-8-dark.svg');
-  background-size: cover;
   margin-left: 15px;
 }
 
@@ -788,5 +794,76 @@ button.uil {
   80%, 100% {
     opacity: 0;
     transform: translateY(0);
+  }
+}
+.sidebar-toggle {
+  position: absolute;
+  left: 0px;
+  background-color: var(--color-dark-blue);
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  z-index: 1100;
+  max-height: 100px;
+  border: none !important;
+  display: none;
+}
+.sidebar-toggle {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.sidebar-toggle:focus,
+.sidebar-toggle:active {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+@media (max-width: 1024px) {
+  .padded {
+    margin: 1em;
+  }
+  .smallHide {
+    display: none;
+  }
+  .conversations-sidebar  {
+      position: fixed;
+      top: 70px;
+      left: 0;
+      height: calc(100vh - 155px);
+      transform: translateX(-100%);
+      max-width: 220px;
+      z-index: 1000;
+      display:none;
+  }
+  .conversations-sidebar.shrunk {
+    position: fixed;
+    top: 100px;
+    left: 0;
+    height: 100%;
+    transform: translateX(-100%);
+    z-index: 1000;
+  }
+  .conversations-sidebar.expanded {
+      transform: translate(0%);
+      background-color: white;
+      display: block;
+  }
+  .sidebar-toggle {
+    display: block;
+  }
+  .aichat {
+    width: 100%;
+  }
+  .bottom {
+    width: 100%;
+  }
+  .bottom #input {
+    margin-left: -15px;
   }
 }

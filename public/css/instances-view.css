@@ -121,3 +121,20 @@ table.cards tbody tr td.description {
     width: 410px;
     height: 60px;
 }
+@media (max-width: 640px) {
+    table.cards tbody tr {
+        width: 400px;
+        height: 250px;
+        margin: 0px;
+    }
+    table.cards tbody tr td.actions button.manageBtn {
+        left: 260px;
+        top: -155px;
+    }
+    table.cards tbody tr td.description {
+        top: 100px;
+        width: 360px;
+        height: 75px;
+        font-size: 0.9em;
+    }
+}
