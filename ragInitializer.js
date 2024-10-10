@@ -133,7 +133,11 @@ async function initializeRAGApplication(instance) {
                         embeddingModel = new AdaEmbeddings({ apiKey: config.embed.apiKey });
                         break;
                     case 'text-embedding-3-large':
-                        embeddingModel = new OpenAi3LargeEmbeddings(openAiEmbedOptions);
+                        // Modify openAiEmbedOptions for text-embedding-3-large to use dynamicDimension instead of dimensions
+                        embeddingModel = new OpenAi3LargeEmbeddings({
+                            ...openAiEmbedOptions, // retain existing options
+                            dynamicDimension: config.embed.dimensions // add dynamicDimension instead of dimensions
+                        });
                         break;
                     case 'text-embedding-3-small':
                         embeddingModel = new OpenAi3SmallEmbeddings({ apiKey: config.embed.apiKey });
