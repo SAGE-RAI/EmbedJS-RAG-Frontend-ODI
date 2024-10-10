@@ -18,23 +18,31 @@
         padding-top: 60px;
     }
     .modal-content {
-        background-color:rgb(33, 37, 41);
+        background-color: var(--color-light-grey);
         margin: 5% auto;
         padding: 20px;
         border: 1px solid #888;
         width: 80%;
     }
     .close {
-        color: #aaa;
+        color: var(--color-dark-blue);
         float: right;
         font-size: 28px;
         font-weight: bold;
     }
     .close:hover,
     .close:focus {
-        color: black;
+        color: var(--color-dark-blue);
         text-decoration: none;
         cursor: pointer;
+    }
+    #modalBody, #modalBody strong {
+        color: var(--color-dark-blue) !important;
+    }
+    pre {
+        white-space: pre-wrap; /* Wrap long lines */
+        word-wrap: break-word; /* Break long words */
+        overflow: auto; /* Add scroll if content overflows */
     }
 </style>
 <div class="padded">
