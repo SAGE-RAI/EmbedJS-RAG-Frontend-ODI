@@ -18,7 +18,7 @@ const embeddingsSchema = new mongoose.Schema({
 });
 
 function getEmbeddingsModel(dbName) {
-  const connection = mongoose.connection.useDb(dbName, { useCache: true });
+  const connection = mongoose.connection.useDb(dbName, { useCache: false });
 
   if (connection.models.Embeddings) {
     return connection.models.Embeddings;

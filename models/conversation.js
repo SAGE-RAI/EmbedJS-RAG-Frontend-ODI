@@ -50,7 +50,7 @@ const conversationSchema = new mongoose.Schema({
 });
 
 function getConversationModel(dbName) {
-  const connection = mongoose.connection.useDb(dbName, { useCache: true });
+  const connection = mongoose.connection.useDb(dbName, { useCache: false });
 
   if (connection.models.Conversations) {
     return connection.models.Conversations;
