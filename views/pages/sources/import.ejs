@@ -26,6 +26,8 @@
                 <th><input type="checkbox" id="selectAll" /></th>
                 <th>Title</th>
                 <th>Source</th>
+                <th>Type</th>
+                <th>overrideUrl</th>
                 <th>Import Status</th>
             </tr>
         </thead>
@@ -88,6 +90,8 @@ function parseCSV(data) {
                 <td>${existingSources[row.source] ? '' : '<input type="checkbox" />'}</td>
                 <td>${row.title}</td>
                 <td>${row.source}</td>
+                <td>${row.type}</td>
+                <td>${row.overrideUrl}</td>
                 <td class="import-status">${importedStatus}</td>
             `;
         }
@@ -102,10 +106,17 @@ function addSelectedSources() {
         if (checkbox && checkbox.checked) {
             let title = row.cells[1].textContent;
             let source = row.cells[2].textContent;
-            let statusCell = row.cells[3];
+            let type = row.cells[3].textContent;
+            let overrideUrl = row.cells[4].textContent;
+            let statusCell = row.cells[5];
             let postUrl = '<%= "/instances/" + instanceId + "/sources" %>';
             let inputObject = { title, source };
-
+            if (type !== 'undefined') {
+                inputObject = { title, source, type };
+            }
+            if (overrideUrl !== 'undefined') {
+                inputObject = { title, source, type, overrideUrl };
+            }
             fetch(postUrl, {
                 method: 'POST',
                 headers: {
