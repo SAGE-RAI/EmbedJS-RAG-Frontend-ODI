@@ -62,14 +62,17 @@
                     title: 'Date',
                     width: '15%',
                     render: function(data, type, row) {
-                        // Parse the date string into a Date object
-                        var date = new Date(data);
-                        // Format the date nicely (e.g., "April 18, 2024 14:36:41")
-                        return date.toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                        }) + ' ' + date.toLocaleTimeString('en-US');
+                        if (type === 'display' || type === 'filter') {
+                            // Parse the date string into a Date object
+                            var date = new Date(data);
+                            // Format the date nicely (e.g., "April 18, 2024 14:36:41")
+                            return date.toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            }) + ' ' + date.toLocaleTimeString('en-US');
+                        }
+                        return data;
                     }
                 },
                 { data: 'tokens', title: 'Tokens', width: '20%' },
