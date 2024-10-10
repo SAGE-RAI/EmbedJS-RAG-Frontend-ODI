@@ -12,7 +12,7 @@
     "type": {
       "type": "string",
       "title": "Source Type",
-      "enum": ["text/html", "text/plain", "PDF", "JSON"]
+      "enum": ["text/html", "text/plain", "PDF", "JSON", "siteMap"]
     },
     "title": {
       "type": "string",

@@ -1,60 +1,17 @@
 import express from 'express';
-import { addSource, getSources, getSource, updateSource, deleteSource, getSourcesCount } from '../controllers/source.js';
+import { addSource, getSources, getSource, updateSource, deleteSource, getSourcesCount, getHeaders, getSiteMapStatus } from '../controllers/source.js';
 import { ensureAuthenticated, checkOwnership, setActiveInstance, canAccessInstance, canEditSources } from '../middleware/auth.js';
-import fetch from 'node-fetch'; // Import node-fetch
-import { load } from 'cheerio'
 
 const router = express.Router({ mergeParams: true });
 
-// Route to fetch headers and title
 router.get('/headers', ensureAuthenticated, async (req, res) => {
     try {
-        const { url } = req.query; // Get the URL from query parameters
-
+        const { url } = req.query;
         if (!url) {
             return res.status(400).json({ error: 'URL is required' });
         }
-
-        // Fetch headers from the URL
-        const headResponse = await fetch(url, { method: 'HEAD' });
-
-        // Extract headers
-        const contentType = headResponse.headers.get('Content-Type') || 'unknown';
-        const contentDisposition = headResponse.headers.get('Content-Disposition') || '';
-        let title = '';
-
-        // Determine the source type
-        let sourceType;
-        if (contentType.includes('application/json')) {
-            sourceType = 'JSON';
-        } else if (contentType.includes('application/pdf')) {
-            sourceType = 'PDF';
-        } else if (contentType.includes('text/plain')) {
-            sourceType = 'Text';
-        } else if (contentType.includes('text/html')) {
-            sourceType = 'HTML';
-
-            // Fetch the actual HTML content
-            const htmlResponse = await fetch(url);
-            const html = await htmlResponse.text();
-
-            // Parse HTML to extract the <title> tag
-            const $ = load(html);
-            title = $('title').text();
-        } else {
-            sourceType = 'Unknown';
-        }
-
-        // Extract filename from Content-Disposition header if present
-        if (contentDisposition.includes('filename=')) {
-            const matches = contentDisposition.match(/filename="(.+?)"/);
-            if (matches && matches[1]) {
-                title = matches[1];
-            }
-        }
-
-        // Send back the headers as JSON
-        res.json({ contentType, sourceType, title });
+        const headers = await getHeaders(url);
+        res.json(headers);
     } catch (error) {
         console.error('Error fetching headers:', error);
         res.status(500).json({ error: 'Failed to fetch headers' });
@@ -71,6 +28,16 @@ router.get('/add', ensureAuthenticated, canAccessInstance, canEditSources, (req,
 router.get('/import', ensureAuthenticated, canAccessInstance, canEditSources, (req, res) => {
     res.locals.pageTitle = "Bulk Import";
     res.render('pages/sources/import', { instanceId: req.params.instanceId });
+});
+
+// Route to get sitemap status
+router.get('/sitemap/status', ensureAuthenticated, canAccessInstance, async (req, res) => {
+    try {
+        await getSiteMapStatus(req, res);
+    } catch (error) {
+        console.error('Error fetching sitemap status:', error);
+        res.status(500).json({ error: 'Failed to fetch sitemap status' });
+    }
 });
 
 router.post('/', ensureAuthenticated, canAccessInstance, canEditSources, setActiveInstance, addSource);
@@ -108,7 +75,9 @@ router.get('/count', ensureAuthenticated, canAccessInstance, getSourcesCount);
 router.get('/:loaderId', ensureAuthenticated, canAccessInstance, async (req, res) => {
     try {
         const source = await getSource(req, res, true); // Use a flag to return raw data
-        if (req.accepts(['json', 'html']) === 'json') {
+        if (!source) {
+            res.status(404).send('Not Found');
+        } else if (req.accepts(['json', 'html']) === 'json') {
             res.json(source);
         } else if (req.accepts(['html', 'json']) === 'html') {
             res.locals.pageTitle = "Edit Source";
@@ -117,6 +86,7 @@ router.get('/:loaderId', ensureAuthenticated, canAccessInstance, async (req, res
             res.status(406).send('Not Acceptable');
         }
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: error.message });
     }
 });

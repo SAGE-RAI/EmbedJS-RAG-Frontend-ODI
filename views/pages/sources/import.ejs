@@ -7,12 +7,17 @@
         margin-top: 2em;
     }
 </style>
+<div class="padded">
 <h1><%= pageTitle %></h1>
+<br/>
 <div id="res" class="alert"></div>
+<br/>
 <form id="csvUploadForm" enctype="multipart/form-data">
     <input type="file" id="csvFile" name="csvFile" accept=".csv" required />
+    <br/>
     <button type="button" onclick="uploadCSV()">Upload CSV</button>
 </form>
+<br/>
 <div id="csvTable" style="display:none;">
     <h2>CSV Content</h2>
     <table id="sourceTable" border="1">
@@ -27,7 +32,10 @@
         <tbody>
         </tbody>
     </table>
+    <br/>
     <button type="button" class="submit" onclick="addSelectedSources()">Add Selected Sources</button>
+    <br/>
+</div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 <script>

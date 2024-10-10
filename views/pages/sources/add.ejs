@@ -58,7 +58,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 });
 
-
                 const sourceField = $('input[name="source"]').closest('.form-group');
                 if (sourceField.length) {
                     sourceField.append(`
@@ -86,14 +85,16 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 });
 
-function fetchSourceType(url,instanceId) {
+function fetchSourceType(url, instanceId) {
     fetch(`/instances/${instanceId}/sources/headers?url=${encodeURIComponent(url)}`)
         .then(response => response.json())
         .then(data => {
             const { contentType, title } = data;
 
             let sourceType;
-            if (contentType.includes('application/json')) {
+            if (url.endsWith('sitemap.xml')) {
+                sourceType = 'siteMap';
+            } else if (contentType.includes('application/json')) {
                 sourceType = 'JSON';
             } else if (contentType.includes('application/pdf')) {
                 sourceType = 'PDF';
@@ -112,7 +113,6 @@ function fetchSourceType(url,instanceId) {
             console.error('Error fetching source type:', error);
         });
 }
-
 
 function updateSource(errors, values, instanceId) {
     if (errors) {
