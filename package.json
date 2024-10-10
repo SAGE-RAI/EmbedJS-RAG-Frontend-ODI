@@ -1,6 +1,6 @@
 {
   "name": "embedjs-rag-frontend-odi",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "description": "A frontend for EmbedJS and proxy API for other chat interfaces using tokens.",
   "type": "module",
   "exports": "./index.js",
