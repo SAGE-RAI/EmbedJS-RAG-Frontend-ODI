@@ -120,6 +120,7 @@ table.cards tbody tr td.description {
     top: 160px;
     width: 410px;
     height: 60px;
+    overflow-y: scroll;
 }
 @media (max-width: 640px) {
     table.cards tbody tr {
