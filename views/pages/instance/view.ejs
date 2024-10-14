@@ -7,12 +7,11 @@
     <div id="res" class="alert"></div>
 
     <div id="assistantDetails" style="display: none;">
-        <h2>Assistant information</h2>
         <p><strong>Name:</strong> <span id="instanceName"></span></p>
         <p><strong>Description:</strong> <span id="instanceDescription"></span></p>
         <p><strong>System prompt:</strong><span id="instancePrompt"></span></p>
         <p><strong>Token reward for providing rating:</strong> <span id="tokenReward"></span></p>
-        <p><strong>Model Provider:</strong> <span id="modelProvider"></span></p>
+        <p><strong>Model Provider:</strong> <span id="modelProvider"></span> (<span id="modelProviderPrivacyPolicy"></span>)</p>
         <p><strong>Model Name:</strong> <span id="modelName"></span></p>
         <p><strong>Created Date:</strong> <span id="instanceCreatedAt"></span></p>
         <p><strong>Updated Date:</strong> <span id="instanceUpdatedAt"></span></p>
@@ -68,6 +67,19 @@
             document.getElementById('instanceCreatedAt').textContent = new Date(instance.createdAt).toLocaleString();
             document.getElementById('instanceUpdatedAt').textContent = new Date(instance.updatedAt).toLocaleString();
             document.getElementById('instancePublic').textContent = instance.public ? 'Yes' : 'No';
+
+            // Add privacy policy link for the model provider
+            const modelProviderPrivacyPolicyLinks = {
+                "OpenAI": "https://openai.com/enterprise-privacy/",
+                "Azure": "https://learn.microsoft.com/en-us/legal/cognitive-services/openai/data-privacy?tabs=azure-portal",
+                "Anthropic": "https://support.anthropic.com/en/collections/4078534-privacy-legal",
+                "Mistral": "https://mistral.ai/terms/#terms-of-service-cloud-usage",
+                "Hugging Face": "https://huggingface.co/docs/inference-endpoints/en/security#data-securityprivacy"
+            };
+
+            const modelProvider = instance.model.provider || '';
+            const privacyPolicyLink = modelProviderPrivacyPolicyLinks[modelProvider] || '#';
+            document.getElementById('modelProviderPrivacyPolicy').innerHTML = privacyPolicyLink !== '#' ? `<a href="${privacyPolicyLink}" target="_blank">Privacy Policy</a>` : 'No privacy policy available';
         })
         .catch(error => {
             console.error('Error fetching instance details:', error);

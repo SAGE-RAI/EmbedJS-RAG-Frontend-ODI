@@ -106,9 +106,9 @@ async function initializeRAGApplication(instance) {
                     apiKey: config.model.apiKey
                 });
                 break;
-            case 'Mistal':
+            case 'Mistral':
                 // Add your implementation for Mistal here
-                throw new Error('Mistal provider not yet implemented.');
+                throw new Error('Mistral provider not yet implemented.');
             case 'Hugging Face':
                 // Add your implementation for Hugging Face here
                 throw new Error('Hugging Face provider not yet implemented.');
