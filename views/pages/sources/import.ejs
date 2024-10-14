@@ -10,6 +10,15 @@
 <div class="padded">
 <h1><%= pageTitle %></h1>
 <br/>
+<p>
+    Upload a CSV (see example) of sources to import. The CSV is structured as follows:
+    <ol>
+        <li><b>title</b>: Title of the source (required)</li>
+        <li>source: URL (required)</li>
+        <li>type: text/html (default), text/plain, PDF, JSON</li>
+        <li>overrideUrl: The URL to link the user to in the soruces list of a chat response.</li>
+    </ol>
+</p>
 <div id="res" class="alert"></div>
 <br/>
 <form id="csvUploadForm" enctype="multipart/form-data">
