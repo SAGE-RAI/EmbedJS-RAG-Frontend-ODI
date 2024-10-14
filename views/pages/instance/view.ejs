@@ -10,6 +10,7 @@
         <h2>Assistant information</h2>
         <p><strong>Name:</strong> <span id="instanceName"></span></p>
         <p><strong>Description:</strong> <span id="instanceDescription"></span></p>
+        <p><strong>System prompt:</strong><span id="instancePrompt"></span></p>
         <p><strong>Token reward for providing rating:</strong> <span id="tokenReward"></span></p>
         <p><strong>Model Provider:</strong> <span id="modelProvider"></span></p>
         <p><strong>Model Name:</strong> <span id="modelName"></span></p>
@@ -22,6 +23,7 @@
         <% if (userCanAdminInstance) { %>
             <h3>Manage assistant</h3>
             <button id="editInstanceBtn">Edit assistant</button>
+            <button id="shareInstanceBtn">Share assistant</button>
             <button id="deleteInstanceBtn">Delete assistant</button>
             <button id="manageSourcesBtn">Manage Sources</button>
 
@@ -59,6 +61,7 @@
 
             document.getElementById('instanceName').textContent = instance.name;
             document.getElementById('instanceDescription').textContent = instance.description || 'No description available';
+            document.getElementById('instancePrompt').textContent = instance.systemPrompt || 'Not available';
             document.getElementById('tokenReward').textContent = '+' + instance.ratingReward || '0';
             document.getElementById('modelProvider').textContent = instance.model.provider || 'Model provider unknown';
             document.getElementById('modelName').textContent = instance.model.name || 'Model name unknown';
@@ -73,6 +76,10 @@
 
         document.getElementById('editInstanceBtn')?.addEventListener('click', function () {
             window.location.href = `/instances/${instanceId}/edit`;
+        });
+
+        document.getElementById('shareInstanceBtn')?.addEventListener('click', function () {
+            window.location.href = `/instances/${instanceId}/sharedWith`;
         });
 
         document.getElementById('deleteInstanceBtn')?.addEventListener('click', function () {
