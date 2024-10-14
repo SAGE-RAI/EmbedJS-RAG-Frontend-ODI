@@ -7,18 +7,38 @@
       <ul>
         <li><a href="#privacy">Your Privacy</a></li>
         <li><a href="#terms">Terms of Use</a></li>
-        <li><a href="#about">About</a></li>
+        <li><a href="#about">How the AI Assistants work</a></li>
       </ul>
     </div>
 
     <h1 id="privacy">Your Privacy</h1>
-    <p>Content for privacy...</p>
+    <p>We care about your privacy and rights.</p>
+    <p>Please refer to the Open Data Institute (ODI) <a href="https://theodi.org/our-policies/privacy-policy/" target="_blank">Privacy policy</a> for general terms including legal durastiction.</p>
+    <p>In addition to the above, the following outlines how interactions with an AI Assistant are managed and your rights. It is important to read and understand this so you are clear on the complete flow of data necessary to make the AI Assistants work.</p>
+    <ol>
+    <li><p><strong>Storage of conversations</strong><br>We store all your conversations in our <a href="#data-storage-location">data storage location</a>. This includes your queries, responses from the AI, and any ratings you provide. This information is tied to your user account (which is also stored in the same location). Conversations are encrypted when they are transferred (in transit), they are not encrypted when stored (at rest).</p>
+    </li>
+    <li><p><strong>Why we store conversation history?</strong><br>Our AI system needs to remember past conversations to provide you with relevant responses. Without this, the experience would not function as intended.</p>
+    </li>
+    <li><p><strong>Deleting conversations</strong><br>When you delete a conversation, it's permanently removed from our active system. However, it may still exist in system backups, which we keep to protect against system failures or cyber-attacks. Backups are retailed for the last for seven days, weekly for the month, and monthly for a year. This is standard practice in digital systems.</p>
+    </li>
+    <li><p><strong>Assistant models and providers</strong><br>Each assistant uses a general-purpose language model (LLM) provided by a third-party service. In order to answer a query, we have to send your query and conversation history to the general purpose model. This means that the general purpose model provider is able to see the query and conversation history. You can find the specific provider and model details on the assistant's information page, where you'll also find the link to the provider's privacy policy.</p>
+    </li>
+    <li><p><strong>Ownership and rights</strong><br/><p>You retain ownership of the queries you submit. By using the system, you grant the Open Data Institute (ODI) a royalty-free, perpetual license to use and share your queries for purposes outlined in our <a href="#data-sharing">Data use and sharing</a> section. You can download copies of conversations through the copy button provided for each response.</p><p>The generated responses may be subject to copyright laws, and rights may be exclusive, shared, or non-existent depending on the nature of the content. Claims made within generated responses are only the responsibility of the creator insofar as those claims are present in the creators source content and only to the extent to which the creator is reponsible for the source content.</p></li>
+    <li id="data-sharing"><p><strong>Data use and sharing</strong><br>We <strong>do not</strong> sell or transfer your data to third parties for advertising or profit. As a research institute, we may share data with research partners. You will always be informed when this happens. The amount of data shared will be proporitional to the research question and is never retained. We do not permit onward sharing of this data. Unfortunately, we do not offer an opt-out from this sharing; if you disagree, we recommend not using our service.</p>
+    </li>
+    <li id="data-storage-location"><p><strong>Data storage location</strong><br>All data is stored securely in MongoDB Cloud within the EU. We ensure your data is kept safe following regional standards and regulations.</p>
+    </li>
+    <li><p><strong>Service hosting</strong><br>Our service is hosted on Digital Ocean's cloud infrastructure in the UK, and we use Cloudflare to provide resilience and protect against cyber threats.</p>
+    </li>
+    </ol>
+    <p>We hope this policy helps clarify how we manage your data. If you have any concerns, please reach out before using the service.</p>
 
     <h1 id="terms">Terms of Use</h1>
-    <p>Content for terms of use...</p>
+    <p>Please refer to the <a href="https://theodi.org/our-policies/terms-of-use/" target="_blank">terms of use</a> of the Open Data Institute.</p>
 
-<h1 id="about-our-ai-system-how-it-works">About the AI Assistants: How they work</h1>
-<p>Our AI assistants use a Retrieval-Augmented Generation (RAG) approach to provide accurate and relevant answers to your queries. Here’s a breakdown of how the system operates, whether it’s your first query or a follow-up.</p>
+<h1 id="about">About the AI Assistants: How they work</h1>
+<p>Our AI assistants use a Retrieval-Augmented Generation (RAG) approach to provide accurate and relevant answers to your queries. Here's a breakdown of how the system operates, whether it's your first query or a follow-up.</p>
 <hr>
 <h2 id="-the-first-query-in-a-conversation-"><strong>The First Query in a Conversation</strong></h2>
 <ol>
@@ -29,7 +49,7 @@
 <li><p><strong>Displaying the Response and Sources</strong><br>You receive the response along with a list of all sources used. These sources show where the content in step (1) came from, ensuring transparency.</p>
 <ul>
 <li><strong>Guardrails:</strong> We instruct the LLM to only respond based on the supplied content, avoiding the generation of answers that aren&#39;t supported by the data.</li>
-<li><strong>Limitations:</strong> While the LLM uses the content provided to formulate an answer, we don’t have visibility into the exact phrases or sources it relied upon. Therefore, we list all relevant sources to cover the range of materials referenced.</li>
+<li><strong>Limitations:</strong> While the LLM uses the content provided to formulate an answer, we don't have visibility into the exact phrases or sources it relied upon. Therefore, we list all relevant sources to cover the range of materials referenced.</li>
 </ul>
 </li>
 </ol>
@@ -40,7 +60,7 @@
 </li>
 <li><p><strong>Direct Response (If Possible)</strong><br>If the LLM finds an answer based on the conversation history and context, we display it to you directly.</p>
 </li>
-<li><p><strong>Query Resolution (If Needed)</strong><br>If the LLM can’t answer the query from existing information, it resolves the entities and context in your query to form a precise question. For example, if your initial query was <em>&quot;What was the main theme of the ODI Summit in 2019?&quot;</em> and the follow-up is <em>&quot;Who were the keynote speakers at the event?&quot;</em>, the system resolves <em>“the event”</em> to <em>“the ODI Summit in 2019”</em> to understand what you’re referring to.</p>
+<li><p><strong>Query Resolution (If Needed)</strong><br>If the LLM can't answer the query from existing information, it resolves the entities and context in your query to form a precise question. For example, if your initial query was <em>&quot;What was the main theme of the ODI Summit in 2019?&quot;</em> and the follow-up is <em>&quot;Who were the keynote speakers at the event?&quot;</em>, the system resolves <em>“the event”</em> to <em>“the ODI Summit in 2019”</em> to understand what you're referring to.</p>
 <p>This process also works if you introduce a completely new topic; the system then treats it like a new conversation.</p>
 </li>
 <li><p><strong>Retrieving and Using New Content</strong><br>Using the resolved query, the system retrieves new content from our database. This content, along with the conversation history, is sent to the LLM to generate a response.</p>
@@ -50,7 +70,7 @@
 </ol>
 <hr>
 <h2 id="-our-approach-to-query-resolution-"><strong>Our Approach to Query Resolution</strong></h2>
-<p>The query resolution process is a custom feature we&#39;ve developed to enhance the LLM’s capabilities. It ensures that when references are vague or when topics shift, the system can still deliver accurate results by resolving entities and retrieving appropriate content.</p>
+<p>The query resolution process is a custom feature we&#39;ve developed to enhance the LLM's capabilities. It ensures that when references are vague or when topics shift, the system can still deliver accurate results by resolving entities and retrieving appropriate content.</p>
 <hr>
 <p>This is how our RAG system operates, providing you with relevant, data-driven responses while ensuring transparency and reliability. If you have any questions about how the system works, feel free to reach out!</p>
     <h1><a href='http://www.theodi.org'>Open Data Institute</a></h1>
