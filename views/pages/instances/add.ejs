@@ -76,7 +76,6 @@ document.addEventListener("DOMContentLoaded", function () {
             // After the form has been loaded, add the event listener for provider change
             const providerField = $('select[name="model.provider"]');
             const baseUrlField = $('input[name="model.baseUrl"]');
-            const nameField = $('input[name="model.name"]');
 
             // Initially disable the Base URL field
             baseUrlField.prop('disabled', true);
@@ -86,12 +85,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 const selectedProvider = $(this).val();
                 if (selectedProvider === 'Azure' || selectedProvider === 'Ollama' || selectedProvider === 'OpenAI') {
                     baseUrlField.prop('disabled', false);
-                    if (selectedProvider === 'Azure') {
-                        nameField.prop('disabled', true).val('');
-                    }
                 } else {
                     baseUrlField.prop('disabled', true).val(''); // Disable and clear value
-                    nameField.prop('disabled', false);
                 }
             });
 
