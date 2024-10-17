@@ -57,22 +57,19 @@ async function getInstance(req, res) {
 
         const userAccess = req.userAccess;
 
-        if (!userAccess || userAccess.role !== 'instanceAdmin') {
-            // If the user is not an admin and doesn't have instanceAdmin role, remove sharedWith
-            delete instance.sharedWith;
-            delete instance.model.baseUrl;
-            delete instance.model.apiKey;
-            delete instance.embedModel.baseUrl;
-            delete instance.embedModel.apiKey;
-        }
-        /*
-        if (!instance.systemPrompt) {
-            console.log(req.ragApplication.queryTemplate);
-            instance.systemPrompt = req.ragApplication.queryTemplate;
-        }
-        */
+        // Clone the instance object before modifying it
+        const clonedInstance = JSON.parse(JSON.stringify(instance));
 
-        res.json(instance);
+        if (!userAccess || userAccess.role !== 'instanceAdmin') {
+            // If the user is not an admin, remove sensitive fields from the cloned object
+            delete clonedInstance.sharedWith;
+            delete clonedInstance.model.baseUrl;
+            delete clonedInstance.model.apiKey;
+            delete clonedInstance.embedModel.baseUrl;
+            delete clonedInstance.embedModel.apiKey;
+        }
+
+        res.json(clonedInstance);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
