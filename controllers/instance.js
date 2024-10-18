@@ -67,6 +67,8 @@ async function getInstance(req, res) {
         } else if (!userAccess || userAccess.role !== 'instanceAdmin') {
             // If the user is not an admin, remove sensitive fields from the cloned object
             delete clonedInstance.sharedWith;
+            delete clonedInstance.ratingResponses;
+            delete clonedInstance.createdBy;
             delete clonedInstance.model.baseUrl;
             delete clonedInstance.model.apiKey;
             delete clonedInstance.embedModel.baseUrl;
