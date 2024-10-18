@@ -63,8 +63,7 @@ async function getInstance(req, res) {
         // Get list of admin emails from environment variable
         const adminEmails = process.env.ADMIN ? process.env.ADMIN.split(',') : [];
 
-        if (adminEmails.includes(req.user.email)) {
-            console.log('is admin');
+        if (req.user && adminEmails.includes(req.user.email)) {
         } else if (!userAccess || userAccess.role !== 'instanceAdmin') {
             // If the user is not an admin, remove sensitive fields from the cloned object
             delete clonedInstance.sharedWith;
