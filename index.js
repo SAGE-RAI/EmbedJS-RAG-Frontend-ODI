@@ -105,13 +105,14 @@ db.once('open', () => {
 
   app.use('/instances/:instanceId/sources', sourceRoutes);
   app.use('/instances/:instanceId/conversations', conversationRoutes);
-  app.use('/instances/:instanceId/', instanceRoutes);
+  app.use('/instances/:instanceId', instanceRoutes);
 
 
   app.get('*', function(req, res, next){
     const page = {
       title: "404 Not Found"
     };
+    console.log(`Route not found: ${req.originalUrl}`);
     res.locals.page = page;
     const error = new Error("Not Found");
     error.status = 404;

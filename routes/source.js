@@ -76,7 +76,7 @@ router.get('/:loaderId', ensureAuthenticated, canAccessInstance, async (req, res
     try {
         const source = await getSource(req, res, true); // Use a flag to return raw data
         if (!source) {
-            res.status(404).send('Not Found');
+            res.status(404).send('Source Not Found');
         } else if (req.accepts(['json', 'html']) === 'json') {
             res.json(source);
         } else if (req.accepts(['html', 'json']) === 'html') {
