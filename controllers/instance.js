@@ -60,7 +60,12 @@ async function getInstance(req, res) {
         // Clone the instance object before modifying it
         const clonedInstance = JSON.parse(JSON.stringify(instance));
 
-        if (!userAccess || userAccess.role !== 'instanceAdmin') {
+        // Get list of admin emails from environment variable
+        const adminEmails = process.env.ADMIN ? process.env.ADMIN.split(',') : [];
+
+        if (adminEmails.includes(req.user.email)) {
+            console.log('is admin');
+        } else if (!userAccess || userAccess.role !== 'instanceAdmin') {
             // If the user is not an admin, remove sensitive fields from the cloned object
             delete clonedInstance.sharedWith;
             delete clonedInstance.model.baseUrl;
@@ -177,7 +182,6 @@ async function deleteInstance(req, res) {
         res.status(500).json({ error: error.message });
     }
 }
-
 
 async function addUserToInstance(req, res) {
     try {

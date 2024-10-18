@@ -238,10 +238,8 @@ export const isAdmin = (req, res, next) => {
 
     // Get list of admin emails from environment variable
     const adminEmails = process.env.ADMIN ? process.env.ADMIN.split(',') : [];
-    console.log("admin");
-    console.log(process.env.ADMIN);
 
-    if (req.session.authMethod === 'google' || adminEmails.includes(req.user.email)) {
+    if (adminEmails.includes(req.user.email)) {
         req.isAdmin = true;
         next();
     } else {
