@@ -3,14 +3,16 @@ import { getEmbeddingsCacheModel } from '../models/embeddingsCache.js';
 import mongoose from 'mongoose';
 import { removeActiveInstanceFromCache } from '../middleware/auth.js';
 
-async function createInstance(req, res) {
+async function createInstance(req, res, next) {
     try {
         const { name, description, ratingReward, isPublic, systemPrompt, suggestions, ratingResponses, model, embedModel } = req.body;
         const userId = req.user.id;
 
         // Validate the required fields
         if (!name || !systemPrompt) {
-            return res.status(400).json({ error: 'Name and systemPrompt are required' });
+            const error = new Error('Name and systemPrompt are required');
+            error.status = 400;
+            return next(error);
         }
 
         // Check if provider is 'Default' and get values from config
@@ -43,16 +45,18 @@ async function createInstance(req, res) {
         await newInstance.save();
         res.status(201).json(newInstance);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return next(error);
     }
 }
 
 // Fetch instance details, include sharedWith only if the user can admin the instance
-async function getInstance(req, res) {
+async function getInstance(req, res, next) {
     try {
         const instance = await Instance.findById(req.params.instanceId);
         if (!instance) {
-            return res.status(404).json({ error: 'Instance not found' });
+            const error = new Error('Instance not found');
+            error.status = 404;
+            return next(error);
         }
 
         const userAccess = req.userAccess;
@@ -64,7 +68,10 @@ async function getInstance(req, res) {
         const adminEmails = process.env.ADMIN ? process.env.ADMIN.split(',') : [];
 
         if (req.user && adminEmails.includes(req.user.email)) {
-        } else if (!userAccess || userAccess.role !== 'instanceAdmin') {
+            res.json(clonedInstance);
+        } else if (userAccess && userAccess.role === 'instanceAdmin') {
+            res.json(clonedInstance);
+        } else {
             // If the user is not an admin, remove sensitive fields from the cloned object
             delete clonedInstance.sharedWith;
             delete clonedInstance.ratingResponses;
@@ -73,16 +80,15 @@ async function getInstance(req, res) {
             delete clonedInstance.model.apiKey;
             delete clonedInstance.embedModel.baseUrl;
             delete clonedInstance.embedModel.apiKey;
+            res.json(clonedInstance);
         }
-
-        res.json(clonedInstance);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return next(error);
     }
 }
 
 // Function to update an instance
-async function updateInstance(req, res) {
+async function updateInstance(req, res, next) {
     try {
         const instanceId = req.params.instanceId;
         const newData = req.body;
@@ -90,7 +96,9 @@ async function updateInstance(req, res) {
         // Fetch the current instance data
         const currentInstance = await Instance.findById(instanceId);
         if (!currentInstance) {
-            return res.status(404).json({ error: 'Instance not found' });
+            const error = new Error('Instance not found');
+            error.status = 404;
+            return next(error);
         }
 
         const EmbeddingsCache = getEmbeddingsCacheModel(req.session.activeInstance.id);
@@ -120,7 +128,9 @@ async function updateInstance(req, res) {
                     newData.embedModel.baseUrl = currentEmbedModel.baseUrl;
 
                 } else {
-                    return res.status(400).json({ error: 'When sources exist, only the embedModel.apiKey field can be updated.' });
+                    const error = new Error('When sources exist, only the embedModel.apiKey field can be updated.');
+                    error.status = 400;
+                    return next(error);
                 }
             }
         }
@@ -129,8 +139,11 @@ async function updateInstance(req, res) {
         const updatedInstance = await Instance.findByIdAndUpdate(instanceId, newData, { new: true });
 
         if (!updatedInstance) {
-            return res.status(404).json({ error: 'Instance not found' });
+            const error = new Error('Instance not found');
+            error.status = 404;
+            return next(error);
         }
+
 
         // Remove from cache
         removeActiveInstanceFromCache(instanceId);
@@ -138,19 +151,20 @@ async function updateInstance(req, res) {
         // Send the updated instance as a response
         res.json(updatedInstance);
     } catch (error) {
-        console.error('Error updating instance:', error);
-        res.status(500).json({ error: error.message });
+        return next(error)
     }
 }
 
-async function deleteInstance(req, res) {
+async function deleteInstance(req, res, next) {
     try {
         const instanceId = req.params.instanceId;
 
         // Find the instance to ensure it exists
         const instance = await Instance.findById(instanceId);
         if (!instance) {
-            return res.status(404).json({ error: 'Instance not found' });
+            const error = new Error('Instance not found');
+            error.status = 404;
+            return next(error);
         }
 
         const dbName = instanceId; // Using instanceId as the database name
@@ -162,16 +176,16 @@ async function deleteInstance(req, res) {
             connection.db.dropDatabase((err, result) => {
                 if (err) {
                     console.error('Error dropping database:', err);
-                    return res.status(500).json({ error: 'Failed to delete associated database' });
+                    const error = new Error('Failed to delete associated database');
+                    error.status = 500;
+                    return next(error);
                 }
                 console.log('Database deleted successfully');
                 connection.close();
             });
 
         } catch (err) {
-            console.error('Failed to delete database');
-            console.error(err);
-            return res.status(500).json({ error: 'Failed to delete associated database' });
+            return next(error);
         }
 
         // Delete the instance from the master database
@@ -179,18 +193,19 @@ async function deleteInstance(req, res) {
 
         res.sendStatus(204);
     } catch (error) {
-        console.error('Error in deleteInstance:', error);
-        res.status(500).json({ error: error.message });
+        return next(error);
     }
 }
 
-async function addUserToInstance(req, res) {
+async function addUserToInstance(req, res, next) {
     try {
 
         const { email, role } = req.body;
         const instance = await Instance.findById(req.params.instanceId);
         if (!instance) {
-            return res.status(404).json({ error: 'Instance not found' });
+            const error = new Error('Instance not found');
+            error.status = 404;
+            return next(error);
         }
 
         // Ensure sharedWith is initialized as an array
@@ -201,7 +216,9 @@ async function addUserToInstance(req, res) {
         // Check if user is already shared with
         const existingUser = instance.sharedWith.find(user => user.email === email);
         if (existingUser) {
-            return res.status(400).json({ error: 'User already shared with instance' });
+            const error = new Error('User already shared with instance');
+            error.status = 400;
+            return next(error);
         }
 
         // Add user to sharedWith
@@ -210,16 +227,18 @@ async function addUserToInstance(req, res) {
 
         res.json(instance);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return next(error);
     }
 };
 
-async function removeUserFromInstance(req, res) {
+async function removeUserFromInstance(req, res, next) {
     try {
         const { email } = req.params;
         const instance = await Instance.findById(req.params.instanceId);
         if (!instance) {
-            return res.status(404).json({ error: 'Instance not found' });
+            const error = new Error('Instance not found');
+            error.status = 404;
+            return next(error);
         }
 
         // Remove user from sharedWith
@@ -228,7 +247,7 @@ async function removeUserFromInstance(req, res) {
 
         res.json(instance);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return next(error);
     }
 };
 

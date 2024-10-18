@@ -168,7 +168,13 @@ export const canAdminInstance = async (req, res, next) => {
     if (!userId || !userEmail) {
         const error = new Error("Unathorised");
         error.status = 401;
-        throw error;
+        return next(error)
+    }
+
+    const adminEmails = process.env.ADMIN ? process.env.ADMIN.split(',') : [];
+
+    if (adminEmails.includes(req.user.email)) {
+        return next();
     }
 
     const instance = await Instance.findById(instanceId);
@@ -177,11 +183,12 @@ export const canAdminInstance = async (req, res, next) => {
 
     const userAccess = req.userAccess;
     if (isOwner || (userAccess && userAccess.role === 'instanceAdmin')) {
-        next();
+        return next();
     } else {
+        console.log('no admin');
         const error = new Error("Permission denied");
         error.status = 403;
-        throw error;
+        return next(error);
     }
 };
 
@@ -252,7 +259,7 @@ export const isAdmin = (req, res, next) => {
 export const checkOwnership = async (req, res, next) => {
     const instance = await Instance.findById(req.params.instanceId);
     if (req.isAdmin || instance.createdBy.equals(req.user._id)) {
-        next();
+        return next();
     } else {
         res.status(403).send('Permission denied');
     }
