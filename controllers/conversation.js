@@ -207,6 +207,50 @@ async function postMessage(req, res) {
 
         const ragResponse = await ragApplication.query(message, conversationId, chunks);
 
+        // ** AI to suggest to talk to tutor **
+        // Check if AI response suggests user needs to contact tutor
+        const aiMessage = ragResponse.content.message; //gets the response 
+        const clarificationQuery = `Does the following response suggest that the AI cannot answer the user's query? Response: "${aiMessage}" Please respond with a JSON object. The JSON should contain a boolean field "aicannotHelp", which should be true if the AI cannot help and false if it can. Example: {"aicannotHelp": true}`;
+        let clarificationResponse = await ragApplication.silentConversationQuery(clarificationQuery, null, conversationId, chunks);
+        let parsedResponse = {}; // Initialize the parsedResponse variable
+
+        try {
+            // Parse the JSON response
+            parsedResponse = JSON.parse(clarificationResponse);
+        } catch (error) {
+            console.error("Failed to parse JSON response from LLM:", error);
+        }
+
+        if (parsedResponse.aicannotHelp) {
+            try {
+                // Fetch instance details
+                const instance = await Instance.findById(req.params.instanceId);
+                const courseTutorEmail = 'tutor@example.com'; // * I have to replace this with an actualy email!*
+                const subject = `Help Request: Conversation History from ${user.name} on Assistant: ${instance ? instance.name : 'Unknown'}`;
+
+                // get the conversation history
+                const conversationHistory = [];
+                // Iterate through all conversation entries and pair them as Message and Response
+                conversation.entries.forEach((entry, index) => {
+                    const messageType = entry.content.sender === 'HUMAN' ? 'Message' : 'Response';
+                    conversationHistory.push(`${messageType} ${Math.ceil((index + 1) / 2)} (${entry.content.sender}): ${entry.content.message}`);
+                });
+
+                const mailtoLink = `mailto:${encodeURIComponent(courseTutorEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+                    `Dear Tutor,\n\nThe user ${user.name} has requested assistance with the following query, as the AI assistant was unable to help:\n\n` +
+                    `User Query: ${message}\n\nConversation History:\n\n${conversationHistory.join('\n\n')}\n\nKind regards,\nYour ODI AI Assistant`
+                )}`;
+
+                // push it to ragResponse
+                ragResponse.prompt = "I'm sorry if my response wasn't helpful. Would you like to reach out to your tutor for further support? You can do so by clicking the link below."
+                ragResponse.mailtoLink = mailtoLink;
+ 
+            } catch (error) {
+                console.error("Error preparing email details:", error);
+                return res.status(500).json({ error: "Failed to prepare email details." });
+            }
+        }
+
         try {
             // Define a function to handle the transactions sequentially
             const handleTransactions = async () => {
@@ -241,6 +285,60 @@ async function postMessage(req, res) {
     } catch (error) {
         console.error("Error in /:instanceId/completion/:conversationId route:", error);
         res.status(error.status || 500).json({ error: error.message });
+    }
+}
+
+// *** User to suggest to contact to tutor via email ***
+async function emailTutor(req, res) {
+    try {
+        const conversationId = req.params.conversationId;
+        const instanceId = req.params.instanceId;
+        const userId = req.session.user.id; // Assume user ID is stored in session
+        // Retrieve the user's token information from the database
+        
+        // Fetch the conversation
+        const Conversation = getConversationModel(instanceId);
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        // Fetch user details
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Fetch instance details
+        const instance = await Instance.findById(instanceId);
+        if (!instance) {
+            return res.status(404).json({ error: 'Instance not found' });
+        }
+
+        // Prepare email details
+        const courseTutorEmail = 'tutor@example.com'; // * I have to replace this with an actualy email!*
+        const subject = `Help Request: Conversation History from ${user.name} on Assistant: ${instance.name || 'Unknown'}`;
+
+        // Get the conversation history
+        const conversationHistory = [];
+        // Iterate through all conversation entries and pair them as Message and Response
+        conversation.entries.forEach((entry, index) => {
+            const messageType = entry.content.sender === 'HUMAN' ? 'Message' : 'Response';
+            conversationHistory.push(`${messageType} ${Math.ceil((index + 1) / 2)} (${entry.content.sender}): ${entry.content.message}`);
+        });
+
+        const mailtoLink = `mailto:${encodeURIComponent(courseTutorEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+            `Dear Tutor,\n\nThe user ${user.name} has requested assistance with the following conversation history:\n\n` +
+            `${conversationHistory.join('\n\n')}\n\nKind regards,\nYour ODI AI Assistant`
+        )}`;
+
+        // Return the email link
+        res.status(200).json({
+            mailtoLink
+        });
+    } catch (error) {
+        console.error("Error in emailTutor:", error);
+        res.status(500).json({ error: error.message });
     }
 }
 
@@ -380,4 +478,4 @@ async function getRatingsReport(req, res) {
     }
 }
 
-export { createConversation, getConversations, getConversation, updateConversation, deleteConversation, getMessages, postMessage, setRating, getRatingsReport };
+export { createConversation, getConversations, getConversation, updateConversation, deleteConversation, getMessages, postMessage, setRating, getRatingsReport, emailTutor };
