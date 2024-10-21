@@ -705,6 +705,12 @@ async function contactTutor(form) {
     let conversationId = conversationIdInput.value; // Get the conversation Id value from the input field
     let instanceId = getInstanceIdFromPath(); // Get the instanceId
 
+    // Check if conversationId is empty or undefined
+    if (!conversationId) {
+        alert('Please start a conversation before contacting the tutor.');
+        return;
+    }
+
     try {
         const response = await fetch(`/instances/${instanceId}/conversations/${conversationId}/email`, {
             method: 'GET',
