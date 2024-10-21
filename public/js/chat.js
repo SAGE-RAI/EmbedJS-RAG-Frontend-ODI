@@ -1,41 +1,3 @@
- // Need to move this somewhere.
- const defaultRatingResponses = {
-    1: [
-        "Don't like the style",
-        "Not factually correct",
-        "Didn't fully follow instructions",
-        "Refused when it shouldn't have",
-        "Wrong or no sources"
-    ],
-    2: [
-        "Not helpful",
-        "Confusing response",
-        "Didn't provide enough detail",
-        "Incomplete information",
-        "Wrong or no sources",
-    ],
-    3: [
-        "Somewhat helpful",
-        "Partially correct",
-        "Room for improvement",
-        "Average response",
-        "Needs more detail"
-    ],
-    4: [
-        "Quite helpful",
-        "Mostly correct",
-        "Good response",
-        "Well-written",
-        "Informative"
-    ],
-    5: [
-        "Very helpful",
-        "Completely correct",
-        "Excellent response",
-        "Clear and concise",
-        "Highly informative"
-    ]
-};
 
 // Function to render Markdown content using React
 async function renderMarkdown(markdown, container, callback) {
@@ -192,7 +154,27 @@ function renderMessage(entry, existingElement = null, newMessage = false) {
             }
         });
     }
+
+    // check if for a mailtoLink request
+    if (entry.content.sender === "AI" && entry.mailtoLink) {
+        const promptDiv = document.createElement('div');
+        promptDiv.classList.add('email-prompt');
+
+        renderMarkdownWordByWord(entry.prompt, promptDiv, () => {
+            // Create the email link
+            const link = document.createElement('a');
+            link.textContent = "Send Email to Tutor";
+            link.href = entry.mailtoLink;
+            link.target = '_blank'; // Open the link in a new tab
+            link.classList.add('email-button'); // Assuming you have a class for styling buttons
+
+            // Append the prompt and link to the promptDiv
+            promptDiv.appendChild(link);
+        });
+        element.appendChild(promptDiv);
+    }
 }
+
 
 async function loadConversation(conversationId) {
     const listCont = document.querySelector('.list_cont');
@@ -714,4 +696,39 @@ async function sendMessage(conversationId, message, responseLi) {
 function getInstanceIdFromPath() {
     const pathSegments = window.location.pathname.split('/');
     return pathSegments[2]; // Assumes /instances/:instanceId/... structure
+}
+
+// Contact Tutor 
+async function contactTutor(form) {
+
+    const conversationIdInput = form.querySelector('#conversationId'); // Get the conversation Id input field within the form
+    let conversationId = conversationIdInput.value; // Get the conversation Id value from the input field
+    let instanceId = getInstanceIdFromPath(); // Get the instanceId
+
+    try {
+        const response = await fetch(`/instances/${instanceId}/conversations/${conversationId}/email`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch email details');
+        }
+
+        const data = await response.json();
+
+        if (data.mailtoLink) {
+            const proceed = confirm("Are you sure you want to contact your tutor?\n\nYour conversation history will be included in the email to provide context for your query. You can remove any parts of the conversation that you don't want to share before sending the email.");
+            if (proceed) {
+            // Open the mailto link to let the user send the email
+            window.location.href = data.mailtoLink;
+            }
+        } else {
+            alert('Failed to generate email link');
+        }
+    } catch (error) {
+        console.error('Error contacting tutor:', error);
+    }
 }
