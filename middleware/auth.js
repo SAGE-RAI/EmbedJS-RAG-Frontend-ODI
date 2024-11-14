@@ -185,7 +185,6 @@ export const canAdminInstance = async (req, res, next) => {
     if (isOwner || (userAccess && userAccess.role === 'instanceAdmin')) {
         return next();
     } else {
-        console.log('no admin');
         const error = new Error("Permission denied");
         error.status = 403;
         return next(error);

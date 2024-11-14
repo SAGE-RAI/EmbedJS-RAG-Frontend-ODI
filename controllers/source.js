@@ -69,82 +69,113 @@ async function handleSiteMapImport(source, req) {
     global.siteMapThreads[source] = { running: true, urls: [], remaining: 0, errors: [] };
 
     const EmbeddingsCache = getEmbeddingsCacheModel(req.params.instanceId);
-    const response = await axios.get(source);
-    const xmlData = response.data;
-    const $ = load(xmlData, { xmlMode: true });
 
-    const urls = $('url');
-    global.siteMapThreads[source].urls = urls;
-    global.siteMapThreads[source].remaining = urls.length;
-    for (let i = 0; i < urls.length; i++) {
-        const pageUrl = $(urls[i]).find('loc').text().trim();
-        const lastMod = new Date($(urls[i]).find('lastmod').text().trim());
+    // Fetch and parse the sitemap XML
+    try {
+        const response = await axios.get(source);
+        const xmlData = response.data;
+        const $ = load(xmlData, { xmlMode: true });
 
-        // Check if page needs to be imported or updated
-        const existingSource = await EmbeddingsCache.findOne({ source: pageUrl });
-        if (existingSource && existingSource.loadedDate >= lastMod) {
-            continue; // Skip if the source is up-to-date
-        }
-        try {
-            // Get headers for the page
-            const headers = await getHeaders(pageUrl);
-            const pageType = headers.sourceType;
-            const pageTitle = headers.title;
+        const urls = $('url');
+        global.siteMapThreads[source].urls = urls;
+        global.siteMapThreads[source].remaining = urls.length;
 
-            let loader;
-            switch (pageType) {
-                case 'PDF':
-                    loader = new PdfLoader({ filePathOrUrl: pageUrl });
-                    break;
-                case 'JSON':
-                    const jsonResponse = await axios.get(pageUrl);
-                    const jsonObject = jsonResponse.data;
-                    loader = new JsonLoader({ object: jsonObject, recurse: true });
-                    break;
-                case 'text/plain':
-                    loader = new TextLoader({ text: req.body.sourceText || '' });
-                    break;
-                case 'text/html':
-                default:
-                    loader = new WebLoader({ urlOrContent: pageUrl });
-                    break;
+        for (let i = 0; i < urls.length; i++) {
+            const pageUrl = $(urls[i]).find('loc').text().trim();
+            const lastModText = $(urls[i]).find('lastmod').text().trim();
+            const lastMod = lastModText ? new Date(lastModText) : null;
+
+            // Check if the page exists and is up-to-date
+            const existingSource = await EmbeddingsCache.findOne({ source: pageUrl });
+            if (existingSource && lastMod && existingSource.loadedDate >= lastMod) {
+                continue; // Skip if the source is up-to-date
             }
 
-            // Retrieve chunks from the loader and calculate total tokens required
-            let totalTokens = 0;
-            for await (const chunk of loader.getChunks()) {
-                const tokenCount = encode(chunk.pageContent).length;
-                totalTokens += tokenCount;
+            try {
+                // Fetch headers and initialize the appropriate loader based on the content type
+                const headers = await getHeaders(pageUrl);
+                const pageType = headers.sourceType;
+                const pageTitle = headers.title;
 
-                const user = await User.findById(req.session.user.id);
-                if (totalTokens > user.tokens) {
-                    delete global.siteMapThreads[source];
-                    throw new Error('Insufficient tokens to load the source');
+                let loader;
+                switch (pageType) {
+                    case 'PDF':
+                        loader = new PdfLoader({ filePathOrUrl: pageUrl });
+                        break;
+                    case 'JSON':
+                        const jsonResponse = await axios.get(pageUrl);
+                        const jsonObject = jsonResponse.data;
+                        loader = new JsonLoader({ object: jsonObject, recurse: true });
+                        break;
+                    case 'Text':
+                        const textResponse = await axios.get(pageUrl);
+                        loader = new TextLoader({ text: textResponse.data });
+                        break;
+                    default:
+                        loader = new WebLoader({ urlOrContent: pageUrl });
+                        break;
                 }
+
+                // Calculate tokens and check if the user has enough to proceed
+                let totalTokens = 0;
+                for await (const chunk of loader.getChunks()) {
+                    const tokenCount = encode(chunk.pageContent).length;
+                    totalTokens += tokenCount;
+
+                    const user = await User.findById(req.session.user.id);
+                    if (totalTokens > user.tokens) {
+                        delete global.siteMapThreads[source];
+                        throw new Error('Insufficient tokens to load the source');
+                    }
+                }
+
+                await req.ragApplication.addLoader(loader);
+                const uniqueId = loader.getUniqueId();
+                newTransaction(req.session.user.id, uniqueId, "sources", "Load source", totalTokens * -1);
+
+                // Update the EmbeddingsCache with the loaded page's metadata
+                const updateObject = {
+                    tokens: totalTokens,
+                    source: pageUrl,
+                    loadedDate: new Date(),
+                    type: pageType,
+                    title: pageTitle,
+                    overrideUrl: req.body.overrideUrl,
+                    siteMap: source
+                };
+                await EmbeddingsCache.findOneAndUpdate(
+                    { loaderId: uniqueId },
+                    { $set: updateObject },
+                    { upsert: true, new: true }
+                );
+                global.siteMapThreads[source].remaining -= 1;
+
+            } catch (error) {
+                if (global.siteMapThreads[source]) {
+                    global.siteMapThreads[source].errors.push(error.message);
+                }
+                continue;
             }
 
-            await req.ragApplication.addLoader(loader);
-            const uniqueId = loader.getUniqueId();
-            newTransaction(req.session.user.id, uniqueId, "sources", "Load source", totalTokens * -1);
+            // Delay for 1 second between each page import to manage API rate limits
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
 
-            const updateObject = { tokens: totalTokens, source: pageUrl, loadedDate: new Date(), type: pageType, title: pageTitle, overrideUrl: req.body.overrideUrl, siteMap: source };
-            await EmbeddingsCache.findOneAndUpdate(
-                { loaderId: uniqueId },
-                { $set: updateObject },
-                { upsert: true, new: true }
-            );
-            global.siteMapThreads[source].remaining -= 1;
-
-        } catch(error) {
-            if (global.siteMapThreads[source]) {
-                global.siteMapThreads[source].errors.push(error.message);
-            }
-            continue;
-        }  // Delay for 1 second between each page import
-        await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (error) {
+        console.error(`Failed to fetch or parse sitemap: ${error.message}`);
+    } finally {
+        global.siteMapThreads[source].running = false;
     }
-    global.siteMapThreads[source].running = false;
 }
+
+async function updateSiteMap(req,res) {
+    const { url } = req.query;
+    handleSiteMapImport(url, req);
+    const data = {};
+    data.uniqueId = "siteMap:" + url + " updating";
+    return res.status(201).json(data);
+}
+
 
 async function addSource(req, res) {
     const { source, title, type, overrideUrl, sourceText } = req.body;
@@ -334,52 +365,43 @@ async function deleteSource(req, res) {
 async function getSiteMapStatus(req, res) {
     try {
         const EmbeddingsCache = getEmbeddingsCacheModel(req.params.instanceId);
-        const globalSiteMapUrls = Object.keys(global.siteMapThreads || {});
 
-        // Iterate over global site map threads first
-        const siteMapStatusesFromThreads = globalSiteMapUrls.map((siteMapUrl) => {
-            const threadRunning = global.siteMapThreads[siteMapUrl];
-            let totalUrls = threadRunning.urls.length;
-            let completedUrls = totalUrls - threadRunning.remaining;
+        // Retrieve all unique sitemaps from EmbeddingsCache
+        const uniqueSiteMaps = await EmbeddingsCache.distinct('siteMap', { siteMap: { $exists: true } });
 
-            return {
-                siteMapUrl,
-                threadRunning: threadRunning.running,
-                totalUrls: totalUrls,
-                completedUrls: completedUrls
-            };
-        });
-
-        // Get unique site maps from the database that are not in the global threads
-        const uniqueSiteMaps = await EmbeddingsCache.distinct('siteMap', {
-            siteMap: { $exists: true, $nin: globalSiteMapUrls }
-        });
-
-        // Get statuses for those unique site maps
-        const siteMapStatusesFromDatabase = await Promise.all(uniqueSiteMaps.map(async (siteMapUrl) => {
+        // Generate status for each sitemap
+        const siteMapStatuses = await Promise.all(uniqueSiteMaps.map(async (siteMapUrl) => {
             let totalUrls = 0;
             let completedUrls = 0;
 
+            // Fetch and parse the sitemap XML
             const response = await axios.get(siteMapUrl);
             const xmlData = response.data;
             const $ = load(xmlData, { xmlMode: true });
-            totalUrls = $('url').length;
-            completedUrls = await EmbeddingsCache.countDocuments({ siteMap: siteMapUrl });
+
+            const urls = $('url');
+            totalUrls = urls.length;
+
+            // Count completed URLs based on their presence in EmbeddingsCache
+            const loadedUrls = await EmbeddingsCache.countDocuments({ siteMap: siteMapUrl });
+            completedUrls = loadedUrls;
+
+            // Determine if the thread is currently running for this sitemap URL
+            const threadRunning = global.siteMapThreads[siteMapUrl]?.running || false;
 
             return {
                 siteMapUrl,
-                threadRunning: false,
+                threadRunning: threadRunning,
                 totalUrls: totalUrls,
                 completedUrls: completedUrls
             };
         }));
 
-        const siteMapStatuses = [...siteMapStatusesFromThreads, ...siteMapStatusesFromDatabase];
-
         res.json(siteMapStatuses);
     } catch (error) {
+        console.error('Error retrieving site map status:', error);
         res.status(500).json({ error: 'Failed to retrieve site map status' });
     }
 }
 
-export { addSource, getSources, getSourcesCount, getSource, updateSource, deleteSource, getHeaders, getSiteMapStatus };
+export { addSource, getSources, getSourcesCount, getSource, updateSource, deleteSource, getHeaders, getSiteMapStatus, updateSiteMap };

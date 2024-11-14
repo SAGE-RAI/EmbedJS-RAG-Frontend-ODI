@@ -1,5 +1,5 @@
 import express from 'express';
-import { addSource, getSources, getSource, updateSource, deleteSource, getSourcesCount, getHeaders, getSiteMapStatus } from '../controllers/source.js';
+import { addSource, getSources, getSource, updateSource, deleteSource, getSourcesCount, getHeaders, getSiteMapStatus, updateSiteMap } from '../controllers/source.js';
 import { ensureAuthenticated, checkOwnership, setActiveInstance, canAccessInstance, canEditSources } from '../middleware/auth.js';
 
 const router = express.Router({ mergeParams: true });
@@ -39,6 +39,8 @@ router.get('/sitemap/status', ensureAuthenticated, canAccessInstance, async (req
         res.status(500).json({ error: 'Failed to fetch sitemap status' });
     }
 });
+
+router.post('/sitemap/update', ensureAuthenticated, canAccessInstance, canEditSources, setActiveInstance, updateSiteMap);
 
 router.post('/', ensureAuthenticated, canAccessInstance, canEditSources, setActiveInstance, addSource);
 
