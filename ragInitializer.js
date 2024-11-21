@@ -1,10 +1,10 @@
 // ragInitializer.js
-import { RAGApplicationBuilder, OpenAi, AzureAIInferenceModel, AdaEmbeddings, OpenAi3LargeEmbeddings, OpenAi3SmallEmbeddings } from '@llm-tools/embedjs';
+import { RAGApplicationBuilder, OpenAi, AzureAIInferenceModel, AdaEmbeddings, OpenAi3LargeEmbeddings, OpenAi3SmallEmbeddings, Anthropic, Mistral, Ollama, HuggingFace, CohereEmbeddings } from '@llm-tools/embedjs';
 import { MongoDb } from '@llm-tools/embedjs/vectorDb/mongodb';
 import { MongoCache } from '@llm-tools/embedjs/cache/mongo';
 import { MongoConversations } from '@llm-tools/embedjs/conversations/mongo';
 import { OpenAiGenericEmbeddings } from '@llm-tools/embedjs';
-import mongoose from 'mongoose';
+import mongoose, { modelNames } from 'mongoose';
 
 // Central configuration for Mongo URI and collection names
 const MONGODB_URI = process.env.MONGO_URI;
@@ -107,17 +107,32 @@ async function initializeRAGApplication(instance) {
                 });
                 break;
             case 'Mistral':
-                // Add your implementation for Mistal here
-                throw new Error('Mistral provider not yet implemented.');
+                model = new Mistral ({
+                    modelName: config.model.name,
+                    apiKey: config.model.apiKey,
+                    endpoint: config.model.baseUrl
+                });
+                break;
             case 'Hugging Face':
-                // Add your implementation for Hugging Face here
-                throw new Error('Hugging Face provider not yet implemented.');
+                model = new HuggingFace ({
+                    modelName: config.model.modelName,
+                    apiKey: config.model.apiKey,
+                    endpointUrl: config.model.baseUrl
+                });
+                break;
             case 'Anthropic':
-                // Add your implementation for Anthropic here
-                throw new Error('Anthropic provider not yet implemented.');
+                model = new Anthropic({  
+                    modelName: config.model.modelName,   
+                    baseURL: config.model.baseUrl,
+                    apiKey: config.model.apiKey
+                });
+                break;
             case 'Ollama':
-                // Add your implementation for Anthropic here
-                throw new Error('Ollama provider not yet implemented.');
+                model = new Ollama ({ 
+                    modelName: config.model.modelName,
+                    baseUrl: config.model.baseUrl
+                });
+                break;
             default:
                 throw new Error('No valid provider found in configuration.');
         }
@@ -155,12 +170,14 @@ async function initializeRAGApplication(instance) {
                 break;
 
             case 'Cohere':
-                // Add your implementation for Cohere here
-                throw new Error('Cohere embedding provider not yet implemented.');
+                embeddingModel = new CohereEmbeddings({
+                    modelName: config.embed.name, 
+                    apiKey: config.embed.apiKey});
+                break;
 
             case 'Gecko':
-                // Add your implementation for Gecko here
-                throw new Error('Gecko embedding provider not yet implemented.');
+                embeddingModel = new GeckoEmbedding();
+                break;
 
             default:
                 throw new Error('No valid embedding provider found in configuration.');
