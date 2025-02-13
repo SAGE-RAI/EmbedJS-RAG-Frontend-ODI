@@ -613,6 +613,7 @@ async function handleSubmit(event) {
     const content = messageInput.value.trim(); // Get the message content from the input field
     const conversationIdInput = form.querySelector('#conversationId'); // Get the conversation ID input field within the form
     let conversationId = conversationIdInput.value; // Get the conversation ID value from the input field
+    const chunkStrategy = form.querySelector('#chunkStrategy').value.trim(); // Get the chunkstrategy input field within the form
 
     if (content === '') {
         alert('Please enter a message.');
@@ -621,13 +622,14 @@ async function handleSubmit(event) {
 
     messageInput.value = ''; // Clear the input field
 
-    sendMessageToConversation(content, conversationId);
+    sendMessageToConversation(content, conversationId, chunkStrategy); // add chunkstrategy
 }
 
-async function sendMessageToConversation(content, conversationId) {
+async function sendMessageToConversation(content, conversationId, chunkStrategy) {
 
     const message = {
         message: content,
+        strategy: chunkStrategy,
         sender: 'HUMAN'
     };
 

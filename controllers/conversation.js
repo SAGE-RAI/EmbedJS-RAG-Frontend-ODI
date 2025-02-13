@@ -118,10 +118,69 @@ async function getMessages(req, res) {
     }
 }
 
+/** Scenario 2: investigating different strategies for chunking **/
+// function to calculate cosine similarity between two vectors
+function cosineSimilarity(vecA, vecB) {
+    if (vecA.length !== vecB.length) {
+        throw new Error('Vectors must have the same length');
+    }
+
+    const dotProduct = vecA.reduce((sum, val, i) => sum + val * vecB[i], 0);
+    const magnitudeA = Math.sqrt(vecA.reduce((sum, val) => sum + val * val, 0));
+    const magnitudeB = Math.sqrt(vecB.reduce((sum, val) => sum + val * val, 0));
+    return dotProduct / (magnitudeA * magnitudeB);
+}
+
+async function calculateSourceWeights(query, chunks, ragApplication) {
+    const sourceWeights = {};
+
+    // Step 1: Group chunks by source
+    const sources = [...new Set(chunks.map(chunk => chunk.metadata.source))];
+    const sourceChunks = {};
+    sources.forEach(source => {
+        sourceChunks[source] = chunks.filter(chunk => chunk.metadata.source === source);
+    });
+
+    console.log("Sources:", sources);
+    console.log("********************************************");
+    console.log("Source chunks:", sourceChunks);
+    console.log("********************************************");
+    console.log("Query:", query);
+    console.log("********************************************");
+    console.log("Chunks:", chunks);
+    console.log("********************************************");
+
+    // Step 2: Generate embeddings for the query and each source's full text
+    const queryEmbedding = await ragApplication.getTextEmbedding(query);
+    // console.log("Query embedding:", queryEmbedding);
+   
+    for (const source of sources) {
+        const sourceText = sourceChunks[source].map(chunk => chunk.pageContent).join(' ');
+        const sourceEmbedding = await ragApplication.getTextEmbedding(sourceText);
+        // console.log('SourceEmbedding:', sourceEmbedding);
+
+        // Step 3: Calculate semantic distance (e.g., cosine similarity)
+        const similarity = cosineSimilarity(queryEmbedding, sourceEmbedding);
+        console.log("********************************************");
+        console.log('Similarity:', similarity);
+
+        // Step 4: Normalize the similarity score to a weight between [0, 1]
+        sourceWeights[source] = (similarity + 1) / 2; // Cosine similarity ranges from -1 to 1
+    }
+
+    // Step 5: Normalize weights so they sum to 1
+    const totalWeight = Object.values(sourceWeights).reduce((sum, weight) => sum + weight, 0);
+    for (const source of sources) {
+        sourceWeights[source] /= totalWeight;
+    }
+
+    return sourceWeights;
+}
+
 async function postMessage(req, res) {
     try {
         const conversationId = req.params.conversationId;
-        const { message, sender } = req.body;
+        const { message, sender, strategy } = req.body;
         const ragApplication = req.ragApplication;
         if (!ragApplication) {
             throw new Error('RAG Application is not initialized');
@@ -190,11 +249,298 @@ async function postMessage(req, res) {
             chunks = await ragApplication.getContext(contextQuery);
         }
 
+        // Implement source combination strategies - tech paper scenario 2
+        // const strategy = req.body.strategy || 'default'; // Default strategy
+        // const strategy = 'top_k_chunks_per_source'; // Example: topic classification and entity extraction
+        let selectedChunks = [];
+        let k = 0;
+        //let sources = [];
+
+        switch (strategy) {
+            case 'top_k_chunks':
+                // Top k chunks across all sources
+                selectedChunks = chunks.slice(0, 5); // top 5 chunks
+                console.log("Selected chunks:", selectedChunks);
+                break;
+            case 'top_k_n_chunks':
+                // Top k/n chunks from each of n sources individually
+                const sourcesChunks = [...new Set(chunks.map(chunk => chunk.metadata.source))];
+                console.log("Sources:", sourcesChunks);
+                console.log("********************************************");
+                const kPerSource = Math.floor(10 / sourcesChunks.length); // top 10 chunks divided by number of sources
+                console.log("kPerSource:", kPerSource);
+                console.log("********************************************");
+                selectedChunks = sourcesChunks.flatMap(source => 
+                    chunks.filter(chunk => chunk.metadata.source === source).slice(0, kPerSource)
+                );
+                console.log("Selected chunks:", selectedChunks);
+                break;
+            case 'top_k_chunks_per_source':
+                // Top k chunks from each of n sources individually
+                const sourcesPerSource = [...new Set(chunks.map(chunk => chunk.metadata.source))];
+                console.log("Sources:", sourcesPerSource);
+                console.log("********************************************");
+                const kPerSource2 = 5; // Example: top 5 chunks per source
+                selectedChunks = sourcesPerSource.flatMap(source => 
+                    chunks.filter(chunk => chunk.metadata.source === source).slice(0, kPerSource2)
+                );
+                console.log('kPerSource2:', kPerSource2);
+                console.log("********************************************");
+                console.log("Selected chunks:", selectedChunks);
+                break;
+            case 'weighted_relevance':
+                // Weighted relevance-based chunks selection
+                console.log('contextQuery:', contextQuery);
+                console.log('message:', message);
+
+                // Step 1: Precompute embeddings for all chunks
+                const chunkEmbeddings = await Promise.all(
+                    chunks.map(async chunk => ({
+                        ...chunk,
+                        embedding: await ragApplication.getTextEmbedding(chunk.pageContent)
+                    }))
+                );
+
+                // Step 2: Group chunks by source and precompute source embeddings
+                const sources = [...new Set(chunkEmbeddings.map(chunk => chunk.metadata.source))];
+                const sourceChunks = {};
+                const sourceEmbeddings = {};
+
+                await Promise.all(
+                    sources.map(async source => {
+                        const chunksForSource = chunkEmbeddings.filter(chunk => chunk.metadata.source === source);
+                        sourceChunks[source] = chunksForSource;
+
+                        // Generate embedding for the full text of the source
+                        const sourceText = chunksForSource.map(chunk => chunk.pageContent).join(' ');
+                        sourceEmbeddings[source] = await ragApplication.getTextEmbedding(sourceText);
+                    })
+                );
+
+                console.log("sourceChunks:", sourceChunks);
+                console.log("********************************************");
+                
+                console.log("sourceEmbeddings:", sourceEmbeddings);
+                console.log("********************************************");
+                // console.log("sourceEmbeddings:", sourceEmbeddings);
+
+                // Step 3: Calculate source weights based on semantic distance
+                const queryEmbedding = await ragApplication.getTextEmbedding(message);
+                console.log("Query Embeddings:", queryEmbedding);
+                const sourceWeights = {};
+
+                for (const source of sources) {
+                    const similarity = cosineSimilarity(queryEmbedding, sourceEmbeddings[source]);
+                    console.log("Similarity for", source, ":", similarity);
+                    sourceWeights[source] = (similarity + 1) / 2; // Normalize to [0, 1]
+                }
+
+                console.log("********************************************");
+                console.log("Source weights:", sourceWeights);
+
+                // Normalize weights so they sum to 1
+                const totalWeight = Object.values(sourceWeights).reduce((sum, weight) => sum + weight, 0);
+                console.log("********************************************");    
+                console.log("Total weight:", totalWeight);
+                for (const source of sources) {
+                    sourceWeights[source] /= totalWeight;
+                }
+
+                // Step 4: Determine the total number of chunks to retrieve (k)
+                k = chunks.length; // or set a specific value for k
+                console.log("total number if chunks retrieve: ", k);
+
+                // Step 5: Select chunks proportionally based on source weights
+                for (const source of sources) {
+                    const chunksForSource = sourceChunks[source];
+
+                    // Calculate the number of chunks to select from this source
+                    const numChunksToSelect = Math.round(k * sourceWeights[source]);
+                    console.log("********************************************");
+                    console.log("num ChunksToSelect for", source, ":", numChunksToSelect);
+
+                    // Sort chunks within the source by relevance to the query
+                    const sortedChunks = chunksForSource.sort((a, b) => 
+                        cosineSimilarity(b.embedding, queryEmbedding) - cosineSimilarity(a.embedding, queryEmbedding)
+                    );
+
+                    console.log("********************************************");
+                    console.log("sorted Chunks for", source, ":", sortedChunks);
+
+                    // Select the top `numChunksToSelect` chunks from this source
+                    selectedChunks.push(...sortedChunks.slice(0, numChunksToSelect));
+                }
+
+                console.log("********************************************");
+                console.log("Selected chunks:", selectedChunks);
+                break;
+            case 'topic_classification':
+                // Topic classification and entity extraction
+                console.log('contextQuery:', contextQuery);
+                console.log('message:', message);
+                console.log("********************************************");
+            
+                // Step 1: Extract topics and entities from the user's query using an advanced model/API
+                const queryExtractionPrompt = `Analyze the following query and extract its primary topics and entities. Assign a weight to each topic/entity based on its importance. Respond with a JSON object: { "topics": { "topic": weight }, "entities": { "entity": weight } }. Do not include any explanations or steps. Query: "${message}"`;
+                let queryTopicsAndEntities = { topics: {}, entities: {} };
+                let queryExtractionResponse = await ragApplication.silentConversationQuery(queryExtractionPrompt, null, conversationId, chunks);
+                
+                try {
+                    queryTopicsAndEntities = JSON.parse(queryExtractionResponse);
+                    if (!queryTopicsAndEntities.topics || !queryTopicsAndEntities.entities) {
+                        throw new Error('Expected a JSON object with topics and entities.');
+                    }
+                    console.log("********************************************");
+                    console.log("Extracted query topics and entities:", queryTopicsAndEntities);
+                } catch (error) {
+                    console.error("Failed to extract query topics and entities:", error, "Response:", queryExtractionResponse);
+                    queryTopicsAndEntities = { topics: {}, entities: {} }; // Fallback
+                }
+            
+                // Step 2: Extract topics and entities from each chunk (with caching)
+                const chunkTopics = await Promise.all(
+                    chunks.map(async chunk => {
+                        if (chunk.metadata.topics && chunk.metadata.entities) {
+                            return { ...chunk, topics: chunk.metadata.topics, entities: chunk.metadata.entities };
+                        }
+                        
+                        let topics = {};
+                        let entities = {};
+                        const chunkExtractionPrompt = `Analyze the following text and extract its primary topics and entities. Assign a weight to each topic/entity based on its importance. Respond with a JSON object: { "topics": { "topic": weight }, "entities": { "entity": weight } }. Do not include any explanations or steps. Text: "${chunk.pageContent}"`;
+                        let extractionResponse = await ragApplication.silentConversationQuery(chunkExtractionPrompt, null, conversationId, [chunk]);
+                        // console.log("Extraction Response:", extractionResponse);
+                        
+                        try {
+                            const parsedResponse = JSON.parse(extractionResponse);
+                            // console.log("Parsed Response:", parsedResponse);
+                            topics = parsedResponse.topics;
+                            entities = parsedResponse.entities;
+                            if (!topics || !entities) {
+                                throw new Error(`Expected a JSON object with "topics" and "entities" for chunk with ID ${chunk.metadata.id}.`);
+                            }
+                            console.log(`Topic-Extraction from Chunks with Id ${chunk.metadata.id}:`, extractionResponse);
+            
+                            return { ...chunk, topics, entities };
+
+                        } catch (error) {
+                            console.error("Failed to extract topics for chunk:", error, "Response:", extractionResponse);
+                            return { ...chunk, topics: {}, entities: {} }; // Fallback
+                        } finally {
+                            // Cache the extracted topics and entities in chunk metadata
+                            chunk.metadata.topics = topics;
+                            chunk.metadata.entities = entities;
+                        }
+                    })
+                );
+            
+                // Step 3: Calculate relevance scores based on weighted topic and entity intersections
+                const scoredChunks = chunkTopics.map(chunk => {
+                    let relevanceScore = 0;
+            
+                    for (const [topic, weight] of Object.entries(chunk.topics)) {
+                        if (queryTopicsAndEntities.topics[topic]) {
+                            relevanceScore += weight * queryTopicsAndEntities.topics[topic];
+                        }
+                    }
+            
+                    for (const [entity, weight] of Object.entries(chunk.entities)) {
+                        if (queryTopicsAndEntities.entities[entity]) {
+                            relevanceScore += weight * queryTopicsAndEntities.entities[entity];
+                        }
+                    }
+            
+                    return { ...chunk, relevanceScore };
+                });
+            
+                console.log("Scored chunks:", scoredChunks);
+            
+                // Step 4: Sort chunks by relevance score (descending order)
+                const sortedChunks = scoredChunks.sort((a, b) => b.relevanceScore - a.relevanceScore);
+                console.log("Sorted chunks:", sortedChunks);
+            
+                // Step 5: Dynamically select the top k chunks
+                const minRelevanceThreshold = 0.3;
+                const topChunks = sortedChunks.filter(chunk => chunk.relevanceScore >= minRelevanceThreshold);
+                k = Math.min(topChunks.length, 10);
+                selectedChunks = topChunks.slice(0, k).map(chunk => ({
+                    ...chunk
+                    // relevanceScore: undefined // Remove relevanceScore from final output if not needed
+                }));
+
+                console.log("Selected chunks:", selectedChunks);
+                break;
+            case 'llm_summarization':
+                // LLM content summarization
+                console.log('contextQuery:', contextQuery);
+                console.log('message:', message);
+            
+                // Step 1: Group chunks by source
+                const sources_ = [...new Set(chunks.map(chunk => chunk.metadata.source))];
+                const sourceChunks_ = {};
+                sources_.forEach(source => {
+                    sourceChunks_[source] = chunks.filter(chunk => chunk.metadata.source === source);
+                });
+            
+                // console.log("Sources:", sources_);
+                console.log("Grouped chunks by source:", sourceChunks_);
+            
+                // Step 2: Summarize chunks per source
+                const summarizedChunks = [];
+                for (const source of sources_) {
+                    const chunksForSource = sourceChunks_[source];
+            
+                    // Step 2a: Summarize with relevance to the query
+                    // const relevanceSummaryPrompt = `Summarize the following text concisely, focusing on the key points and main ideas relevant to the query: "${message}". Ensure the summary is clear, accurate, and free of opinions or additional information not present in the original text. Here is the text to summarize:\n\n${chunksForSource.map(chunk => chunk.pageContent).join(' ')}. Respond with just the summary without any decorators.`;
+                    const relevanceSummaryPrompt = `Generate a well-structured and informative summary of the following text, ensuring it is **concise yet sufficiently detailed** to capture key points and main ideas relevant to the query: "${message}".  
+                    - The summary should be **clear, accurate, and contextually relevant**.  
+                    - Avoid opinions, interpretations, or information not present in the original text.  
+                    - Maintain a **balanced length**—long enough to cover essential details but concise enough to stay focused.  
+                    Text to summarize: ${chunksForSource.map(chunk => chunk.pageContent).join(' ')}  
+                    Respond with **only** the summary, without any extra text or formatting.`;
+
+                    const relevanceSummary = await ragApplication.silentConversationQuery(relevanceSummaryPrompt, null, conversationId, chunksForSource);
+            
+                    console.log("Relevance summary for source:", source, relevanceSummary);
+            
+                    // Step 2b: Summarize in general (without focusing on the query)
+                    // const generalSummaryPrompt = `Summarize the following text concisely, focusing on the main ideas, key points, and essential details while ensuring clarity and coherence. Do not include personal opinions or any information not present in the original text. Here is the text to summarize:\n\n${chunksForSource.map(chunk => chunk.pageContent).join(' ')}. Respond with just the summary without any decorators.`;
+                    const generalSummaryPrompt = `Generate a clear, well-structured summary of the following text.  
+                    - Ensure the summary captures the **main ideas, key points, and essential details**.  
+                    - Maintain **clarity, coherence, and a balanced length**—detailed enough to convey important information but concise and to the point.  
+                    - **Exclude** personal opinions or any information not present in the original text.  
+                    Text to summarize: ${chunksForSource.map(chunk => chunk.pageContent).join(' ')}  
+                    Respond with **only** the summary, without any extra text or formatting.`;
+
+                    const generalSummary = await ragApplication.silentConversationQuery(generalSummaryPrompt, null, conversationId, chunksForSource);
+            
+                    console.log("General summary for source:", source, generalSummary);
+            
+                    // Step 2c: Add summarized chunks to the result
+                    summarizedChunks.push({
+                        metadata: { source },
+                        pageContent: relevanceSummary, // Use relevance summary by default
+                        generalSummary // Optional: Store general summary for reference; we can switch between general and relevance
+                    });
+                }
+            
+                console.log("Summarized chunks:", summarizedChunks);
+            
+                // Step 3: Select the top k summarized chunks
+                k = 10; // Set the number of chunks to retrieve
+                selectedChunks = summarizedChunks.slice(0, k);
+            
+                console.log("Selected summarized chunks:", selectedChunks);
+                break;
+            default:
+                selectedChunks = chunks; // Default strategy chunks
+                break;
+        }
+
         /// Calculate the number of tokens required for the message and chunks
         const messageTokens = encode(message).length;
 
         let chunkTokens = 0;
-        for (const chunk of chunks) {
+        for (const chunk of selectedChunks) {
             chunkTokens += encode(chunk.pageContent).length;
         }
 
@@ -205,13 +551,14 @@ async function postMessage(req, res) {
             return res.status(400).json({ error: 'Insufficient tokens to post the message' });
         }
 
-        const ragResponse = await ragApplication.query(message, conversationId, chunks);
+        // Query the RAG application with the message and selected chunks
+        const ragResponse = await ragApplication.query(message, conversationId, selectedChunks);
 
         // ** AI to suggest to talk to tutor **
         // Check if AI response suggests user needs to contact tutor
         const aiMessage = ragResponse.content.message; //gets the response 
         const clarificationQuery = `Does the following response suggest that the AI cannot answer the user's query? Response: "${aiMessage}" Please respond with a JSON object. The JSON should contain a boolean field "aicannotHelp", which should be true if the AI cannot help and false if it can. Example: {"aicannotHelp": true}`;
-        let clarificationResponse = await ragApplication.silentConversationQuery(clarificationQuery, null, conversationId, chunks);
+        let clarificationResponse = await ragApplication.silentConversationQuery(clarificationQuery, null, conversationId, selectedChunks);
         let parsedResponse = {}; // Initialize the parsedResponse variable
 
         try {

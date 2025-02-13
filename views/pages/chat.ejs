@@ -12,6 +12,15 @@
             <div class="bottom">
                 <div id="input">
                     <input type="hidden" id="conversationId" value="<%- conversation.id %>"></input>
+                    <select id="chunkStrategy" name="select">
+                        <option value="default">default</option>
+                        <option value="top_k_chunks">top_k_chunks</option>
+                        <option value="top_k_n_chunks">top_k_n_chunks</option>
+                        <option value="top_k_chunks_per_source">top_k_chunks_per_source</option>
+                        <option value="weighted_relevance">weighted_relevance</option>
+                        <option value="topic_classification">topic_classification</option>
+                        <option value="llm_summarization">llm_summarization</option>
+                    </select>
                     <textarea id="txt" placeholder="Send a message" name="msg" rows="1"></textarea>
                     <button type="submit" class="uil uil-message"></button>
                     <p> | </p>
@@ -28,6 +37,7 @@
             const textarea = document.getElementById('txt');
             const form = document.querySelector('.aichat');
             const contactTutorButton = document.getElementById('contact-tutor'); 
+            const select = document.getElementById('chunkStrategy'); // chunk strategy select element
 
             textarea.addEventListener('input', function() {
                 this.style.height = 'auto'; // Reset the height

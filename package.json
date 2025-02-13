@@ -21,7 +21,7 @@
   "homepage": "https://github.com:SAGE-RAI/EmbedJS-RAG-Frontend-ODI/#readme",
   "dependencies": {
     "@azure-rest/ai-inference": "^1.0.0-beta.1",
-    "@llm-tools/embedjs": "github:SAGE-RAI/embedJs#main",
+    "@llm-tools/embedjs": "github:SAGE-RAI/embedJs#paper-experiments",
     "cheerio": "^1.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
