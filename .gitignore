@@ -1,3 +1,11 @@
 package-lock.json
 node_modules
 config.env
+output1.json
+output2.json
+output3.json
+output_new.json
+output_new_cosine.json
+output_14-25-00-968.json
+test-pretest.js
+old-pretest.js

@@ -4,27 +4,28 @@ import { newTransaction } from '../controllers/transaction.js';
 import User from '../models/user.js';
 import Instance from '../models/instance.js';
 import { encode } from 'gpt-tokenizer/model/gpt-4o';
+//import { allDbs } from './ragInitializer.js'; // to use allDbs
 
 async function createConversation(req, res) {
-  try {
-      const userId = req.user._id;
-      const { contentObject, course, _skillsFramework } = req.body;
+    try {
+        const userId = req.user._id;
+        const { contentObject, course, _skillsFramework } = req.body;
 
-      const Conversation = getConversationModel(req.params.instanceId);
+        const Conversation = getConversationModel(req.params.instanceId);
 
-      const newConversation = new Conversation({
-          userId,
-          constructor: { contentObject, course, _skillsFramework },
-      });
+        const newConversation = new Conversation({
+            userId,
+            constructor: { contentObject, course, _skillsFramework },
+        });
 
-      newConversation.conversationId = newConversation._id.toString(); // Set conversationId to the string of the _id created
+        newConversation.conversationId = newConversation._id.toString(); // Set conversationId to the string of the _id created
 
-      await newConversation.save();
+        await newConversation.save();
 
-      res.status(201).json({ id: newConversation._id });
-  } catch (error) {
-      res.status(500).json({ error: error.message });
-  }
+        res.status(201).json({ id: newConversation._id });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 }
 
 async function getConversations(req, res) {
@@ -119,62 +120,27 @@ async function getMessages(req, res) {
 }
 
 /** Scenario 2: investigating different strategies for chunking **/
-// function to calculate cosine similarity between two vectors
+// Function to calculate cosine similarity between two vectors
 function cosineSimilarity(vecA, vecB) {
     if (vecA.length !== vecB.length) {
         throw new Error('Vectors must have the same length');
     }
-
     const dotProduct = vecA.reduce((sum, val, i) => sum + val * vecB[i], 0);
     const magnitudeA = Math.sqrt(vecA.reduce((sum, val) => sum + val * val, 0));
     const magnitudeB = Math.sqrt(vecB.reduce((sum, val) => sum + val * val, 0));
     return dotProduct / (magnitudeA * magnitudeB);
 }
 
-async function calculateSourceWeights(query, chunks, ragApplication) {
-    const sourceWeights = {};
+// Normalize embeddings to unit length (L2-normalization)
+function normalize(vec) {
+    const magnitude = Math.sqrt(vec.reduce((sum, val) => sum + val ** 2, 0));
+    return vec.map(val => val / magnitude);
+}
 
-    // Step 1: Group chunks by source
-    const sources = [...new Set(chunks.map(chunk => chunk.metadata.source))];
-    const sourceChunks = {};
-    sources.forEach(source => {
-        sourceChunks[source] = chunks.filter(chunk => chunk.metadata.source === source);
-    });
-
-    console.log("Sources:", sources);
-    console.log("********************************************");
-    console.log("Source chunks:", sourceChunks);
-    console.log("********************************************");
-    console.log("Query:", query);
-    console.log("********************************************");
-    console.log("Chunks:", chunks);
-    console.log("********************************************");
-
-    // Step 2: Generate embeddings for the query and each source's full text
-    const queryEmbedding = await ragApplication.getTextEmbedding(query);
-    // console.log("Query embedding:", queryEmbedding);
-   
-    for (const source of sources) {
-        const sourceText = sourceChunks[source].map(chunk => chunk.pageContent).join(' ');
-        const sourceEmbedding = await ragApplication.getTextEmbedding(sourceText);
-        // console.log('SourceEmbedding:', sourceEmbedding);
-
-        // Step 3: Calculate semantic distance (e.g., cosine similarity)
-        const similarity = cosineSimilarity(queryEmbedding, sourceEmbedding);
-        console.log("********************************************");
-        console.log('Similarity:', similarity);
-
-        // Step 4: Normalize the similarity score to a weight between [0, 1]
-        sourceWeights[source] = (similarity + 1) / 2; // Cosine similarity ranges from -1 to 1
-    }
-
-    // Step 5: Normalize weights so they sum to 1
-    const totalWeight = Object.values(sourceWeights).reduce((sum, weight) => sum + weight, 0);
-    for (const source of sources) {
-        sourceWeights[source] /= totalWeight;
-    }
-
-    return sourceWeights;
+// Calculates the Euclidean distance between two vectors using the formula:
+function euclideanDistance(vecA, vecB) {
+    const cosSim = cosineSimilarity(vecA, vecB);  // Calculate cosine similarity
+    return Math.sqrt(2 * (1 - cosSim));
 }
 
 async function postMessage(req, res) {
@@ -238,7 +204,7 @@ async function postMessage(req, res) {
             let response = await ragApplication.silentConversationQuery(ragQuery, null, conversationId, chunks);
             try {
                 response = JSON.parse(response);
-            } catch(err) {
+            } catch (err) {
                 console.error("Could not parse RAG response as JSON");
             }
             if (response.additionalContextRequired) {
@@ -250,16 +216,15 @@ async function postMessage(req, res) {
         }
 
         // Implement source combination strategies - tech paper scenario 2
-        // const strategy = req.body.strategy || 'default'; // Default strategy
-        // const strategy = 'top_k_chunks_per_source'; // Example: topic classification and entity extraction
         let selectedChunks = [];
-        let k = 0;
+        let k = 10; // Default number of chunks to retrieve
+        let minRelevanceThreshold = 0.3; // Default relevance score threshold
         //let sources = [];
 
         switch (strategy) {
             case 'top_k_chunks':
                 // Top k chunks across all sources
-                selectedChunks = chunks.slice(0, 5); // top 5 chunks
+                selectedChunks = chunks.slice(0, k); // top 5 chunks
                 console.log("Selected chunks:", selectedChunks);
                 break;
             case 'top_k_n_chunks':
@@ -270,9 +235,9 @@ async function postMessage(req, res) {
                 const kPerSource = Math.floor(10 / sourcesChunks.length); // top 10 chunks divided by number of sources
                 console.log("kPerSource:", kPerSource);
                 console.log("********************************************");
-                selectedChunks = sourcesChunks.flatMap(source => 
+                selectedChunks = sourcesChunks.flatMap(source =>
                     chunks.filter(chunk => chunk.metadata.source === source).slice(0, kPerSource)
-                );
+                ).slice(0, k);
                 console.log("Selected chunks:", selectedChunks);
                 break;
             case 'top_k_chunks_per_source':
@@ -280,19 +245,18 @@ async function postMessage(req, res) {
                 const sourcesPerSource = [...new Set(chunks.map(chunk => chunk.metadata.source))];
                 console.log("Sources:", sourcesPerSource);
                 console.log("********************************************");
-                const kPerSource2 = 5; // Example: top 5 chunks per source
-                selectedChunks = sourcesPerSource.flatMap(source => 
+                const kPerSource2 = k; // Example: top 5 chunks per source
+                selectedChunks = sourcesPerSource.flatMap(source =>
                     chunks.filter(chunk => chunk.metadata.source === source).slice(0, kPerSource2)
-                );
+                ).slice(0, k);
                 console.log('kPerSource2:', kPerSource2);
                 console.log("********************************************");
                 console.log("Selected chunks:", selectedChunks);
                 break;
-            case 'weighted_relevance':
-                // Weighted relevance-based chunks selection
+            case 'weighted_relevance': 
                 console.log('contextQuery:', contextQuery);
                 console.log('message:', message);
-
+            
                 // Step 1: Precompute embeddings for all chunks
                 const chunkEmbeddings = await Promise.all(
                     chunks.map(async chunk => ({
@@ -300,77 +264,80 @@ async function postMessage(req, res) {
                         embedding: await ragApplication.getTextEmbedding(chunk.pageContent)
                     }))
                 );
-
+            
                 // Step 2: Group chunks by source and precompute source embeddings
                 const sources = [...new Set(chunkEmbeddings.map(chunk => chunk.metadata.source))];
                 const sourceChunks = {};
                 const sourceEmbeddings = {};
-
+            
                 await Promise.all(
                     sources.map(async source => {
                         const chunksForSource = chunkEmbeddings.filter(chunk => chunk.metadata.source === source);
                         sourceChunks[source] = chunksForSource;
-
+            
                         // Generate embedding for the full text of the source
                         const sourceText = chunksForSource.map(chunk => chunk.pageContent).join(' ');
                         sourceEmbeddings[source] = await ragApplication.getTextEmbedding(sourceText);
                     })
                 );
-
+            
                 console.log("sourceChunks:", sourceChunks);
                 console.log("********************************************");
-                
-                console.log("sourceEmbeddings:", sourceEmbeddings);
-                console.log("********************************************");
-                // console.log("sourceEmbeddings:", sourceEmbeddings);
-
+            
+                console.log("sourceEmbeddings Done:");
+            
                 // Step 3: Calculate source weights based on semantic distance
                 const queryEmbedding = await ragApplication.getTextEmbedding(message);
-                console.log("Query Embeddings:", queryEmbedding);
+                console.log("Query Embeddings Done");
                 const sourceWeights = {};
-
+            
+                const normalizedQueryEmbedding = normalize(queryEmbedding); // normalise the query embeddings
                 for (const source of sources) {
-                    const similarity = cosineSimilarity(queryEmbedding, sourceEmbeddings[source]);
+                    const normalizedSourceEmbedding = normalize(sourceEmbeddings[source]); // normalise the sourceEmbeddings 
+                    const similarity = euclideanDistance(normalizedQueryEmbedding, normalizedSourceEmbedding); // find the similarity or euclidean distance
                     console.log("Similarity for", source, ":", similarity);
                     sourceWeights[source] = (similarity + 1) / 2; // Normalize to [0, 1]
                 }
-
+            
                 console.log("********************************************");
                 console.log("Source weights:", sourceWeights);
-
+            
                 // Normalize weights so they sum to 1
                 const totalWeight = Object.values(sourceWeights).reduce((sum, weight) => sum + weight, 0);
-                console.log("********************************************");    
+                console.log("********************************************");
                 console.log("Total weight:", totalWeight);
                 for (const source of sources) {
                     sourceWeights[source] /= totalWeight;
                 }
-
+            
                 // Step 4: Determine the total number of chunks to retrieve (k)
-                k = chunks.length; // or set a specific value for k
-                console.log("total number if chunks retrieve: ", k);
-
+                const kn = chunks.length; // or set a specific value for k
+                console.log("total number of chunks to retrieve: ", kn);
+            
                 // Step 5: Select chunks proportionally based on source weights
+                //const selectedChunks = [];
                 for (const source of sources) {
                     const chunksForSource = sourceChunks[source];
-
+            
                     // Calculate the number of chunks to select from this source
-                    const numChunksToSelect = Math.round(k * sourceWeights[source]);
+                    const numChunksToSelect = Math.round(kn * sourceWeights[source]);
                     console.log("********************************************");
                     console.log("num ChunksToSelect for", source, ":", numChunksToSelect);
-
+            
                     // Sort chunks within the source by relevance to the query
-                    const sortedChunks = chunksForSource.sort((a, b) => 
-                        cosineSimilarity(b.embedding, queryEmbedding) - cosineSimilarity(a.embedding, queryEmbedding)
+                    const sortedChunks = chunksForSource.sort((a, b) =>
+                        euclideanDistance(b.embedding, queryEmbedding) - euclideanDistance(a.embedding, queryEmbedding)
                     );
-
+            
                     console.log("********************************************");
                     console.log("sorted Chunks for", source, ":", sortedChunks);
-
+            
                     // Select the top `numChunksToSelect` chunks from this source
                     selectedChunks.push(...sortedChunks.slice(0, numChunksToSelect));
                 }
-
+            
+                // set the total number of chunks to retrieve
+                selectedChunks = selectedChunks.slice(0, k);
                 console.log("********************************************");
                 console.log("Selected chunks:", selectedChunks);
                 break;
@@ -379,12 +346,12 @@ async function postMessage(req, res) {
                 console.log('contextQuery:', contextQuery);
                 console.log('message:', message);
                 console.log("********************************************");
-            
+
                 // Step 1: Extract topics and entities from the user's query using an advanced model/API
                 const queryExtractionPrompt = `Analyze the following query and extract its primary topics and entities. Assign a weight to each topic/entity based on its importance. Respond with a JSON object: { "topics": { "topic": weight }, "entities": { "entity": weight } }. Do not include any explanations or steps. Query: "${message}"`;
                 let queryTopicsAndEntities = { topics: {}, entities: {} };
                 let queryExtractionResponse = await ragApplication.silentConversationQuery(queryExtractionPrompt, null, conversationId, chunks);
-                
+
                 try {
                     queryTopicsAndEntities = JSON.parse(queryExtractionResponse);
                     if (!queryTopicsAndEntities.topics || !queryTopicsAndEntities.entities) {
@@ -396,35 +363,47 @@ async function postMessage(req, res) {
                     console.error("Failed to extract query topics and entities:", error, "Response:", queryExtractionResponse);
                     queryTopicsAndEntities = { topics: {}, entities: {} }; // Fallback
                 }
-            
+
                 // Step 2: Extract topics and entities from each chunk (with caching)
                 const chunkTopics = await Promise.all(
                     chunks.map(async chunk => {
                         if (chunk.metadata.topics && chunk.metadata.entities) {
                             return { ...chunk, topics: chunk.metadata.topics, entities: chunk.metadata.entities };
                         }
-                        
+
                         let topics = {};
                         let entities = {};
                         const chunkExtractionPrompt = `Analyze the following text and extract its primary topics and entities. Assign a weight to each topic/entity based on its importance. Respond with a JSON object: { "topics": { "topic": weight }, "entities": { "entity": weight } }. Do not include any explanations or steps. Text: "${chunk.pageContent}"`;
                         let extractionResponse = await ragApplication.silentConversationQuery(chunkExtractionPrompt, null, conversationId, [chunk]);
-                        // console.log("Extraction Response:", extractionResponse);
-                        
+                        let parsedResponse = {};
+
                         try {
-                            const parsedResponse = JSON.parse(extractionResponse);
-                            // console.log("Parsed Response:", parsedResponse);
+                            parsedResponse = JSON.parse(extractionResponse);
+                            //console.log("Parsed Response:", parsedResponse);
                             topics = parsedResponse.topics;
                             entities = parsedResponse.entities;
                             if (!topics || !entities) {
                                 throw new Error(`Expected a JSON object with "topics" and "entities" for chunk with ID ${chunk.metadata.id}.`);
                             }
                             console.log(`Topic-Extraction from Chunks with Id ${chunk.metadata.id}:`, extractionResponse);
-            
+
                             return { ...chunk, topics, entities };
 
                         } catch (error) {
-                            console.error("Failed to extract topics for chunk:", error, "Response:", extractionResponse);
-                            return { ...chunk, topics: {}, entities: {} }; // Fallback
+                            try {
+                                // console.error("Fixing the JSON Object..", error, "Response:", extractionResponse);
+                                parsedResponse = JSON.parse(extractionResponse + "}"); // This is a hack to get the error message from the response
+                                topics = parsedResponse.topics;
+                                entities = parsedResponse.entities;
+                                if (!topics || !entities) {
+                                    throw new Error(`Expected a JSON object with "topics" and "entities" for chunk with ID ${chunk.metadata.id}.`);
+                                }
+                                // console.log(`Fixed: Topic-Extraction from Chunks with Id ${chunk.metadata.id}:`, extractionResponse);
+                                return { ...chunk, topics: topics, entities: entities }; // Fallback
+                            } catch (error) {
+                                console.error("Failed to extract topics for chunk:", error, "Response:", extractionResponse);
+                                return { ...chunk, topics: {}, entities: {} }; // Fallback
+                            }
                         } finally {
                             // Cache the extracted topics and entities in chunk metadata
                             chunk.metadata.topics = topics;
@@ -432,40 +411,40 @@ async function postMessage(req, res) {
                         }
                     })
                 );
-            
+
                 // Step 3: Calculate relevance scores based on weighted topic and entity intersections
                 const scoredChunks = chunkTopics.map(chunk => {
                     let relevanceScore = 0;
-            
+
                     for (const [topic, weight] of Object.entries(chunk.topics)) {
                         if (queryTopicsAndEntities.topics[topic]) {
                             relevanceScore += weight * queryTopicsAndEntities.topics[topic];
                         }
                     }
-            
+
                     for (const [entity, weight] of Object.entries(chunk.entities)) {
                         if (queryTopicsAndEntities.entities[entity]) {
                             relevanceScore += weight * queryTopicsAndEntities.entities[entity];
                         }
                     }
-            
+
                     return { ...chunk, relevanceScore };
                 });
-            
+
                 console.log("Scored chunks:", scoredChunks);
-            
+
                 // Step 4: Sort chunks by relevance score (descending order)
                 const sortedChunks = scoredChunks.sort((a, b) => b.relevanceScore - a.relevanceScore);
                 console.log("Sorted chunks:", sortedChunks);
-            
-                // Step 5: Dynamically select the top k chunks
-                const minRelevanceThreshold = 0.3;
+
+                // Step 5: Dynamically select the top k chunks to be selected based on relevance threshold
+                // const minRelevanceThreshold = 0.3;
                 const topChunks = sortedChunks.filter(chunk => chunk.relevanceScore >= minRelevanceThreshold);
                 k = Math.min(topChunks.length, 10);
                 selectedChunks = topChunks.slice(0, k).map(chunk => ({
                     ...chunk
                     // relevanceScore: undefined // Remove relevanceScore from final output if not needed
-                }));
+                })).slice(0, k); // Set the number of chunks to retrieve
 
                 console.log("Selected chunks:", selectedChunks);
                 break;
@@ -473,22 +452,22 @@ async function postMessage(req, res) {
                 // LLM content summarization
                 console.log('contextQuery:', contextQuery);
                 console.log('message:', message);
-            
+
                 // Step 1: Group chunks by source
                 const sources_ = [...new Set(chunks.map(chunk => chunk.metadata.source))];
                 const sourceChunks_ = {};
                 sources_.forEach(source => {
                     sourceChunks_[source] = chunks.filter(chunk => chunk.metadata.source === source);
                 });
-            
+
                 // console.log("Sources:", sources_);
                 console.log("Grouped chunks by source:", sourceChunks_);
-            
+
                 // Step 2: Summarize chunks per source
                 const summarizedChunks = [];
                 for (const source of sources_) {
                     const chunksForSource = sourceChunks_[source];
-            
+
                     // Step 2a: Summarize with relevance to the query
                     // const relevanceSummaryPrompt = `Summarize the following text concisely, focusing on the key points and main ideas relevant to the query: "${message}". Ensure the summary is clear, accurate, and free of opinions or additional information not present in the original text. Here is the text to summarize:\n\n${chunksForSource.map(chunk => chunk.pageContent).join(' ')}. Respond with just the summary without any decorators.`;
                     const relevanceSummaryPrompt = `Generate a well-structured and informative summary of the following text, ensuring it is **concise yet sufficiently detailed** to capture key points and main ideas relevant to the query: "${message}".  
@@ -499,9 +478,9 @@ async function postMessage(req, res) {
                     Respond with **only** the summary, without any extra text or formatting.`;
 
                     const relevanceSummary = await ragApplication.silentConversationQuery(relevanceSummaryPrompt, null, conversationId, chunksForSource);
-            
+
                     console.log("Relevance summary for source:", source, relevanceSummary);
-            
+
                     // Step 2b: Summarize in general (without focusing on the query)
                     // const generalSummaryPrompt = `Summarize the following text concisely, focusing on the main ideas, key points, and essential details while ensuring clarity and coherence. Do not include personal opinions or any information not present in the original text. Here is the text to summarize:\n\n${chunksForSource.map(chunk => chunk.pageContent).join(' ')}. Respond with just the summary without any decorators.`;
                     const generalSummaryPrompt = `Generate a clear, well-structured summary of the following text.  
@@ -512,9 +491,9 @@ async function postMessage(req, res) {
                     Respond with **only** the summary, without any extra text or formatting.`;
 
                     const generalSummary = await ragApplication.silentConversationQuery(generalSummaryPrompt, null, conversationId, chunksForSource);
-            
+
                     console.log("General summary for source:", source, generalSummary);
-            
+
                     // Step 2c: Add summarized chunks to the result
                     summarizedChunks.push({
                         metadata: { source },
@@ -522,13 +501,13 @@ async function postMessage(req, res) {
                         generalSummary // Optional: Store general summary for reference; we can switch between general and relevance
                     });
                 }
-            
+
                 console.log("Summarized chunks:", summarizedChunks);
-            
+
                 // Step 3: Select the top k summarized chunks
-                k = 10; // Set the number of chunks to retrieve
+                //  Set the number of chunks to retrieve
                 selectedChunks = summarizedChunks.slice(0, k);
-            
+
                 console.log("Selected summarized chunks:", selectedChunks);
                 break;
             default:
@@ -591,7 +570,7 @@ async function postMessage(req, res) {
                 // push it to ragResponse
                 ragResponse.prompt = "I'm sorry if my response wasn't helpful. Would you like to reach out to your tutor for further support? You can do so by clicking the link below."
                 ragResponse.mailtoLink = mailtoLink;
- 
+
             } catch (error) {
                 console.error("Error preparing email details:", error);
                 return res.status(500).json({ error: "Failed to prepare email details." });
@@ -642,7 +621,7 @@ async function emailTutor(req, res) {
         const instanceId = req.params.instanceId;
         const userId = req.session.user.id; // Assume user ID is stored in session
         // Retrieve the user's token information from the database
-        
+
         // Fetch the conversation
         const Conversation = getConversationModel(instanceId);
         const conversation = await Conversation.findById(conversationId);
@@ -689,21 +668,21 @@ async function emailTutor(req, res) {
     }
 }
 
-async function getPreviousEntryId(entries,entryId) {
+async function getPreviousEntryId(entries, entryId) {
     try {
 
-      const currentIndex = entries.findIndex(entry => entry._id === entryId);
+        const currentIndex = entries.findIndex(entry => entry._id === entryId);
 
-      if (currentIndex === -1) {
-        throw new Error('Entry not found');
-      }
+        if (currentIndex === -1) {
+            throw new Error('Entry not found');
+        }
 
-      // Get the previous entry ID
-      const previousEntry = entries[currentIndex - 1];
-      return previousEntry ? previousEntry._id : null;
+        // Get the previous entry ID
+        const previousEntry = entries[currentIndex - 1];
+        return previousEntry ? previousEntry._id : null;
     } catch (error) {
-      console.error('Error retrieving previous entry ID:', error);
-      return null;
+        console.error('Error retrieving previous entry ID:', error);
+        return null;
     }
 }
 

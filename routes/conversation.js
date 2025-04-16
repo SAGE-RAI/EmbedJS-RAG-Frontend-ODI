@@ -1,6 +1,7 @@
 import express from 'express';
 import { ensureAuthenticated, verifyConversationMiddleware, setActiveInstance, canAccessInstance, canAdminInstance } from '../middleware/auth.js'; // Import your middleware functions
 import { getConversation, getConversations, createConversation, getMessages, deleteConversation, updateConversation, postMessage, setRating, emailTutor } from '../controllers/conversation.js'; // Import necessary functions from controllers
+import { runPreTest } from '../controllers/pre-test.js'; // for pre-testing 
 
 const router = express.Router({ mergeParams: true });
 
@@ -44,5 +45,8 @@ router.post("/:conversationId/messages/:messageId", ensureAuthenticated, verifyC
 
 // Route to contact tutor via email
 router.get("/:conversationId/email", ensureAuthenticated, verifyConversationMiddleware, canAccessInstance, emailTutor);
+
+// Route to run pre-test
+router.post("/:conversationId/pretest", setActiveInstance, runPreTest);
 
 export default router;

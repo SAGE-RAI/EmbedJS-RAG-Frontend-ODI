@@ -4,6 +4,7 @@ import { MongoDb } from '@llm-tools/embedjs/vectorDb/mongodb';
 import { MongoCache } from '@llm-tools/embedjs/cache/mongo';
 import { MongoConversations } from '@llm-tools/embedjs/conversations/mongo';
 import { OpenAiGenericEmbeddings } from '@llm-tools/embedjs';
+import { SetOfDbs } from '@llm-tools/embedjs';
 import mongoose from 'mongoose';
 
 // Central configuration for Mongo URI and collection names
@@ -12,15 +13,39 @@ const COLLECTION_NAME = process.env.EMBEDDINGS_COLLECTION;
 const CACHE_COLLECTION_NAME = process.env.EMBEDDINGS_CACHE_COLLECTION;
 const CONVERSATIONS_COLLECTION_NAME = process.env.CONVERSATIONS_COLLECTION;
 
+// Extra instances for the RAG application
+const EXTRA_INSTANCES = ['67d9d199f072de2cee7cc7ee'];
+
+let allDbs; // to access from other files
+
 // Function to initialize the RAG application
 async function initializeRAGApplication(instance) {
     const instanceId = instance.id;
 
-    const db = new MongoDb({
+    const db = {
+        database: new MongoDb({
         connectionString: MONGODB_URI,
         dbName: instanceId,
         collectionName: COLLECTION_NAME
-    });
+        }),
+        name: instanceId
+    };
+
+    // for a set of Dbs 
+    let extraDbs = [];
+    for (let extra of EXTRA_INSTANCES) {
+        extraDbs.push({
+            database: new MongoDb({
+            connectionString: MONGODB_URI,
+            dbName: extra,
+            collectionName: COLLECTION_NAME
+            }),
+            name: extra
+        });
+    }
+    // combine the main db and the extra dbs
+    allDbs = new SetOfDbs([db, ...extraDbs]);
+    //allDbs.setStrategy('topicClassification'); // Set the default strategy
 
     const cachedb = new MongoCache({
         uri: MONGODB_URI,
@@ -33,6 +58,8 @@ async function initializeRAGApplication(instance) {
         dbName: instanceId,
         collectionName: CONVERSATIONS_COLLECTION_NAME
     });
+
+    
 
     // Initialize the connection to MongoDB Atlas
     try {
@@ -169,7 +196,8 @@ async function initializeRAGApplication(instance) {
         const ragApplicationBuilder = new RAGApplicationBuilder()
             .setModel(model)
             .setTemperature(0.8)
-            .setVectorDb(db)
+ //           .setVectorDb(db)
+            .setVectorDb(allDbs)
             .setCache(cachedb)
             .setConversations(conversationsdb)
             .setQueryTemplate(instance.systemPrompt);
@@ -180,6 +208,8 @@ async function initializeRAGApplication(instance) {
         }
 
         const ragApplication = await ragApplicationBuilder.build();
+        allDbs.ragApp(ragApplication); // Set the RAG application
+
 
         console.log('RAG Application is ready with provider ' + config.model.provider + ' and MongoDB!');
         return ragApplication;
@@ -199,4 +229,15 @@ function connectToRagDatabase(dbName) {
     return connection;
 }
 
-export { initializeRAGApplication, connectToRagDatabase };
+// logic to set strategies for set of dbs
+function setAllDbsStrategy(strategy, relevanceThreshold, numberK) { // later we can add k and r values
+    if (allDbs) {
+        allDbs.setStrategy(strategy);
+        allDbs.setRelevanceThreshold(relevanceThreshold);
+        allDbs.setNumberK(numberK);
+    } else {
+        console.error('Error: allDbs is not initialized yet.');
+    }
+}
+
+export { initializeRAGApplication, connectToRagDatabase, setAllDbsStrategy };
