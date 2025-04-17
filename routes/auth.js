@@ -9,10 +9,16 @@ const router = express.Router();
 
 async function processLogin(req, res) {
     try {
-        const profile = req.session.passport ? req.session.passport.user : req.session.user;
-        const user = await retrieveOrCreateUser(profile);
-        processToken(profile.currentToken, user._id);
-        delete profile.currentToken;
+        let user;
+        if (req.session.passport) {
+            const profile = req.session.passport.user;
+            user = await retrieveOrCreateUser(profile);
+            processToken(profile.currentToken, user._id);
+            delete profile.currentToken;
+        } else if (req.session.authMethod === '/local') {
+            const localUser = req.user; // User object from LocalStrategy
+            user = await retrieveOrCreateUser(localUser);
+        }
 
         // Update last login data
         user.lastLoginFormatted = user.lastLogin.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });
@@ -50,6 +56,31 @@ router.get('/google/callback', passport.authenticate('google', { failureRedirect
     await processLogin(req, res);
     res.redirect('/instances/');
 });
+
+// Callback endpoint for LocalStrategy authentication
+router.post('/local/callback', (req, res, next) => {
+    passport.authenticate('local', async (err, user, info) => {
+      if (err) {
+        return res.status(500).json({ message: err.message || 'Internal Server Error' });
+      }
+  
+      if (!user) {
+        return res.status(401).json({ message: info?.message || 'Invalid credentials' });
+      }
+  
+      req.logIn(user, async (err) => {
+        if (err) {
+          return res.status(500).json({ message: 'Login error.' });
+        }
+  
+        req.session.authMethod = 'local';
+        await processLogin(req, res);
+        res.json({ message: 'Login successful' });
+        // res.redirect('/instances/');
+      });
+    })(req, res, next);
+  });
+
 
 // Callback endpoint for Django authentication
 router.get('/django/callback', (req, res, next) => {

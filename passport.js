@@ -3,6 +3,15 @@ import { Strategy as OAuth2Strategy } from 'passport-oauth2';
 import { OAuth2Strategy as GoogleStrategy } from 'passport-google-oauth';
 import fetch from 'node-fetch';
 import { retrieveOrCreateUser } from './controllers/user.js'; // Ensure this path is correct
+import { Strategy as LocalStrategy } from 'passport-local';
+import bcrypt from 'bcrypt';
+import fs from 'fs';
+
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Passport setup for Google authentication
 passport.use('google', new GoogleStrategy({
@@ -17,6 +26,38 @@ passport.use('google', new GoogleStrategy({
   profile.authMethod = 'google';
   return done(null, profile);
 }));
+
+// Passport setup for Local authentication
+passport.use('local', new LocalStrategy(
+  {
+    usernameField: 'email',
+    passwordField: 'password'
+  },
+  async (email, password, done) => {
+    try {
+      const filePath = path.resolve(__dirname, 'users.json');
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      const users = JSON.parse(fileContent);
+
+      const user = users.find(user => user.email === email);
+
+      if (!user) {
+        return done(null, false, { message: 'Incorrect email.' });
+      }
+
+      const isValidPassword = await bcrypt.compare(password, user.password);
+
+      if (!isValidPassword) {
+        return done(null, false, { message: 'Incorrect password.' });
+      }
+
+      return done(null, user); // success
+    } catch (error) {
+      console.log(error);
+      return done(error);
+    }
+  }
+));
 
 // Passport setup for Django authentication
 passport.use('django', new OAuth2Strategy({

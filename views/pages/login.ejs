@@ -1,0 +1,52 @@
+<%- include('../partials/header') %>
+    <div class="container">
+        <div class="login-form" style="max-width: 400px; margin: left;">
+            <h1>Login</h1>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="email" id="username" name="username" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          const loginForm = document.getElementById('loginForm');
+      
+          loginForm?.addEventListener('submit', async function (event) {
+            event.preventDefault();
+      
+            const email = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+      
+            try {
+              const response = await fetch('/auth/local/callback', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+              });
+      
+              if (response.ok) {
+                const result = await response.json();
+                localStorage.setItem('token', result.token);
+                window.location.href = '/instances/';
+              } else {
+                const error = await response.json();
+                alert('Login failed: ' + error.message);
+              }
+            } catch (err) {
+              console.error('Error:', err);
+              alert('An error occurred. Please try again.');
+            }
+          });
+        });
+    </script>
+<%- include('../partials/footer') %>

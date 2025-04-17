@@ -22,6 +22,7 @@
   "dependencies": {
     "@azure-rest/ai-inference": "^1.0.0-beta.1",
     "@llm-tools/embedjs": "github:SAGE-RAI/embedJs#main",
+    "bcrypt": "^5.1.1",
     "cheerio": "^1.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -36,6 +37,7 @@
     "openai": "^4.29.0",
     "passport": "^0.6.0",
     "passport-google-oauth": "^2.0.0",
+    "passport-local": "^1.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-markdown": "^9.0.1",

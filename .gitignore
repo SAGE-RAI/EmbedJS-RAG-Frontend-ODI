@@ -1,3 +1,5 @@
 package-lock.json
 node_modules
 config.env
+users.json
+test-hash.js

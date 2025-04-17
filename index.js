@@ -93,7 +93,13 @@ db.once('open', () => {
       res.render('pages/about');
   });
 
-  app.use('/auth', authRoutes);
+  app.use('/auth', (req, res, next) => {
+    if (req.url === '/local') {
+      res.locals.pageTitle = "Login";
+      return res.render('pages/login');
+    }
+    next();
+  }, authRoutes);
   app.use('/admin', adminRoutes);
 
   app.use('/instances', instancesRoutes);
