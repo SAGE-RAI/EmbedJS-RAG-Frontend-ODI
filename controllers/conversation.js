@@ -205,7 +205,10 @@ async function postMessage(req, res) {
             return res.status(400).json({ error: 'Insufficient tokens to post the message' });
         }
 
-        const ragResponse = await ragApplication.query(message, conversationId, chunks);
+
+        // get instanceId from the request parameters
+        const instanceId = req.params.instanceId; // for tracing in LangSmith 
+        const ragResponse = await ragApplication.query(message, conversationId, chunks, user.email, instanceId);
 
         try {
             // Define a function to handle the transactions sequentially
