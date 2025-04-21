@@ -1,6 +1,6 @@
 import express from 'express';
 import { ensureAuthenticated, verifyConversationMiddleware, setActiveInstance, canAccessInstance, canAdminInstance } from '../middleware/auth.js'; // Import your middleware functions
-import { getConversation, getConversations, createConversation, getMessages, deleteConversation, updateConversation, postMessage, setRating } from '../controllers/conversation.js'; // Import necessary functions from controllers
+import { getConversation, getConversations, createConversation, getMessages, deleteConversation, updateConversation, postMessage, setRating, emailTutor } from '../controllers/conversation.js'; // Import necessary functions from controllers
 
 const router = express.Router({ mergeParams: true });
 
@@ -41,5 +41,8 @@ router.post("/:conversationId/messages", ensureAuthenticated, verifyConversation
 
 // Route to post a rating to a specific message
 router.post("/:conversationId/messages/:messageId", ensureAuthenticated, verifyConversationMiddleware, canAccessInstance, setRating);
+
+// Route to contact tutor via email
+router.get("/:conversationId/email", ensureAuthenticated, verifyConversationMiddleware, canAccessInstance, emailTutor);
 
 export default router;
