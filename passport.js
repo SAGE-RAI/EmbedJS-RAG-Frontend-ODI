@@ -4,7 +4,7 @@ import { OAuth2Strategy as GoogleStrategy } from 'passport-google-oauth';
 import fetch from 'node-fetch';
 import { retrieveOrCreateUser } from './controllers/user.js'; // Ensure this path is correct
 import { Strategy as LocalStrategy } from 'passport-local';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import fs from 'fs';
 
 import path from 'path';
@@ -35,9 +35,18 @@ passport.use('local', new LocalStrategy(
   },
   async (email, password, done) => {
     try {
-      const filePath = path.resolve(__dirname, 'users.json');
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      // Fetch users from Google Drive
+      const download = await fetch('https://drive.google.com/uc?export=download&id=121AOmL7GxTDLwd0wrsDma1BLxxl4Lv3V');
+      if (!download.ok) {
+        throw new Error('Failed to download the file');
+      }
+      const fileContent = await download.text();
       const users = JSON.parse(fileContent);
+
+      // local read file
+      // const filePath = path.resolve(__dirname, 'users.json');
+      // const fileContent = fs.readFileSync(filePath, 'utf-8');
+      // const users = JSON.parse(fileContent);
 
       const user = users.find(user => user.email === email);
 

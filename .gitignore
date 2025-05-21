@@ -3,3 +3,7 @@ node_modules
 config.env
 users.json
 test-hash.js
+docker-compose.yml
+dockerfile
+newuser.json
+azure.azcli

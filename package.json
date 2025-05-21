@@ -22,7 +22,7 @@
   "dependencies": {
     "@azure-rest/ai-inference": "^1.0.0-beta.1",
     "@llm-tools/embedjs": "github:SAGE-RAI/embedJs#odi-webinar",
-    "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
     "cheerio": "^1.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -30,6 +30,7 @@
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "gpt-tokenizer": "^2.2.1",
+    "ml-kmeans": "^6.0.0",
     "mongoose": "^8.5.0",
     "morgan": "^1.10.0",
     "nodemon": "^3.1.0",
