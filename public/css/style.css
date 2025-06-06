@@ -729,7 +729,31 @@ sidebar .admin-menu {
   border-radius: 0;
 }
 
+/* for send email */
+.email-prompt {
+  margin-top: 10px; /* Adds space between the message and the prompt */
+  padding: 10px; /* Adds padding around the prompt */
+  background-color: var(--color-light-grey); /* Light background for better visibility */
+  border-top: 1px solid var(--color-dark-blue); /* Adds a separator line at the top */
+}
 
+.email-prompt p {
+  margin-bottom: 10px; /* Adds space between the prompt text and the link */
+}
+
+.email-button {
+  padding: 10px 20px; /* Padding inside the button for a larger clickable area */
+  background-color: var(--color-dark-blue); /* Make the button color align with your theme */
+  color: var(--color-white); /* Button text color */
+  text-decoration: none; /* Remove underline from link */
+  display: inline-block; /* Ensures the button behaves like a block element */
+}
+
+.email-button:hover {
+  background-color: var(--color-dark-grey); /* Change color on hover */
+  color: var(--color-white); /* Text color change on hover */
+  text-decoration: none;
+}
 
 /* Style for the tooltip icon */
 .tooltip-icon {

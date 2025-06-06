@@ -14,6 +14,8 @@
                     <input type="hidden" id="conversationId" value="<%- conversation.id %>"></input>
                     <textarea id="txt" placeholder="Send a message" name="msg" rows="1"></textarea>
                     <button type="submit" class="uil uil-message"></button>
+                    <p> | </p>
+                    <button type="button"  id="contact-tutor" class="uil uil-envelope-alt email"></button>
                 </div>
             </div>
         </div>
@@ -25,6 +27,7 @@
 
             const textarea = document.getElementById('txt');
             const form = document.querySelector('.aichat');
+            const contactTutorButton = document.getElementById('contact-tutor'); 
 
             textarea.addEventListener('input', function() {
                 this.style.height = 'auto'; // Reset the height
@@ -46,6 +49,10 @@
             });
 
             form.addEventListener('submit', handleSubmit); // Ensure the form calls handleSubmit on submit
+
+            contactTutorButton.addEventListener('click', function() {
+                contactTutor(form); // Call contactTutor when the button is clicked
+            });
         });
     </script>
 <%- include('../partials/footer') %>
