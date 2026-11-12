@@ -82,20 +82,43 @@
                     })
                     .then(response => response.json())
                     .then(data => {
+
+                        function disableAndPreserve(field) {
+                            const name = field.attr('name');
+                            field.prop('disabled', true);
+
+                            // Remove any previous shadow input for this field, then add fresh one
+                            $(`input[type="hidden"][data-shadow-for="${name}"]`).remove();
+                            $('<input>').attr({
+                                type: 'hidden',
+                                name: name,
+                                'data-shadow-for': name
+                            }).val(field.val()).insertAfter(field);
+                        }
                         if (data.count > 0) {
                             // Disable all editing of the embedProvider fields
-                            $('select[name="embedModel.provider"]').prop('disabled', true);
-                            $('input[name="embedModel.baseUrl"]').prop('disabled', true);
-                            $('input[name="embedModel.name"]').prop('disabled', true);
-                            $('input[name="embedModel.dimensions"]').prop('disabled', true);
+                            // $('select[name="embedModel.provider"]').prop('disabled', false);
+                            // $('input[name="embedModel.baseUrl"]').prop('disabled', false);
+                            // $('input[name="embedModel.name"]').prop('disabled', false);
+                            // $('input[name="embedModel.dimensions"]').prop('disabled', false);
+
+                            disableAndPreserve($('select[name="embedModel.provider"]'));
+                            disableAndPreserve($('input[name="embedModel.baseUrl"]'));
+                            disableAndPreserve($('input[name="embedModel.name"]'));
+                            disableAndPreserve($('input[name="embedModel.dimensions"]'));
+
                         } else {
 
                             selectedEmbedProvider = embedProviderField.val();
                             selectedEmbedName = embedNameField.val();
                             if (selectedEmbedProvider !== 'OpenAI') {
-                                embedBaseUrlField.prop('disabled', true);
-                                embedNameField.prop('disabled', true).val('');
-                                embedDimensionsField.prop('disabled', true);
+                                // embedBaseUrlField.prop('disabled', true);
+                                // embedNameField.prop('disabled', true).val('');
+                                // embedDimensionsField.prop('disabled', true);
+
+                                disableAndPreserve(embedBaseUrlField);
+                                disableAndPreserve(embedNameField);
+                                disableAndPreserve(embedDimensionsField);
                             }
 
                             // Add change event listener to provider field

@@ -531,7 +531,9 @@ async function postMessage(req, res) {
         }
 
         // Query the RAG application with the message and selected chunks
-        const ragResponse = await ragApplication.query(message, conversationId, selectedChunks);
+        const instanceId = req.params.instanceId; // for tracing in LangSmith 
+        const ragResponse = await ragApplication.query(message, conversationId, selectedChunks, user.email, instanceId);
+
 
         // ** AI to suggest to talk to tutor **
         // Check if AI response suggests user needs to contact tutor

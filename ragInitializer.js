@@ -129,6 +129,7 @@ async function initializeRAGApplication(instance) {
                 break;
             case 'Azure':
                 model = new AzureAIInferenceModel({
+                    modelName: config.model.name || undefined,
                     endpointUrl: config.model.baseUrl,
                     apiKey: config.model.apiKey
                 });
